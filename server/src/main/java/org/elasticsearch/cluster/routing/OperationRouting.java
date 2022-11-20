@@ -147,7 +147,11 @@ public class OperationRouting extends AbstractComponent {
                     return indexShard.activeInitializingShardsRandomIt();
                 }
             } else {
-                return indexShard.preferAttributesActiveInitializingShardsIt(awarenessAttributes, nodes);
+                if (useAdaptiveReplicaSelection) { // NOTE:htt, prefer to use adaptive selection
+                    return indexShard.activeInitializingShardsRankedIt(collectorService, nodeCounts);
+                } else {
+                    return indexShard.preferAttributesActiveInitializingShardsIt(awarenessAttributes, nodes);
+                }
             }
         }
         if (preference.charAt(0) == '_') {
@@ -182,7 +186,11 @@ public class OperationRouting extends AbstractComponent {
                             return indexShard.activeInitializingShardsRandomIt();
                         }
                     } else {
-                        return indexShard.preferAttributesActiveInitializingShardsIt(awarenessAttributes, nodes);
+                        if (useAdaptiveReplicaSelection) { // NOTE:htt, prefer to use adaptive selection
+                            return indexShard.activeInitializingShardsRankedIt(collectorService, nodeCounts);
+                        } else {
+                            return indexShard.preferAttributesActiveInitializingShardsIt(awarenessAttributes, nodes);
+                        }
                     }
                 } else {
                     // update the preference and continue
@@ -237,7 +245,7 @@ public class OperationRouting extends AbstractComponent {
         }
         if (awarenessAttributes.isEmpty()) {
             return indexShard.activeInitializingShardsIt(routingHash);
-        } else {
+        } else { // NOTE:htt, keep attributes selection
             return indexShard.preferAttributesActiveInitializingShardsIt(awarenessAttributes, nodes, routingHash);
         }
     }
