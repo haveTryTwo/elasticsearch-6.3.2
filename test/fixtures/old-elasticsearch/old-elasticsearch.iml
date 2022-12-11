@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="false">
+    <exclude-output/>
+    <orderEntry type="inheritedJdk"/>
+    <content url="file://$MODULE_DIR$/">
+      <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false"/>
+      <excludeFolder url="file://$MODULE_DIR$/.gradle"/>
+      <excludeFolder url="file://$MODULE_DIR$/build-idea"/>
+      <excludeFolder url="file://$MODULE_DIR$/build"/>
+      <excludeFolder url="file://$MODULE_DIR$/build-eclipse"/>
+    </content>
+    <orderEntry type="sourceFolder" forTests="false"/>
+    <output url="file://$MODULE_DIR$/build-idea/classes/main"/>
+    <output-test url="file://$MODULE_DIR$/build-idea/classes/test"/>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-core/7.3.1/ce76b4aef66ffe0830afefb2b347028a4fc9eb36/lucene-core-7.3.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-core/7.3.1/2c99a1c8d3ab277895c416de8e77185893326a10/lucene-core-7.3.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+  <component name="ModuleRootManager"/>
+</module>

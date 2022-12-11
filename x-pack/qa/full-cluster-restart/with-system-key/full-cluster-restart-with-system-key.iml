@@ -1,0 +1,913 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="false">
+    <exclude-output/>
+    <orderEntry type="inheritedJdk"/>
+    <content url="file://$MODULE_DIR$/">
+      <excludeFolder url="file://$MODULE_DIR$/.gradle"/>
+      <excludeFolder url="file://$MODULE_DIR$/build-idea"/>
+      <excludeFolder url="file://$MODULE_DIR$/build"/>
+      <excludeFolder url="file://$MODULE_DIR$/build-eclipse"/>
+    </content>
+    <orderEntry type="sourceFolder" forTests="false"/>
+    <output url="file://$MODULE_DIR$/build-idea/classes/main"/>
+    <output-test url="file://$MODULE_DIR$/build-idea/classes/test"/>
+    <orderEntry type="module" module-name="plugin-security" scope="TEST"/>
+    <orderEntry type="module" module-name="core" scope="TEST"/>
+    <orderEntry type="module" module-name="framework" scope="TEST"/>
+    <orderEntry type="module" module-name="watcher" scope="TEST"/>
+    <orderEntry type="module" module-name="reindex" scope="TEST"/>
+    <orderEntry type="module" module-name="monitoring" scope="TEST"/>
+    <orderEntry type="module" module-name="sniffer" scope="TEST"/>
+    <orderEntry type="module" module-name="rest" scope="TEST"/>
+    <orderEntry type="module" module-name="sql-proto" scope="TEST"/>
+    <orderEntry type="module" module-name="server" scope="TEST"/>
+    <orderEntry type="module" module-name="cli" scope="TEST"/>
+    <orderEntry type="module" module-name="transport-netty4" scope="TEST"/>
+    <orderEntry type="module" module-name="parent-join" scope="TEST"/>
+    <orderEntry type="module" module-name="analysis-common" scope="TEST"/>
+    <orderEntry type="module" module-name="x-content" scope="TEST"/>
+    <orderEntry type="module" module-name="elasticsearch-core" scope="TEST"/>
+    <orderEntry type="module" module-name="secure-sm" scope="TEST"/>
+    <orderEntry type="module" module-name="rest-api-spec" scope="TEST"/>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/com.carrotsearch.randomizedtesting/randomizedtesting-runner/2.5.2/91f3284993b44dcb2f003b5f28617abba13971d2/randomizedtesting-runner-2.5.2.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/com.carrotsearch.randomizedtesting/randomizedtesting-runner/2.5.2/1a27e5df69f8ddf5ab24a726c8d198f1ee56a52d/randomizedtesting-runner-2.5.2-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/junit/junit/4.12/2973d150c0dc1fefe998f834810d68f278ea58ec/junit-4.12.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/junit/junit/4.12/a6c32b40bf3d76eca54e3c601e5d1470c86fcdfa/junit-4.12-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.hamcrest/hamcrest-all/1.3/63a21ebc981131004ad02e0434e799fd7f3a8d5a/hamcrest-all-1.3.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.hamcrest/hamcrest-all/1.3/47e033b7ab18c5dbd5fe29fc1bd5a40afe028818/hamcrest-all-1.3-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-test-framework/7.3.1/e6c87ec1a6f2670a6cb400f1eccf4671960e561c/lucene-test-framework-7.3.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-test-framework/7.3.1/c0ff72f339f4f6dcb4382001b2183feed6dd14dc/lucene-test-framework-7.3.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-codecs/7.3.1/e348a7c07a071e291b5ff5643b6045052f3b0968/lucene-codecs-7.3.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-codecs/7.3.1/74dec7b06a11b5d53632006d679d70e4a3e09168/lucene-codecs-7.3.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.httpcomponents/httpclient/4.5.2/733db77aa8d9b2d68015189df76ab06304406e50/httpclient-4.5.2.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.httpcomponents/httpclient/4.5.2/b9f9e3e5255b6ddc3bf21be05428c7a60d00e042/httpclient-4.5.2-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.httpcomponents/httpcore/4.4.5/e7501a1b34325abb00d17dde96150604a0658b54/httpcore-4.4.5.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.httpcomponents/httpcore/4.4.5/542498265bc5a238dcb0275172b8070bd51e30af/httpcore-4.4.5-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/commons-logging/commons-logging/1.1.3/f6f66e966c70a83ffbdb6f17a0919eaf7c8aca7f/commons-logging-1.1.3.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/commons-logging/commons-logging/1.1.3/28bb0405fddaf04f15058fbfbe01fe2780d7d3b6/commons-logging-1.1.3-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/commons-codec/commons-codec/1.10/4b95f4897fa13f2cd904aee711aeafc0c5295cd8/commons-codec-1.10.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/commons-codec/commons-codec/1.10/11fb3d88ae7e3b757d70237064210ceb954a5a04/commons-codec-1.10-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.elasticsearch/securemock/1.2/98201d4ad5ac93f6b415ae9172d52b5e7cda490e/securemock-1.2.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES/>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.elasticsearch/mocksocket/1.2/190ad3f42fd6ab7367bae0c0e14d1dc4e4a3c361/mocksocket-1.2.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.elasticsearch/mocksocket/1.2/5a7e4e48580119231e834b5d77333248275e3fb7/mocksocket-1.2-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.httpcomponents/httpcore-nio/4.4.5/f4be009e7505f6ceddf21e7960c759f413f15056/httpcore-nio-4.4.5.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.httpcomponents/httpcore-nio/4.4.5/1544107ae82c6d87433984550d96d2f4126b51e5/httpcore-nio-4.4.5-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.httpcomponents/httpasyncclient/4.1.2/95aa3e6fb520191a0970a73cf09f62948ee614be/httpasyncclient-4.1.2.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.httpcomponents/httpasyncclient/4.1.2/c19bd8ca474b5ec2b797ec62a4cf9cdfc7804eaf/httpasyncclient-4.1.2-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/com.unboundid/unboundid-ldapsdk/3.2.0/f76725e5a215ea468ecda06a8d66a809281e685f/unboundid-ldapsdk-3.2.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/com.unboundid/unboundid-ldapsdk/3.2.0/2c0db8fa1493580bd037b1eceb064e7e24d48d4/unboundid-ldapsdk-3.2.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.bouncycastle/bcprov-jdk15on/1.58/2c9aa1c4e3372b447ba5daabade4adf2a2264b12/bcprov-jdk15on-1.58.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.bouncycastle/bcprov-jdk15on/1.58/6dea249598adbb3a58d67778022c9c603215fa57/bcprov-jdk15on-1.58-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.bouncycastle/bcpkix-jdk15on/1.58/15a760a039b040e767a75c77ffcc4ff62558f903/bcpkix-jdk15on-1.58.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.bouncycastle/bcpkix-jdk15on/1.58/f744c76f21a2f592e980260793948ed1cd3cad1d/bcpkix-jdk15on-1.58-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/com.googlecode.owasp-java-html-sanitizer/owasp-java-html-sanitizer/r239/ea8dd89a9e8fcf90c1b666ac0585e7769224da5e/owasp-java-html-sanitizer-r239.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/com.googlecode.owasp-java-html-sanitizer/owasp-java-html-sanitizer/r239/1f7aed063cd72f011ca339034f155853d2743b07/owasp-java-html-sanitizer-r239-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/com.google.guava/guava/19.0/6ce200f6b23222af3d8abb6b6459e6c44f4bb0e9/guava-19.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/com.google.guava/guava/19.0/91a4d115400e904f22b03a78deb355e9ea803cd4/guava-19.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/com.sun.mail/javax.mail/1.5.6/ab5daef2f881c42c8e280cbe918ec4d7fdfd7efe/javax.mail-1.5.6.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/com.sun.mail/javax.mail/1.5.6/7a9a2f66d64bed834a9090c4e91e78892e2e67a1/javax.mail-1.5.6-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/javax.activation/activation/1.1.1/485de3a253e23f645037828c07f1d7f1af40763a/activation-1.1.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/javax.activation/activation/1.1.1/159e45688875fdabff19c9ceb7335aefe4df8339/activation-1.1.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.locationtech.spatial4j/spatial4j/0.7/faa8ba85d503da4ab872d17ba8c00da0098ab2f2/spatial4j-0.7.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.locationtech.spatial4j/spatial4j/0.7/a5ce80e5742f35c523f64963a3786cd4a3ca9fd7/spatial4j-0.7-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.locationtech.jts/jts-core/1.15.0/705981b7e25d05a76a3654e597dab6ba423eb79e/jts-core-1.15.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.locationtech.jts/jts-core/1.15.0/85f9b98dfa591c1cee8d3d4fe5a2bf68667adf83/jts-core-1.15.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-core/2.9.1/c041978c686866ee8534f538c6220238db3bb6be/log4j-core-2.9.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-core/2.9.1/dd7a74b8b7bacb99e053dea13611e6531e383b06/log4j-core-2.9.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-api/2.9.1/7a2999229464e7a324aa503c0a52ec0f05efe7bd/log4j-api-2.9.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-api/2.9.1/73b9d7ad6a70014f5dd705a53209de48285e3c36/log4j-api-2.9.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.elasticsearch/jna/4.5.1/da10908ae23dc59b19dc258e63aea1c44621dc3a/jna-4.5.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.elasticsearch/jna/4.5.1/965bf0f4cf5b71c2b1e9bb5a8d7b6919020e0492/jna-4.5.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-slf4j-impl/2.9.1/a97a849b18b3798c4af1a2ca5b10c66cef17e3a/log4j-slf4j-impl-2.9.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-slf4j-impl/2.9.1/6a8b3d30c1771aa644fe7a1c6fc7a8ce6cb8e826/log4j-slf4j-impl-2.9.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api/1.6.2/8619e95939167fb37245b5670135e4feb0ec7d50/slf4j-api-1.6.2.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api/1.6.2/6b5f6572792e2192ecf714ea12ae894b0fbcf750/slf4j-api-1.6.2-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-core/3.3.0/6fac68342891abec3c22d53e14c706ba3e58918b/opensaml-core-3.3.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-core/3.3.0/8949d87d1d5c0cf946dc49f009cca0706ffcbb1f/opensaml-core-3.3.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-saml-api/3.3.0/c9611395e073206e59816b0b5ce5166450e8101e/opensaml-saml-api-3.3.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-saml-api/3.3.0/297c50ed3ba0389bc221f3abe2561f9541775d8f/opensaml-saml-api-3.3.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-saml-impl/3.3.0/391ac88f96a9f8f522d693c168d4c65fad20535d/opensaml-saml-impl-3.3.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-saml-impl/3.3.0/f6a799b54bd223a77b4f96462e9f80f2fc37959d/opensaml-saml-impl-3.3.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-messaging-api/3.3.0/5da0ff5d28546b3af8cc1487b4717fdeb675b8c4/opensaml-messaging-api-3.3.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-messaging-api/3.3.0/ba3d977e17a3c47ecd960c9423106efb076d06df/opensaml-messaging-api-3.3.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-messaging-impl/3.3.0/38b21389971105f32099d04c6f63b4af505364ca/opensaml-messaging-impl-3.3.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-messaging-impl/3.3.0/e2b2a28895f92a6a1f34485d312533c86c5073bd/opensaml-messaging-impl-3.3.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-security-api/3.3.0/89477899f0836040e9a584b451895a61d923bf96/opensaml-security-api-3.3.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-security-api/3.3.0/2f1ffc90b4696fd8564dc6b6cd112a973117f38d/opensaml-security-api-3.3.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-security-impl/3.3.0/48cf37a5080ee406aef21a49045f5e1d15ea46e6/opensaml-security-impl-3.3.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-security-impl/3.3.0/9bdb5b4deafe10bc625a7f75287ac71ab4e885e4/opensaml-security-impl-3.3.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-profile-api/3.3.0/e4c72301b98cf4967c49c450de7da2dbc1f6b8d0/opensaml-profile-api-3.3.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-profile-api/3.3.0/58245e66c111c99f3b9177bbf221038304bda058/opensaml-profile-api-3.3.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-profile-impl/3.3.0/25c28fb4ab027fcaacaa268902cffc4451ac840c/opensaml-profile-impl-3.3.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-profile-impl/3.3.0/22178a329977bde9a04ba3ae1e9f48cef63616f4/opensaml-profile-impl-3.3.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-xmlsec-api/3.3.0/e824f1e3ec14080412a4ab4b0807a13933d9be80/opensaml-xmlsec-api-3.3.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-xmlsec-api/3.3.0/92de42e810f533ff48a784c787a42becaab63932/opensaml-xmlsec-api-3.3.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-xmlsec-impl/3.3.0/569ae8fc7c84817c5324e9f9b7958adf700a94c1/opensaml-xmlsec-impl-3.3.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-xmlsec-impl/3.3.0/28a9751be7227af794e89425b082128545fed0da/opensaml-xmlsec-impl-3.3.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-soap-api/3.3.0/4e900056cd80c1f0bd72497c26a48664089e04a8/opensaml-soap-api-3.3.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-soap-api/3.3.0/2853891ff4ea69c576388dc2f3d0ede1035b58ed/opensaml-soap-api-3.3.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-soap-impl/3.3.0/ea912fe660d11ad443775974e3208f0563edcebd/opensaml-soap-impl-3.3.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-soap-impl/3.3.0/a6d7441727388c43838db289779c8f77cec9e099/opensaml-soap-impl-3.3.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-storage-api/3.3.0/7492688b067dca0568554ec4c7abf9f0b5e1f682/opensaml-storage-api-3.3.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-storage-api/3.3.0/eabfaed2e36e44b716635d7a21c5f981546901bc/opensaml-storage-api-3.3.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-storage-impl/3.3.0/1244ecd4e8eccf74eb178906b0e9cac8a62bcbf7/opensaml-storage-impl-3.3.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.opensaml/opensaml-storage-impl/3.3.0/bf04fc9f20da5662846d93238d3b4541d95bbe75/opensaml-storage-impl-3.3.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/net.shibboleth.utilities/java-support/7.3.0/288ecc17f2025ad14f768163d42808987d5ffcd6/java-support-7.3.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/net.shibboleth.utilities/java-support/7.3.0/373e26fc8ee779221d83da120a23917da817d908/java-support-7.3.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.santuario/xmlsec/2.0.8/f5995bd4cd75816568c3b26d2552d957316ba8dc/xmlsec-2.0.8.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.santuario/xmlsec/2.0.8/4c82d6ad338d4801484b215ab3898c80e0f7d737/xmlsec-2.0.8-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/io.dropwizard.metrics/metrics-core/3.2.2/cd9886f498ee2ab2d994f0c779e5553b2c450416/metrics-core-3.2.2.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/io.dropwizard.metrics/metrics-core/3.2.2/d8341de37a301b38988b40f5b20976258f2b77e8/metrics-core-3.2.2-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.cryptacular/cryptacular/1.2.0/94f6cb97d7f7487a183f283ae80c6e61c86156e3/cryptacular-1.2.0.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.cryptacular/cryptacular/1.2.0/19574eec18f8f486cb1e756576f755c47129e4f4/cryptacular-1.2.0-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.httpcomponents/httpclient-cache/4.5.2/bd50ea83908dbf2f387a333216e66d2f0c5079bd/httpclient-cache-4.5.2.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.httpcomponents/httpclient-cache/4.5.2/cf65fff90f44bf96e937be86e240626f1f3af0ff/httpclient-cache-4.5.2-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-core/7.3.1/ce76b4aef66ffe0830afefb2b347028a4fc9eb36/lucene-core-7.3.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-core/7.3.1/2c99a1c8d3ab277895c416de8e77185893326a10/lucene-core-7.3.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-analyzers-common/7.3.1/51b62b22f4193bfa386f5ca0c978c68821a12bc0/lucene-analyzers-common-7.3.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-analyzers-common/7.3.1/2d913f6e57b1a0bc0d75a48ed919ffe09fdc0c82/lucene-analyzers-common-7.3.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-backward-codecs/7.3.1/c9bded879284d12b66eb8df112b6f69078616bb6/lucene-backward-codecs-7.3.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-backward-codecs/7.3.1/2d3adb4bbb102dd6c17b4d7784ff49f27853f77b/lucene-backward-codecs-7.3.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-grouping/7.3.1/ebb5344ee066bbb6031164dcf4e690d5a4ea62a5/lucene-grouping-7.3.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-grouping/7.3.1/f5375a309f739a1e596403607d19d0daacc4962/lucene-grouping-7.3.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-highlighter/7.3.1/1e945c65876a1eab97a5db40e92c981c5a65915/lucene-highlighter-7.3.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-highlighter/7.3.1/68e36605bbfd9f3ff11400141547e6dcce948fa7/lucene-highlighter-7.3.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-join/7.3.1/e866b2c36555cff48f31a427efbfd52466418504/lucene-join-7.3.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-join/7.3.1/d5513258b447ef396e8a6d44145273d4f83cb2b/lucene-join-7.3.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-memory/7.3.1/12b7520cfb0c83d4d9e4efde6ad1812693f91acd/lucene-memory-7.3.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-memory/7.3.1/7a84e91bd213ad353b339b1882125e626a9d888d/lucene-memory-7.3.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-misc/7.3.1/2ce12b8828f29c8e5dd9eeef05333705befc9342/lucene-misc-7.3.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-misc/7.3.1/e769174f35cb93c44fd46aa2f6137e8f8d559530/lucene-misc-7.3.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-queries/7.3.1/d531efe427da6cb41a9aa52854be4dd241227a19/lucene-queries-7.3.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-queries/7.3.1/460df21d9cbcef1780fc23f81021f69116497865/lucene-queries-7.3.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-queryparser/7.3.1/51e4cde15df3ab4534a6407598cfb5c7ce7d21ac/lucene-queryparser-7.3.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-queryparser/7.3.1/9130645128a64b669b2e483d7f1248f74b0d0f48/lucene-queryparser-7.3.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-sandbox/7.3.1/ba8c7a91cf3d74d7f5e6f91e6842c6e857bd73c5/lucene-sandbox-7.3.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-sandbox/7.3.1/129abe427c6e0be1c89f1bdae74a18770d158db7/lucene-sandbox-7.3.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-spatial/7.3.1/6e5fb097fdb41f1817c748e4b1d4e6b9bb6e92ec/lucene-spatial-7.3.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-spatial/7.3.1/1756453891a35aec22e714ecb743d6f9f212399/lucene-spatial-7.3.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-spatial-extras/7.3.1/7ff14f7c7b8e2fb7259e925949f51122cbc873c4/lucene-spatial-extras-7.3.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-spatial-extras/7.3.1/22d2b42bebc71e724a7aa0e4843ba4bf50d65a5b/lucene-spatial-extras-7.3.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-spatial3d/7.3.1/db59b01557dd4abb1a469d857e2a96b3c3aa6365/lucene-spatial3d-7.3.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-spatial3d/7.3.1/ec58f7cb9e62c104641f46fe28b360a13c88e871/lucene-spatial3d-7.3.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-suggest/7.3.1/5255e5bec27f078ca89cdc44b9614e3295b51607/lucene-suggest-7.3.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-suggest/7.3.1/e16e3885553bd6cad16408aac7d8481f560fb866/lucene-suggest-7.3.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/com.carrotsearch/hppc/0.7.1/8b5057f74ea378c0150a1860874a3ebdcb713767/hppc-0.7.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/com.carrotsearch/hppc/0.7.1/a8c1a544cf6ce0d109b874ab335e68f335f773f8/hppc-0.7.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/joda-time/joda-time/2.9.9/f7b520c458572890807d143670c9b24f4de90897/joda-time-2.9.9.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/joda-time/joda-time/2.9.9/29a9fcf32288cd678b37b372974786f731b982d1/joda-time-2.9.9-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/com.tdunning/t-digest/3.2/2ab94758b0276a8a26102adf8d528cf6d0567b9a/t-digest-3.2.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/com.tdunning/t-digest/3.2/b1858d66a80a93f61f048cf542fc2751ec7971bf/t-digest-3.2-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.hdrhistogram/HdrHistogram/2.1.9/e4631ce165eb400edecfa32e03d3f1be53dee754/HdrHistogram-2.1.9.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.hdrhistogram/HdrHistogram/2.1.9/966a6429061192e62cc346462587253a726db6b7/HdrHistogram-2.1.9-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-1.2-api/2.9.1/894f96d677880d4ab834a1356f62b875e579caaa/log4j-1.2-api-2.9.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-1.2-api/2.9.1/7081ffdd93a46f1d69b97c90b2e8d59c4e4b16a0/log4j-1.2-api-2.9.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/net.sf.jopt-simple/jopt-simple/5.0.2/98cafc6081d5632b61be2c9e60650b64ddbc637c/jopt-simple-5.0.2.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/net.sf.jopt-simple/jopt-simple/5.0.2/8c1ab37cb37a04678788316d6c560078bc56d885/jopt-simple-5.0.2-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/io.netty/netty-buffer/4.1.16.Final/63b5fa95c74785e16f2c30ce268bc222e35c8cb5/netty-buffer-4.1.16.Final.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/io.netty/netty-buffer/4.1.16.Final/ecfdbdb4677e7300fd498808bb9c078a52e9ae1a/netty-buffer-4.1.16.Final-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec/4.1.16.Final/d84a1f21768b7309c2954521cf5a1f46c2309eb1/netty-codec-4.1.16.Final.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec/4.1.16.Final/c6bce4bff1d8f9e331e013802e9a8125a06b390d/netty-codec-4.1.16.Final-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec-http/4.1.16.Final/d64312378b438dfdad84267c599a053327c6f02a/netty-codec-http-4.1.16.Final.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec-http/4.1.16.Final/9caf025756a4af9bccabd0324a44a9beb165b1b2/netty-codec-http-4.1.16.Final-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/io.netty/netty-common/4.1.16.Final/177a6b30cca92f6f5f9873c9befd681377a4c328/netty-common-4.1.16.Final.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/io.netty/netty-common/4.1.16.Final/2d6b5e99ad733d7324eef44502155cc9fa120699/netty-common-4.1.16.Final-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/io.netty/netty-handler/4.1.16.Final/fec0e63e7dd7f4eeef7ea8dc47a1ff32dfc7ebc2/netty-handler-4.1.16.Final.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/io.netty/netty-handler/4.1.16.Final/af7d99baeb85696657f48a07daee6e898cfda0bf/netty-handler-4.1.16.Final-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/io.netty/netty-resolver/4.1.16.Final/f6eb553b53fb3a90a8ac1170697093fed82eae28/netty-resolver-4.1.16.Final.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/io.netty/netty-resolver/4.1.16.Final/b163b67aeeaccf933359b7606d4d73715cb9a1f7/netty-resolver-4.1.16.Final-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport/4.1.16.Final/3c8ee2c4d4a1cbb947a5c184c7aeb2204260958b/netty-transport-4.1.16.Final.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport/4.1.16.Final/4f98982516fa71c45187aa56640a9a8f0c78de4f/netty-transport-4.1.16.Final-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-core/2.8.10/eb21a035c66ad307e66ec8fce37f5d50fd62d039/jackson-core-2.8.10.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-core/2.8.10/c9231226e0eb8e90ff73c09ae57487b451d65771/jackson-core-2.8.10-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.yaml/snakeyaml/1.17/7a27ea250c5130b2922b86dea63cbb1cc10a660c/snakeyaml-1.17.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/org.yaml/snakeyaml/1.17/63577e87886c76228db9f8a2c50ea43cde5072eb/snakeyaml-1.17-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.dataformat/jackson-dataformat-smile/2.8.10/e853081fadaad3e98ed801937acc3d8f77580686/jackson-dataformat-smile-2.8.10.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.dataformat/jackson-dataformat-smile/2.8.10/aea8bef90dd0dd737dde92ed05d658870e2c977e/jackson-dataformat-smile-2.8.10-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.dataformat/jackson-dataformat-yaml/2.8.10/1e08caf1d787c825307d8cc6362452086020d853/jackson-dataformat-yaml-2.8.10.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.dataformat/jackson-dataformat-yaml/2.8.10/aca16a8b675bd4abd4a976dd804ae2c585a05c3d/jackson-dataformat-yaml-2.8.10-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.dataformat/jackson-dataformat-cbor/2.8.10/1c58cc9313ddf19f0900cd61ed044874278ce320/jackson-dataformat-cbor-2.8.10.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar:///Users/liuzhongchao/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.dataformat/jackson-dataformat-cbor/2.8.10/7e687e4527a46ec2e732cd74ed78c0c11574cb54/jackson-dataformat-cbor-2.8.10-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+  <component name="ModuleRootManager"/>
+</module>
