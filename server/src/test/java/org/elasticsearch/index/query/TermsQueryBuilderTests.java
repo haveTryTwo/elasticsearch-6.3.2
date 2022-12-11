@@ -226,6 +226,18 @@ public class TermsQueryBuilderTests extends AbstractQueryTestCase<TermsQueryBuil
         }
     }
 
+    public void testExtendMaxTermCount() {
+        QueryShardContext context = createShardContext();
+        Object[] values = new Object[65537];
+        for (int i = 0; i < values.length; ++i) {
+            values[i] = i;
+        }
+        TermsQueryBuilder query = new TermsQueryBuilder("TestMoreWords", values);
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> query.doToQuery(context));
+        assertEquals("The number of terms [65537] used in the Terms Query request has exceeded the allowed maximum of [65536]. " +
+                "This maximum can be set by changing the [index.max_terms_count] index level setting.", e.getMessage());
+    }
+
     public void testTermsQueryWithMultipleFields() throws IOException {
         String query = Strings.toString(XContentFactory.jsonBuilder().startObject()
                 .startObject("terms").array("foo", 123).array("bar", 456).endObject()

@@ -304,7 +304,7 @@ public final class IndexSettings {
     private volatile int maxNgramDiff;
     private volatile int maxShingleDiff;
     private volatile int maxAnalyzedOffset;
-    private volatile int maxTermsCount;
+    private volatile int maxTermsCount; // NOTE:htt, terms 查询条件中最多term个数，默认为65536
 
     /**
      * The maximum number of refresh listeners allows on this shard.

@@ -426,10 +426,18 @@ public class TermsQueryBuilder extends AbstractQueryBuilder<TermsQueryBuilder> {
         }
         int maxTermsCount = context.getIndexSettings().getMaxTermsCount();
         if (values.size() > maxTermsCount){
-            DEPRECATION_LOGGER.deprecated(
-                "Deprecated: the number of terms ["  + values.size() +  "] used in the Terms Query request has exceeded " +
-                    "the allowed maximum of [" + maxTermsCount + "]. " + "This maximum can be set by changing the [" +
-                    IndexSettings.MAX_TERMS_COUNT_SETTING.getKey() + "] index level setting.");
+            // NOTE: htt, an error while occur When the number of terms query conditions exceeds the current configuration value
+            throw new IllegalArgumentException(
+                    "The number of terms ["
+                            + values.size()
+                            + "] used in the Terms Query request has exceeded "
+                            + "the allowed maximum of ["
+                            + maxTermsCount
+                            + "]. "
+                            + "This maximum can be set by changing the ["
+                            + IndexSettings.MAX_TERMS_COUNT_SETTING.getKey()
+                            + "] index level setting."
+            );
         }
         MappedFieldType fieldType = context.fieldMapper(fieldName);
 
