@@ -46,11 +46,11 @@ import java.util.stream.Collectors;
  * tasks executed on each node, making the EWMA of the values available to the
  * coordinating node.
  */
-public final class ResponseCollectorService extends AbstractComponent implements ClusterStateListener {
+public final class ResponseCollectorService extends AbstractComponent implements ClusterStateListener { // NOTE:htt, 节点搜集回复搜集时间，包括EWMA队列长度，节点search的EWMA时间，节点的EWMA的服务时间
 
-    private static final double ALPHA = 0.3;
+    private static final double ALPHA = 0.3; // NOTE:htt, 加权值为0.3
 
-    private final ConcurrentMap<String, NodeStatistics> nodeIdToStats = ConcurrentCollections.newConcurrentMap();
+    private final ConcurrentMap<String, NodeStatistics> nodeIdToStats = ConcurrentCollections.newConcurrentMap(); // NOTE:htt, 协调节点统计目标节点的统计信息
 
     public ResponseCollectorService(Settings settings, ClusterService clusterService) {
         super(settings);
@@ -66,20 +66,20 @@ public final class ResponseCollectorService extends AbstractComponent implements
         }
     }
 
-    void removeNode(String nodeId) {
+    void removeNode(String nodeId) { // NOTE:htt, 移除节点的统计信息
         nodeIdToStats.remove(nodeId);
     }
 
-    public void addNodeStatistics(String nodeId, int queueSize, long responseTimeNanos, long avgServiceTimeNanos) {
+    public void addNodeStatistics(String nodeId, int queueSize, long responseTimeNanos, long avgServiceTimeNanos) { // NOTE:htt, 添加一个节点统计数据
         nodeIdToStats.compute(nodeId, (id, ns) -> {
             if (ns == null) {
-                ExponentiallyWeightedMovingAverage queueEWMA = new ExponentiallyWeightedMovingAverage(ALPHA, queueSize);
-                ExponentiallyWeightedMovingAverage responseEWMA = new ExponentiallyWeightedMovingAverage(ALPHA, responseTimeNanos);
-                return new NodeStatistics(nodeId, queueEWMA, responseEWMA, avgServiceTimeNanos);
+                ExponentiallyWeightedMovingAverage queueEWMA = new ExponentiallyWeightedMovingAverage(ALPHA, queueSize); // NOTE:htt, 队列EWMA值
+                ExponentiallyWeightedMovingAverage responseEWMA = new ExponentiallyWeightedMovingAverage(ALPHA, responseTimeNanos); // NOTE:htt, 节点回复时间EWMA值
+                return new NodeStatistics(nodeId, queueEWMA, responseEWMA, avgServiceTimeNanos); // NOTE:htt, 添加节点的统计数据
             } else {
-                ns.queueSize.addValue((double) queueSize);
-                ns.responseTime.addValue((double) responseTimeNanos);
-                ns.serviceTime = avgServiceTimeNanos;
+                ns.queueSize.addValue((double) queueSize); // NOTE:htt, 添加新的队列值
+                ns.responseTime.addValue((double) responseTimeNanos); // NOTE:htt, 添加回复时间
+                ns.serviceTime = avgServiceTimeNanos; // NOTE:htt, 添加平均时间
                 return ns;
             }
         });
@@ -104,7 +104,7 @@ public final class ResponseCollectorService extends AbstractComponent implements
      * response information exists for the given node. Returns an empty
      * {@code Optional} if the node was not found.
      */
-    public Optional<ComputedNodeStats> getNodeStatistics(final String nodeId) {
+    public Optional<ComputedNodeStats> getNodeStatistics(final String nodeId) { // NOTE:htt, 获取目标节点统计信息
         final int clientNum = nodeIdToStats.size();
         return Optional.ofNullable(nodeIdToStats.get(nodeId)).map(ns -> new ComputedNodeStats(clientNum, ns));
     }
@@ -114,19 +114,19 @@ public final class ResponseCollectorService extends AbstractComponent implements
      * node's statistics. This includes the EWMA of queue size, response time,
      * and service time.
      */
-    public static class ComputedNodeStats implements Writeable {
+    public static class ComputedNodeStats implements Writeable { // NOTE:htt, 计算目标节点统计数据
         // We store timestamps with nanosecond precision, however, the
         // formula specifies milliseconds, therefore we need to convert
         // the values so the times don't unduely weight the formula
         private final double FACTOR = 1000000.0;
-        private final int clientNum;
+        private final int clientNum; // NOTE:htt, 节点个数
 
         private double cachedRank = 0;
 
-        public final String nodeId;
-        public final int queueSize;
-        public final double responseTime;
-        public final double serviceTime;
+        public final String nodeId; // NOTE:htt, 目标节点
+        public final int queueSize; // NOTE:htt, 队列大小， EWMA队列长度
+        public final double responseTime; // NOTE:htt, 节点回复时间（从协调节点获取目标节点）， EWMA
+        public final double serviceTime; // NOTE:htt, 节点服务时间, EWMA
 
         public ComputedNodeStats(String nodeId, int clientNum, int queueSize, double responseTime, double serviceTime) {
             this.nodeId = nodeId;
@@ -162,27 +162,27 @@ public final class ResponseCollectorService extends AbstractComponent implements
          * Rank this copy of the data, according to the adaptive replica selection formula from the C3 paper
          * https://www.usenix.org/system/files/conference/nsdi15/nsdi15-paper-suresh.pdf
          */
-        private double innerRank(long outstandingRequests) {
+        private double innerRank(long outstandingRequests) { // NOTE:htt, 自适应查询打分算法，核心参数是{ 目标节点未完成搜索请求个数，search延迟}，这两者越大就不会在继续发送请求
             // the concurrency compensation is defined as the number of
             // outstanding requests from the client to the node times the number
             // of clients in the system
-            double concurrencyCompensation = outstandingRequests * clientNum;
+            double concurrencyCompensation = outstandingRequests * clientNum; // NOTE:htt, outstandingRequests为目标节点上发送search未完成搜索请求个数
 
             // Cubic queue adjustment factor. The paper chose 3 though we could
             // potentially make this configurable if desired.
-            int queueAdjustmentFactor = 3;
+            int queueAdjustmentFactor = 3; // NOTE:htt, 3的指数
 
             // EWMA of queue size
             double qBar = queueSize;
-            double qHatS = 1 + concurrencyCompensation + qBar;
+            double qHatS = 1 + concurrencyCompensation + qBar; // NOTE:htt, q̂(s) = 1 + (os(s) * n) + q(s)
 
             // EWMA of response time
-            double rS = responseTime / FACTOR;
+            double rS = responseTime / FACTOR; // NOTE:htt, 回复时间（从协调节点看到回复时间）
             // EWMA of service time
-            double muBarS = serviceTime / FACTOR;
+            double muBarS = serviceTime / FACTOR; // NOTE:htt, 服务时间（目标节点上服务的时间）
 
             // The final formula
-            double rank = rS - (1.0 / muBarS) + (Math.pow(qHatS, queueAdjustmentFactor) / muBarS);
+            double rank = rS - (1.0 / muBarS) + (Math.pow(qHatS, queueAdjustmentFactor) / muBarS); // NOTE:htt, Ψ(s) = R(s) - 1/µ̄(s) + (q̂(s))^3 / µ̄(s)
             return rank;
         }
 
@@ -212,11 +212,11 @@ public final class ResponseCollectorService extends AbstractComponent implements
      * time, and service time, however, this class is private and intended only
      * to be used for the internal accounting of {@code ResponseCollectorService}.
      */
-    private static class NodeStatistics {
-        final String nodeId;
-        final ExponentiallyWeightedMovingAverage queueSize;
-        final ExponentiallyWeightedMovingAverage responseTime;
-        double serviceTime;
+    private static class NodeStatistics { // NOTE:htt, 节点信息统计
+        final String nodeId; // NOTE:htt, 目标节点
+        final ExponentiallyWeightedMovingAverage queueSize; // NOTE:htt, 队列大小 EWMA
+        final ExponentiallyWeightedMovingAverage responseTime; // NOTE:htt, search回包请求延迟， EWMA
+        double serviceTime; // NOTE:htt, 目标节点search 服务时间
 
         NodeStatistics(String nodeId,
                        ExponentiallyWeightedMovingAverage queueSizeEWMA,

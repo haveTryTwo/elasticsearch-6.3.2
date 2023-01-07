@@ -26,10 +26,10 @@ import java.util.concurrent.atomic.AtomicLong;
  * Implements exponentially weighted moving averages (commonly abbreviated EWMA) for a single value.
  * This class is safe to share between threads.
  */
-public class ExponentiallyWeightedMovingAverage {
+public class ExponentiallyWeightedMovingAverage { // NOTE:htt, 指数加权移动平均， https://en.wikipedia.org/wiki/Moving_average
 
-    private final double alpha;
-    private final AtomicLong averageBits;
+    private final double alpha; // NOTE:htt, 加权值, EWMA
+    private final AtomicLong averageBits; // NOTE:htt, long对应的平均bits
 
     /**
      * Create a new EWMA with a given {@code alpha} and {@code initialAvg}. A smaller alpha means
@@ -44,16 +44,16 @@ public class ExponentiallyWeightedMovingAverage {
         this.averageBits = new AtomicLong(Double.doubleToLongBits(initialAvg));
     }
 
-    public double getAverage() {
+    public double getAverage() { // NOTE:htt, 获取double的均值
         return Double.longBitsToDouble(this.averageBits.get());
     }
 
-    public void addValue(double newValue) {
+    public void addValue(double newValue) { // NOTE:htt, 添加值
         boolean successful = false;
         do {
             final long currentBits = this.averageBits.get();
             final double currentAvg = getAverage();
-            final double newAvg = (alpha * newValue) + ((1 - alpha) * currentAvg);
+            final double newAvg = (alpha * newValue) + ((1 - alpha) * currentAvg); // NOTE:htt, 加权移动平均，新的值权重更大
             final long newBits = Double.doubleToLongBits(newAvg);
             successful = averageBits.compareAndSet(currentBits, newBits);
         } while (successful == false);

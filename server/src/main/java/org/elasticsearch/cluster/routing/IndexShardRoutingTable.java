@@ -288,7 +288,7 @@ public class IndexShardRoutingTable implements Iterable<ShardRouting> {
         return new PlainShardIterator(shardId, ordered);
     }
 
-    private static Set<String> getAllNodeIds(final List<ShardRouting> shards) {
+    private static Set<String> getAllNodeIds(final List<ShardRouting> shards) { // NOTE:htt, 获取所有分片的节点信息
         final Set<String> nodeIds = new HashSet<>();
         for (ShardRouting shard : shards) {
             nodeIds.add(shard.currentNodeId());
@@ -297,23 +297,23 @@ public class IndexShardRoutingTable implements Iterable<ShardRouting> {
     }
 
     private static Map<String, Optional<ResponseCollectorService.ComputedNodeStats>>
-        getNodeStats(final Set<String> nodeIds, final ResponseCollectorService collector) {
+        getNodeStats(final Set<String> nodeIds, final ResponseCollectorService collector) { // NOTE:htt, 获取从当前节点到每个节点的统计信息
 
         final Map<String, Optional<ResponseCollectorService.ComputedNodeStats>> nodeStats = new HashMap<>(nodeIds.size());
         for (String nodeId : nodeIds) {
-            nodeStats.put(nodeId, collector.getNodeStatistics(nodeId));
+            nodeStats.put(nodeId, collector.getNodeStatistics(nodeId)); // NOTE:htt, 获取从当前节点到每个节点的统计信息
         }
         return nodeStats;
     }
 
     private static Map<String, Double> rankNodes(final Map<String, Optional<ResponseCollectorService.ComputedNodeStats>> nodeStats,
-                                                 final Map<String, Long> nodeSearchCounts) {
+                                                 final Map<String, Long> nodeSearchCounts) { // NOTE:htt, 获取每个节点的打分信息
         final Map<String, Double> nodeRanks = new HashMap<>(nodeStats.size());
         for (Map.Entry<String, Optional<ResponseCollectorService.ComputedNodeStats>> entry : nodeStats.entrySet()) {
             Optional<ResponseCollectorService.ComputedNodeStats> maybeStats = entry.getValue();
             maybeStats.ifPresent(stats -> {
                 final String nodeId = entry.getKey();
-                nodeRanks.put(nodeId, stats.rank(nodeSearchCounts.getOrDefault(nodeId, 1L)));
+                nodeRanks.put(nodeId, stats.rank(nodeSearchCounts.getOrDefault(nodeId, 1L))); // NOTE:htt, 获取每个节点的打分，ARS机制
             });
         }
         return nodeRanks;
@@ -350,23 +350,23 @@ public class IndexShardRoutingTable implements Iterable<ShardRouting> {
     }
 
     private static List<ShardRouting> rankShardsAndUpdateStats(List<ShardRouting> shards, final ResponseCollectorService collector,
-                                                               final Map<String, Long> nodeSearchCounts) {
+                                                               final Map<String, Long> nodeSearchCounts) { // NOTE:htt, 对节点排序，采用ARS机制
         if (collector == null || nodeSearchCounts == null || shards.size() <= 1) {
             return shards;
         }
 
         // Retrieve which nodes we can potentially send the query to
-        final Set<String> nodeIds = getAllNodeIds(shards);
+        final Set<String> nodeIds = getAllNodeIds(shards); // NOTE;htt, 获取所有的节点信息
         final int nodeCount = nodeIds.size();
 
-        final Map<String, Optional<ResponseCollectorService.ComputedNodeStats>> nodeStats = getNodeStats(nodeIds, collector);
+        final Map<String, Optional<ResponseCollectorService.ComputedNodeStats>> nodeStats = getNodeStats(nodeIds, collector); // NOTE:htt, 获取从当前节点到每个节点的统计信息
 
         // Retrieve all the nodes the shards exist on
-        final Map<String, Double> nodeRanks = rankNodes(nodeStats, nodeSearchCounts);
+        final Map<String, Double> nodeRanks = rankNodes(nodeStats, nodeSearchCounts); // NOTE:htt, 获取每个节点的打分信息
 
         // sort all shards based on the shard rank
         ArrayList<ShardRouting> sortedShards = new ArrayList<>(shards);
-        Collections.sort(sortedShards, new NodeRankComparator(nodeRanks));
+        Collections.sort(sortedShards, new NodeRankComparator(nodeRanks)); // NOTE:htt, 对节点根据打分排序，第一个即得分最高的节点
 
         // adjust the non-winner nodes' stats so they will get a chance to receive queries
         if (sortedShards.size() > 1) {
@@ -390,7 +390,7 @@ public class IndexShardRoutingTable implements Iterable<ShardRouting> {
         return sortedShards;
     }
 
-    private static class NodeRankComparator implements Comparator<ShardRouting> {
+    private static class NodeRankComparator implements Comparator<ShardRouting> { // NOTE:htt, 节点打分排序，用于搜索查询排序ARS
         private final Map<String, Double> nodeRanks;
 
         NodeRankComparator(Map<String, Double> nodeRanks) {
@@ -398,7 +398,7 @@ public class IndexShardRoutingTable implements Iterable<ShardRouting> {
         }
 
         @Override
-        public int compare(ShardRouting s1, ShardRouting s2) {
+        public int compare(ShardRouting s1, ShardRouting s2) { // NOTE:htt, 排序处理，越小优先级越高
             if (s1.currentNodeId().equals(s2.currentNodeId())) {
                 // these shards on the same node
                 return 0;
