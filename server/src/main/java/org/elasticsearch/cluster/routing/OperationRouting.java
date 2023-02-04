@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import static org.elasticsearch.common.Booleans.parseBoolean;
 
 public class OperationRouting extends AbstractComponent {
 
@@ -55,10 +56,18 @@ public class OperationRouting extends AbstractComponent {
 
     public OperationRouting(Settings settings, ClusterSettings clusterSettings) {
         super(settings);
-        this.awarenessAttributes = AwarenessAllocationDecider.CLUSTER_ROUTING_ALLOCATION_AWARENESS_ATTRIBUTE_SETTING.get(settings);
+
+        // whether to ignore awareness attributes when routing requests
+        boolean ignoreAwarenessAttr = parseBoolean(System.getProperty("es.search.ignore_awareness_attributes"), true);
+        if (ignoreAwarenessAttr == false) {
+            awarenessAttributes = AwarenessAllocationDecider.CLUSTER_ROUTING_ALLOCATION_AWARENESS_ATTRIBUTE_SETTING.get(settings);
+            clusterSettings.addSettingsUpdateConsumer(AwarenessAllocationDecider.CLUSTER_ROUTING_ALLOCATION_AWARENESS_ATTRIBUTE_SETTING,
+                    this::setAwarenessAttributes);
+        } else {
+            awarenessAttributes = Collections.emptyList();
+        }
+
         this.useAdaptiveReplicaSelection = USE_ADAPTIVE_REPLICA_SELECTION_SETTING.get(settings);
-        clusterSettings.addSettingsUpdateConsumer(AwarenessAllocationDecider.CLUSTER_ROUTING_ALLOCATION_AWARENESS_ATTRIBUTE_SETTING,
-            this::setAwarenessAttributes);
         clusterSettings.addSettingsUpdateConsumer(USE_ADAPTIVE_REPLICA_SELECTION_SETTING, this::setUseAdaptiveReplicaSelection);
     }
 
@@ -68,6 +77,10 @@ public class OperationRouting extends AbstractComponent {
 
     private void setAwarenessAttributes(List<String> awarenessAttributes) {
         this.awarenessAttributes = awarenessAttributes;
+    }
+
+    List<String> getAwarenessAttributes() {
+        return awarenessAttributes;
     }
 
     public ShardIterator indexShards(ClusterState clusterState, String index, String id, @Nullable String routing) {

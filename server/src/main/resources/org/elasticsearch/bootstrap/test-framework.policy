@@ -86,3 +86,8 @@ grant codeBase "${codebase.httpasyncclient}" {
   // rest client uses system properties which gets the default proxy
   permission java.net.NetPermission "getProxySelector";
 };
+
+grant {
+  // NOTE:htt, 为了满足test时需要用到 System.setProperty write权限
+  permission java.util.PropertyPermission "es.search.ignore_awareness_attributes", "read,write";
+};

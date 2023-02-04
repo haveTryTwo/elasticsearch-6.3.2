@@ -338,3 +338,8 @@ if (isEclipse == false || project.path == ":server-tests") {
   check.dependsOn integTest
   integTest.mustRunAfter test
 }
+
+// NOTE:htt, 测试时如果不启用安全权限，可以设置下面配置；但是极度不推荐如此操作
+//test {
+//   systemProperty "tests.security.manager", false
+//}
