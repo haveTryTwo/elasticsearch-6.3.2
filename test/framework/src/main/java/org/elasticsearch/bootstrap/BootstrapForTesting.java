@@ -102,8 +102,8 @@ public class BootstrapForTesting {
         if (systemPropertyAsBoolean("tests.security.manager", true)) {
             try {
                 // initialize paths the same exact way as bootstrap
-                Permissions perms = new Permissions();
-                Security.addClasspathPermissions(perms);
+                Permissions perms = new Permissions(); // NOTE:htt, java安全
+                Security.addClasspathPermissions(perms); // NOTE:htt, 文件加上权限
                 // java.io.tmpdir
                 FilePermissionUtils.addDirectoryPath(perms, "java.io.tmpdir", javaTmpDir, "read,readlink,write,delete");
                 // custom test config file
@@ -140,7 +140,7 @@ public class BootstrapForTesting {
                     addClassCodebase(codebases,"plugin-classloader", "org.elasticsearch.plugins.ExtendedPluginsClassLoader");
                     addClassCodebase(codebases, "elasticsearch-secure-sm", "org.elasticsearch.secure_sm.SecureSM");
                 }
-                final Policy testFramework = Security.readPolicy(Bootstrap.class.getResource("test-framework.policy"), codebases);
+                final Policy testFramework = Security.readPolicy(Bootstrap.class.getResource("test-framework.policy"), codebases); // NOTE:htt, 读取policy文件，获取相关权限设置
                 final Policy esPolicy = new ESPolicy(codebases, perms, getPluginPermissions(), true);
                 Policy.setPolicy(new Policy() {
                     @Override
@@ -149,7 +149,7 @@ public class BootstrapForTesting {
                         return esPolicy.implies(domain, permission) || testFramework.implies(domain, permission);
                     }
                 });
-                System.setSecurityManager(SecureSM.createTestSecureSM());
+                System.setSecurityManager(SecureSM.createTestSecureSM()); // NOTE:htt, 设置SecurityManager
                 Security.selfTest();
 
                 // guarantee plugin classes are initialized first, in case they have one-time hacks.

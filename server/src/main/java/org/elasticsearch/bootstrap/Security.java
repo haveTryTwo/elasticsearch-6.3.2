@@ -257,21 +257,21 @@ final class Security {
 
     /** Adds access to classpath jars/classes for jar hell scan, etc */
     @SuppressForbidden(reason = "accesses fully qualified URLs to configure security")
-    static void addClasspathPermissions(Permissions policy) throws IOException {
+    static void addClasspathPermissions(Permissions policy) throws IOException { // NOTE:htt, 文件加上权限
         // add permissions to everything in classpath
         // really it should be covered by lib/, but there could be e.g. agents or similar configured)
         for (URL url : JarHell.parseClassPath()) {
             Path path;
             try {
-                path = PathUtils.get(url.toURI());
+                path = PathUtils.get(url.toURI()); // NOTE:htt, 文件路径
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
             }
             // resource itself
             if (Files.isDirectory(path)) {
-                addDirectoryPath(policy, "class.path", path, "read,readlink");
+                addDirectoryPath(policy, "class.path", path, "read,readlink"); // NOTE:htt, 确认目录存在并且加上权限
             } else {
-                addSingleFilePath(policy, path, "read,readlink");
+                addSingleFilePath(policy, path, "read,readlink"); // NOTE:htt, 文件加上权限
             }
         }
     }
@@ -400,16 +400,16 @@ final class Security {
      * Ensures configured directory {@code path} exists.
      * @throws IOException if {@code path} exists, but is not a directory, not accessible, or broken symbolic link.
      */
-    static void ensureDirectoryExists(Path path) throws IOException {
+    static void ensureDirectoryExists(Path path) throws IOException { // NOTE:htt, 确认文件目录存在，如果没有则创建
         // this isn't atomic, but neither is createDirectories.
         if (Files.isDirectory(path)) {
             // verify access, following links (throws exception if something is wrong)
             // we only check READ as a sanity test
-            path.getFileSystem().provider().checkAccess(path.toRealPath(), AccessMode.READ);
+            path.getFileSystem().provider().checkAccess(path.toRealPath(), AccessMode.READ); // NOTE:htt, 确认文件读权限
         } else {
             // doesn't exist, or not a directory
             try {
-                Files.createDirectories(path);
+                Files.createDirectories(path); // NOTE:htt, 创建目录
             } catch (FileAlreadyExistsException e) {
                 // convert optional specific exception so the context is clear
                 IOException e2 = new NotDirectoryException(path.toString());

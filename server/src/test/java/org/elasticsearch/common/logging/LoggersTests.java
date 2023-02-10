@@ -37,8 +37,8 @@ import static org.hamcrest.Matchers.nullValue;
 
 public class LoggersTests extends ESTestCase {
 
-    static class MockAppender extends AbstractAppender {
-        private LogEvent lastEvent;
+    static class MockAppender extends AbstractAppender { // NOTE:htt, mock添加Appender事件
+        private LogEvent lastEvent; // NOTE:htt, 日志处理事件
 
         MockAppender(final String name) throws IllegalAccessException {
             super(name, RegexFilter.createFilter(".*(\n.*)*", new String[0], false, null, null), null);
@@ -46,7 +46,8 @@ public class LoggersTests extends ESTestCase {
 
         @Override
         public void append(LogEvent event) {
-            lastEvent = event;
+//            lastEvent = event;
+            lastEvent = event.toImmutable();
         }
 
         ParameterizedMessage lastParameterizedMessage() {
@@ -62,8 +63,8 @@ public class LoggersTests extends ESTestCase {
         Loggers.setLevel(testLogger, Level.TRACE);
 
         Throwable ex = randomException();
-        testLogger.error(() -> new ParameterizedMessage("an error message"), ex);
-        assertThat(appender.lastEvent.getLevel(), equalTo(Level.ERROR));
+        testLogger.error(() -> new ParameterizedMessage("an error message"), ex); // NOTE:htt, 抛出异常
+        assertThat(appender.lastEvent.getLevel(), equalTo(Level.ERROR)); // NOTE:htt, 监听错误日志
         assertThat(appender.lastEvent.getThrown(), equalTo(ex));
         assertThat(appender.lastParameterizedMessage().getFormattedMessage(), equalTo("an error message"));
 
