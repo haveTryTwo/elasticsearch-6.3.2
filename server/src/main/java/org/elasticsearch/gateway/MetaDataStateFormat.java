@@ -63,10 +63,10 @@ import java.util.stream.Collectors;
  * XContent based files to one or more directories in a standardized directory structure.
  * @param <T> the type of the XContent base data-structure
  */
-public abstract class MetaDataStateFormat<T> {
+public abstract class MetaDataStateFormat<T> { // NOTE: htt, state operation for index (read/write, ../_state/state-xx.st) or cluste(../_state/global-xxx.st)  or node(../_state/node-xxx.st) or shard(../_state/state-xx.st)
     public static final XContentType FORMAT = XContentType.SMILE;
-    public static final String STATE_DIR_NAME = "_state";
-    public static final String STATE_FILE_EXTENSION = ".st";
+    public static final String STATE_DIR_NAME = "_state"; // NOTE: htt, _stat目录，用于将相关元信息记录到本地，包括分片信息，索引信息，节点信息，元信息, _state directory for index
+    public static final String STATE_FILE_EXTENSION = ".st"; // NOTE: htt, state文件 with suffix of .st
 
     private static final String STATE_FILE_CODEC = "state";
     private static final int MIN_COMPATIBLE_STATE_FILE_VERSION = 0;
@@ -80,7 +80,7 @@ public abstract class MetaDataStateFormat<T> {
     /**
      * Creates a new {@link MetaDataStateFormat} instance
      */
-    protected MetaDataStateFormat(String prefix) {
+    protected MetaDataStateFormat(String prefix) { // NOTE: htt, index state prefix is : state-
         this.prefix = prefix;
         this.stateFilePattern = Pattern.compile(Pattern.quote(prefix) + "(\\d+)(" + MetaDataStateFormat.STATE_FILE_EXTENSION + ")?");
 
@@ -96,26 +96,26 @@ public abstract class MetaDataStateFormat<T> {
      * @param locations the locations where the state should be written to.
      * @throws IOException if an IOException occurs
      */
-    public final void write(final T state, final Path... locations) throws IOException {
+    public final void write(final T state, final Path... locations) throws IOException { // NOTE: htt, index : 生成 state-xx.st 元信息文件, and remove old file
         if (locations == null) {
             throw new IllegalArgumentException("Locations must not be null");
         }
         if (locations.length <= 0) {
             throw new IllegalArgumentException("One or more locations required");
         }
-        final long maxStateId = findMaxStateId(prefix, locations)+1;
+        final long maxStateId = findMaxStateId(prefix, locations)+1; // NOTE: htt, stateId + 1
         assert maxStateId >= 0 : "maxStateId must be positive but was: [" + maxStateId + "]";
-        final String fileName = prefix + maxStateId + STATE_FILE_EXTENSION;
+        final String fileName = prefix + maxStateId + STATE_FILE_EXTENSION; // NOTE: htt, index: state-18.st, 节点: global-xx.st
         Path stateLocation = locations[0].resolve(STATE_DIR_NAME);
         Files.createDirectories(stateLocation);
-        final Path tmpStatePath = stateLocation.resolve(fileName + ".tmp");
-        final Path finalStatePath = stateLocation.resolve(fileName);
+        final Path tmpStatePath = stateLocation.resolve(fileName + ".tmp"); // NOTE: htt, index: ../_state/state-18.st.tmp; 节点：_state/global-xx.st.tmp
+        final Path finalStatePath = stateLocation.resolve(fileName); // NOTE: htt, index: ../state/state-18.st; 节点: _state/global-xx.st
         try {
             final String resourceDesc = "MetaDataStateFormat.write(path=\"" + tmpStatePath + "\")";
             try (OutputStreamIndexOutput out =
                      new OutputStreamIndexOutput(resourceDesc, fileName, Files.newOutputStream(tmpStatePath), BUFFER_SIZE)) {
-                CodecUtil.writeHeader(out, STATE_FILE_CODEC, STATE_FILE_VERSION);
-                out.writeInt(FORMAT.index());
+                CodecUtil.writeHeader(out, STATE_FILE_CODEC, STATE_FILE_VERSION); // NOTE: htt, index, 3f d7 6c 17 05 73 74 61  74 65 00 00 00 01
+                out.writeInt(FORMAT.index()); // NOTE: htt, SMILE:1
                 try (XContentBuilder builder = newXContentBuilder(FORMAT, new IndexOutputOutputStream(out) {
                     @Override
                     public void close() throws IOException {
@@ -129,12 +129,12 @@ public abstract class MetaDataStateFormat<T> {
                     }
                     builder.endObject();
                 }
-                CodecUtil.writeFooter(out);
+                CodecUtil.writeFooter(out); // NOTE: htt, index c0 28 93 e8 00 00 00 00  00 00 00 00 15 22 e4 a5
             }
-            IOUtils.fsync(tmpStatePath, false); // fsync the state file
+            IOUtils.fsync(tmpStatePath, false); // fsync the state file // NOTE: htt, fsync
             Files.move(tmpStatePath, finalStatePath, StandardCopyOption.ATOMIC_MOVE);
             IOUtils.fsync(stateLocation, true);
-            for (int i = 1; i < locations.length; i++) {
+            for (int i = 1; i < locations.length; i++) { // NOTE: htt, write ${data.path }/nodes/0/_state/node-xx.st in echo ${data.path}
                 stateLocation = locations[i].resolve(STATE_DIR_NAME);
                 Files.createDirectories(stateLocation);
                 Path tmpPath = stateLocation.resolve(fileName + ".tmp");
@@ -152,7 +152,7 @@ public abstract class MetaDataStateFormat<T> {
         } finally {
             Files.deleteIfExists(tmpStatePath);
         }
-        cleanupOldFiles(prefix, fileName, locations);
+        cleanupOldFiles(prefix, fileName, locations); // NOTE: htt, cleanup old state-xxx.st files
     }
 
     protected XContentBuilder newXContentBuilder(XContentType type, OutputStream stream ) throws IOException {
@@ -175,12 +175,12 @@ public abstract class MetaDataStateFormat<T> {
      * Reads the state from a given file and compares the expected version against the actual version of
      * the state.
      */
-    public final T read(NamedXContentRegistry namedXContentRegistry, Path file) throws IOException {
+    public final T read(NamedXContentRegistry namedXContentRegistry, Path file) throws IOException { // NOTE: htt, index read state-xx.st to IndexMetaData
         try (Directory dir = newDirectory(file.getParent())) {
             try (IndexInput indexInput = dir.openInput(file.getFileName().toString(), IOContext.DEFAULT)) {
                  // We checksum the entire file before we even go and parse it. If it's corrupted we barf right here.
-                CodecUtil.checksumEntireFile(indexInput);
-                final int fileVersion = CodecUtil.checkHeader(indexInput, STATE_FILE_CODEC, MIN_COMPATIBLE_STATE_FILE_VERSION,
+                CodecUtil.checksumEntireFile(indexInput); // NOTE: htt, check foot and crc
+                final int fileVersion = CodecUtil.checkHeader(indexInput, STATE_FILE_CODEC, MIN_COMPATIBLE_STATE_FILE_VERSION, // NOTE: htt, check heder
                     STATE_FILE_VERSION);
                 final XContentType xContentType = XContentType.values()[indexInput.readInt()];
                 if (xContentType != FORMAT) {
@@ -216,8 +216,8 @@ public abstract class MetaDataStateFormat<T> {
             public boolean accept(Path entry) throws IOException {
                 final String entryFileName = entry.getFileName().toString();
                 return Files.isRegularFile(entry)
-                        && entryFileName.startsWith(prefix) // only state files
-                        && currentStateFile.equals(entryFileName) == false; // keep the current state file around
+                        && entryFileName.startsWith(prefix) // only state files // NOTE: htt, state-
+                        && currentStateFile.equals(entryFileName) == false; // keep the current state file around  // NOTE: htt, not equal to current number
             }
         };
         // now clean up the old files
@@ -264,16 +264,16 @@ public abstract class MetaDataStateFormat<T> {
         boolean maxStateIdIsLegacy = true;
         if (dataLocations != null) { // select all eligible files first
             for (Path dataLocation : dataLocations) {
-                final Path stateDir = dataLocation.resolve(STATE_DIR_NAME);
+                final Path stateDir = dataLocation.resolve(STATE_DIR_NAME);  // NOTE: htt, ${data.path}/nodes/0/_state(节点级别_state), 还有索引级别元信息, ${data.paths}/nodes/0/indices/${index.UUID}/_state
                 // now, iterate over the current versions, and find latest one
                 // we don't check if the stateDir is present since it could be deleted
                 // after the check. Also if there is a _state file and it's not a dir something is really wrong
                 // we don't pass a glob since we need the group part for parsing
                 try (DirectoryStream<Path> paths = Files.newDirectoryStream(stateDir)) {
-                    for (Path stateFile : paths) {
-                        final Matcher matcher = stateFilePattern.matcher(stateFile.getFileName().toString());
+                    for (Path stateFile : paths) { // NOTE: htt, index: state-19.st
+                        final Matcher matcher = stateFilePattern.matcher(stateFile.getFileName().toString()); // NOTE: htt, prefix should be set such as node- to get current .st file
                         if (matcher.matches()) {
-                            final long stateId = Long.parseLong(matcher.group(1));
+                            final long stateId = Long.parseLong(matcher.group(1)); // NOTE: htt, 19
                             maxStateId = Math.max(maxStateId, stateId);
                             final boolean legacy = MetaDataStateFormat.STATE_FILE_EXTENSION.equals(matcher.group(2)) == false;
                             maxStateIdIsLegacy &= legacy; // on purpose, see NOTE below
@@ -296,10 +296,10 @@ public abstract class MetaDataStateFormat<T> {
         //       the list below will be empty and loading the state will fail
         Collection<PathAndStateId> pathAndStateIds = files
                 .stream()
-                .filter(new StateIdAndLegacyPredicate(maxStateId, maxStateIdIsLegacy))
+                .filter(new StateIdAndLegacyPredicate(maxStateId, maxStateIdIsLegacy)) // NOTE: htt, get the newest state-xx.st file
                 .collect(Collectors.toCollection(ArrayList::new));
 
-        for (PathAndStateId pathAndStateId : pathAndStateIds) {
+        for (PathAndStateId pathAndStateId : pathAndStateIds) { // NOTE: htt, get the newest state-xx.st file
             try {
                 final Path stateFile = pathAndStateId.file;
                 final long id = pathAndStateId.id;
@@ -320,7 +320,7 @@ public abstract class MetaDataStateFormat<T> {
                     state = read(namedXContentRegistry, stateFile);
                     logger.trace("state id [{}] read from [{}]", id, stateFile.getFileName());
                 }
-                return state;
+                return state; // NOTE:htt, 读取到一个之后，就直接返回
             } catch (Exception e) {
                 exceptions.add(new IOException("failed to read " + pathAndStateId.toString(), e));
                 logger.debug(() -> new ParameterizedMessage(
@@ -340,7 +340,7 @@ public abstract class MetaDataStateFormat<T> {
      * Filters out all {@link org.elasticsearch.gateway.MetaDataStateFormat.PathAndStateId} instances with a different id than
      * the given one.
      */
-    private static final class StateIdAndLegacyPredicate implements Predicate<PathAndStateId> {
+    private static final class StateIdAndLegacyPredicate implements Predicate<PathAndStateId> { // NOTE: htt, test PathAndStateId
         private final long id;
         private final boolean legacy;
 
@@ -359,7 +359,7 @@ public abstract class MetaDataStateFormat<T> {
      * Internal struct-like class that holds the parsed state id, the file
      * and a flag if the file is a legacy state ie. pre 1.5
      */
-    private static class PathAndStateId {
+    private static class PathAndStateId { // NOTE: htt, path and stateId
         final Path file;
         final long id;
         final boolean legacy;
