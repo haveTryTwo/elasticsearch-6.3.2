@@ -89,7 +89,7 @@ public class SearchAsyncActionTests extends ESTestCase {
             }
         }
 
-        SearchTransportService transportService = new SearchTransportService(Settings.EMPTY, null, null);
+        SearchTransportService transportService = new SearchTransportService(Settings.EMPTY, null, null, null);
         Map<String, Transport.Connection> lookup = new HashMap<>();
         Map<ShardId, Boolean> seenShard = new ConcurrentHashMap<>();
         lookup.put(primaryNode.getId(), new MockConnection(primaryNode));
@@ -179,7 +179,7 @@ public class SearchAsyncActionTests extends ESTestCase {
         GroupShardsIterator<SearchShardIterator> shardsIter = getShardsIter("idx",
             new OriginalIndices(new String[]{"idx"}, IndicesOptions.strictExpandOpenAndForbidClosed()),
             10, randomBoolean(), primaryNode, replicaNode);
-        SearchTransportService transportService = new SearchTransportService(Settings.EMPTY, null, null);
+        SearchTransportService transportService = new SearchTransportService(Settings.EMPTY, null, null, null);
         Map<String, Transport.Connection> lookup = new HashMap<>();
         Map<ShardId, Boolean> seenShard = new ConcurrentHashMap<>();
         lookup.put(primaryNode.getId(), new MockConnection(primaryNode));
@@ -280,7 +280,7 @@ public class SearchAsyncActionTests extends ESTestCase {
                 new OriginalIndices(new String[]{"idx"}, IndicesOptions.strictExpandOpenAndForbidClosed()),
                 randomIntBetween(1, 10), randomBoolean(), primaryNode, replicaNode);
         AtomicInteger numFreedContext = new AtomicInteger();
-        SearchTransportService transportService = new SearchTransportService(Settings.EMPTY, null, null) {
+        SearchTransportService transportService = new SearchTransportService(Settings.EMPTY, null, null, null) {
             @Override
             public void sendFreeContext(Transport.Connection connection, long contextId, OriginalIndices originalIndices) {
                 numFreedContext.incrementAndGet();
