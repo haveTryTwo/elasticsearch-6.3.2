@@ -30,6 +30,7 @@ import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.ConcurrentCollections;
 import org.elasticsearch.search.SearchPhaseResult;
 import org.elasticsearch.search.SearchService;
@@ -87,12 +88,15 @@ public class SearchTransportService extends AbstractComponent {
     private final TransportService transportService;
     private final BiFunction<Transport.Connection, SearchActionListener, ActionListener> responseWrapper;
     private final Map<String, Long> clientConnections = ConcurrentCollections.newConcurrentMapWithAggressiveConcurrency();
+    private final SearchSettings searchSettings;
 
     public SearchTransportService(Settings settings, TransportService transportService,
-                                  BiFunction<Transport.Connection, SearchActionListener, ActionListener> responseWrapper) {
+                                  BiFunction<Transport.Connection, SearchActionListener, ActionListener> responseWrapper,
+                                  SearchSettings searchSettings) {
         super(settings);
         this.transportService = transportService;
         this.responseWrapper = responseWrapper;
+        this.searchSettings = searchSettings;
     }
 
     public void sendFreeContext(Transport.Connection connection, final long contextId, OriginalIndices originalIndices) {
@@ -148,8 +152,13 @@ public class SearchTransportService extends AbstractComponent {
         final boolean fetchDocuments = request.numberOfShards() == 1;
         Supplier<SearchPhaseResult> supplier = fetchDocuments ? QueryFetchSearchResult::new : QuerySearchResult::new;
 
+        TransportRequestOptions options = TransportRequestOptions.EMPTY;
+        TimeValue searchTimeOut = searchSettings.getSearchRpcTimeout();
+        if (searchTimeOut != null && !searchTimeOut.equals(TimeValue.ZERO)) { // NOTE:htt, 如果search rpc超时时间有效则进行设置
+            options = TransportRequestOptions.builder().withTimeout(searchTimeOut).build();
+        }
         final ActionListener handler = responseWrapper.apply(connection, listener);
-        transportService.sendChildRequest(connection, QUERY_ACTION_NAME, request, task,
+        transportService.sendChildRequest(connection, QUERY_ACTION_NAME, request, task, options,
                 new ConnectionCountingHandler<>(handler, supplier, clientConnections, connection.getNode().getId()));
     }
 

@@ -21,6 +21,7 @@ package org.elasticsearch.node;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.util.Constants;
+import org.elasticsearch.action.search.SearchSettings;
 import org.elasticsearch.core.internal.io.IOUtils;
 import org.apache.lucene.util.SetOnce;
 import org.elasticsearch.Build;
@@ -440,8 +441,9 @@ public class Node implements Closeable {
             final TransportService transportService = newTransportService(settings, transport, threadPool,
                 networkModule.getTransportInterceptor(), localNodeFactory, settingsModule.getClusterSettings(), taskHeaders);
             final ResponseCollectorService responseCollectorService = new ResponseCollectorService(this.settings, clusterService);
+            final SearchSettings searchSettings = new SearchSettings(clusterService);
             final SearchTransportService searchTransportService =  new SearchTransportService(settings, transportService,
-                SearchExecutionStatsCollector.makeWrapper(responseCollectorService));
+                SearchExecutionStatsCollector.makeWrapper(responseCollectorService), searchSettings);
             final Consumer<Binder> httpBind;
             final HttpServerTransport httpServerTransport;
             if (networkModule.isHttpEnabled()) {
