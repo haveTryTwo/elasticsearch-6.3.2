@@ -19,6 +19,7 @@
 
 package org.elasticsearch.action.main;
 
+import java.util.Locale;
 import org.elasticsearch.Build;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionResponse;
@@ -42,6 +43,7 @@ public class MainResponse extends ActionResponse implements ToXContentObject {
     private String clusterUuid;
     private Build build;
     boolean available;
+    private String privateESVersion = "6.3.2.1"; // NOTE:htt, 区分小版本
 
     MainResponse() {
     }
@@ -117,6 +119,7 @@ public class MainResponse extends ActionResponse implements ToXContentObject {
             .field("lucene_version", version.luceneVersion.toString())
             .field("minimum_wire_compatibility_version", version.minimumCompatibilityVersion().toString())
             .field("minimum_index_compatibility_version", version.minimumIndexCompatibilityVersion().toString())
+            .field("privateESVerison", privateESVersion.toString())
             .endObject();
         builder.field("tagline", "You Know, for Search");
         builder.endObject();

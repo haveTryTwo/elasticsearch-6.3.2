@@ -66,7 +66,7 @@ public class RestMainAction extends BaseRestHandler {
         if (request.hasParam("pretty") == false) {
             builder.prettyPrint().lfAtEnd();
         }
-        response.toXContent(builder, request);
+        response.toXContent(builder, request); // NOTE:htt, 获取main reponse的json回包内容
         return new BytesRestResponse(status, builder);
     }
 }
