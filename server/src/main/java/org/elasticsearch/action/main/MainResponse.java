@@ -43,6 +43,7 @@ public class MainResponse extends ActionResponse implements ToXContentObject {
     private String clusterUuid;
     private Build build;
     boolean available;
+
     private String privateESVersion = "6.3.2.1"; // NOTE:htt, 区分小版本
 
     MainResponse() {
@@ -119,7 +120,7 @@ public class MainResponse extends ActionResponse implements ToXContentObject {
             .field("lucene_version", version.luceneVersion.toString())
             .field("minimum_wire_compatibility_version", version.minimumCompatibilityVersion().toString())
             .field("minimum_index_compatibility_version", version.minimumIndexCompatibilityVersion().toString())
-            .field("privateESVerison", privateESVersion.toString())
+            .field("private_es_verison", privateESVersion.toString())
             .endObject();
         builder.field("tagline", "You Know, for Search");
         builder.endObject();
@@ -147,6 +148,15 @@ public class MainResponse extends ActionResponse implements ToXContentObject {
             response.version = Version.fromString((String) value.get("number"));
             response.available = true;
         }, (parser, context) -> parser.map(), new ParseField("version"));
+    }
+
+
+    public String getPrivateESVersion() {
+        return privateESVersion;
+    }
+
+    public void setPrivateESVersion(String privateESVersion) {
+        this.privateESVersion = privateESVersion;
     }
 
     public static MainResponse fromXContent(XContentParser parser) {

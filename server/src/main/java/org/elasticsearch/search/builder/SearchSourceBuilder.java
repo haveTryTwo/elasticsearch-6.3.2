@@ -90,8 +90,8 @@ public final class SearchSourceBuilder implements Writeable, ToXContentObject, R
     public static final ParseField VERSION_FIELD = new ParseField("version");
     public static final ParseField EXPLAIN_FIELD = new ParseField("explain");
     public static final ParseField _SOURCE_FIELD = new ParseField("_source");
-    public static final ParseField STORED_FIELDS_FIELD = new ParseField("stored_fields");
-    public static final ParseField DOCVALUE_FIELDS_FIELD = new ParseField("docvalue_fields");
+    public static final ParseField STORED_FIELDS_FIELD = new ParseField("stored_fields"); // NOTE:htt, 按存储字段直接查询
+    public static final ParseField DOCVALUE_FIELDS_FIELD = new ParseField("docvalue_fields"); // NOTE:htt, 按docvalue直接查询
     public static final ParseField SCRIPT_FIELDS_FIELD = new ParseField("script_fields");
     public static final ParseField SCRIPT_FIELD = new ParseField("script");
     public static final ParseField IGNORE_FAILURE_FIELD = new ParseField("ignore_failure");
