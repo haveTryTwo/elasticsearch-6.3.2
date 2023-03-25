@@ -51,14 +51,14 @@ public class GetResult implements Streamable, Iterable<DocumentField>, ToXConten
     public static final String _TYPE = "_type";
     public static final String _ID = "_id";
     private static final String _VERSION = "_version";
-    private static final String FOUND = "found";
+    private static final String FOUND = "found"; // NOTE:htt, 是否找到数据
     private static final String FIELDS = "fields";
 
     private String index;
     private String type;
     private String id;
     private long version;
-    private boolean exists;
+    private boolean exists; // NOTE:htt, 数据是否找到
     private Map<String, DocumentField> fields;
     private Map<String, Object> sourceAsMap;
     private BytesReference source;

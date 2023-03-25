@@ -48,7 +48,7 @@ public class RestToXContentListener<Response extends ToXContentObject> extends R
         return new BytesRestResponse(getStatus(response), builder);
     }
 
-    protected RestStatus getStatus(Response response) {
-        return RestStatus.OK;
+    protected RestStatus getStatus(Response response) { // NOTE:htt, 获取结果状态
+        return RestStatus.OK; // NOTE:htt, 默认返回状态为OK
     }
 }

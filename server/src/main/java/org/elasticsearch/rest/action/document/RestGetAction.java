@@ -78,10 +78,10 @@ public class RestGetAction extends BaseRestHandler {
 
         getRequest.fetchSourceContext(FetchSourceContext.parseFromRestRequest(request));
 
-        return channel -> client.get(getRequest, new RestToXContentListener<GetResponse>(channel) {
+        return channel -> client.get(getRequest, new RestToXContentListener<GetResponse>(channel) { // NOTE:htt, 执行get操作
             @Override
-            protected RestStatus getStatus(final GetResponse response) {
-                return response.isExists() ? OK : NOT_FOUND;
+            protected RestStatus getStatus(final GetResponse response) { // NOTE:htt, 获取结果状态
+                return response.isExists() ? OK : NOT_FOUND; // NOTE:htt, GET如果没有找到，则返回404
             }
         });
     }

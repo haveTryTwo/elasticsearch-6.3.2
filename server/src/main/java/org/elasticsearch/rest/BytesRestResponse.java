@@ -42,11 +42,11 @@ import static org.elasticsearch.common.xcontent.XContentParserUtils.ensureExpect
 
 public class BytesRestResponse extends RestResponse {
 
-    public static final String TEXT_CONTENT_TYPE = "text/plain; charset=UTF-8";
+    public static final String TEXT_CONTENT_TYPE = "text/plain; charset=UTF-8"; // NOTE:htt, utf8字符集
 
     private static final String STATUS = "status";
 
-    private final RestStatus status;
+    private final RestStatus status; // NOTE:htt, 结果状态
     private final BytesReference content;
     private final String contentType;
 

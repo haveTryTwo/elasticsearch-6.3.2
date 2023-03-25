@@ -177,8 +177,8 @@ final class Bootstrap {
         // initialize probes before the security manager is installed
         initializeProbes();
 
-        if (addShutdownHook) {
-            Runtime.getRuntime().addShutdownHook(new Thread() {
+        if (addShutdownHook) { // NOTE:htt, 当前为true
+            Runtime.getRuntime().addShutdownHook(new Thread() { // NOTE:htt, 添加SIGTERM等监听并进行关闭处理
                 @Override
                 public void run() {
                     try {
@@ -266,7 +266,7 @@ final class Bootstrap {
         keepAliveThread.start();
     }
 
-    static void stop() throws IOException {
+    static void stop() throws IOException { // NOTE:htt, 监听停止方式，主要给WINDOWS等场景下使用
         try {
             IOUtils.close(INSTANCE.node, INSTANCE.spawner);
         } finally {
