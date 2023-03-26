@@ -22,27 +22,27 @@ package org.elasticsearch.cluster.routing;
 /**
  * Routing Preference Type
  */
-public enum  Preference {
+public enum  Preference { // NOTE:htt, 查询时优先选择路由值
 
     /**
      * Route to specific shards
      */
-    SHARDS("_shards"),
+    SHARDS("_shards"), // NOTE:htt, 指定_shards开头
 
     /**
      * Route to preferred nodes, if possible
      */
-    PREFER_NODES("_prefer_nodes"),
+    PREFER_NODES("_prefer_nodes"), // NOTE:htt, 优先处理节点
 
     /**
      * Route to local node, if possible
      */
-    LOCAL("_local"),
+    LOCAL("_local"), // NOTE:htt, 优先local节点
 
     /**
      * Route to primary shards
      */
-    PRIMARY("_primary"),
+    PRIMARY("_primary"), // NOTE:htt, 路由主分片
 
     /**
      * Route to replica shards
@@ -52,7 +52,7 @@ public enum  Preference {
     /**
      * Route to primary shards first
      */
-    PRIMARY_FIRST("_primary_first"),
+    PRIMARY_FIRST("_primary_first"), // NOTE:htt, 优先主分片
 
     /**
      * Route to replica shards first
@@ -69,7 +69,7 @@ public enum  Preference {
      */
     ONLY_NODES("_only_nodes");
 
-    private final String type;
+    private final String type; // NOTE:htt, 类型
 
     Preference(String type) {
         this.type = type;
@@ -81,16 +81,16 @@ public enum  Preference {
     /**
      * Parses the Preference Type given a string
      */
-    public static Preference parse(String preference) {
+    public static Preference parse(String preference) { // NOTE:htt, 解析优先preference值
         String preferenceType;
         int colonIndex = preference.indexOf(':');
         if (colonIndex == -1) {
             preferenceType = preference;
         } else {
-            preferenceType = preference.substring(0, colonIndex);
+            preferenceType = preference.substring(0, colonIndex); // NOTE:htt, 获取preference的key
         }
 
-        switch (preferenceType) {
+        switch (preferenceType) { // NOTE:htt, 处理不同的preference
             case "_shards":
                 return SHARDS;
             case "_prefer_nodes":

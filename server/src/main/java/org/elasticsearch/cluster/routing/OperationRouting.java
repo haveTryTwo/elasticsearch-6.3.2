@@ -168,7 +168,7 @@ public class OperationRouting extends AbstractComponent {
             }
         }
         if (preference.charAt(0) == '_') {
-            Preference preferenceType = Preference.parse(preference);
+            Preference preferenceType = Preference.parse(preference); // NOTE:htt, 解析优先preference值
             if (preferenceType == Preference.SHARDS) {
                 // starts with _shards, so execute on specific ones
                 int index = preference.indexOf('|');
@@ -177,7 +177,7 @@ public class OperationRouting extends AbstractComponent {
                 if (index == -1) {
                     shards = preference.substring(Preference.SHARDS.type().length() + 1);
                 } else {
-                    shards = preference.substring(Preference.SHARDS.type().length() + 1, index);
+                    shards = preference.substring(Preference.SHARDS.type().length() + 1, index); // NOTE:htt, 获取shards的具体值
                 }
                 String[] ids = Strings.splitStringByCommaToArray(shards);
                 boolean found = false;
@@ -207,42 +207,49 @@ public class OperationRouting extends AbstractComponent {
                     }
                 } else {
                     // update the preference and continue
-                    preference = preference.substring(index + 1);
+                    preference = preference.substring(index + 1); // NOTE:htt, 继续处|之后的内容
                 }
             }
-            preferenceType = Preference.parse(preference);
-            switch (preferenceType) {
-                case PREFER_NODES:
-                    final Set<String> nodesIds =
-                            Arrays.stream(
-                                    preference.substring(Preference.PREFER_NODES.type().length() + 1).split(",")
-                            ).collect(Collectors.toSet());
-                    return indexShard.preferNodeActiveInitializingShardsIt(nodesIds);
-                case LOCAL:
-                    return indexShard.preferNodeActiveInitializingShardsIt(Collections.singleton(localNodeId));
-                case PRIMARY:
-                    deprecationLogger.deprecated("[_primary] has been deprecated in 6.1+, and will be removed in 7.0; " +
-                        "use [_only_nodes] or [_prefer_nodes]");
-                    return indexShard.primaryActiveInitializingShardIt();
-                case REPLICA:
-                    deprecationLogger.deprecated("[_replica] has been deprecated in 6.1+, and will be removed in 7.0; " +
-                        "use [_only_nodes] or [_prefer_nodes]");
-                    return indexShard.replicaActiveInitializingShardIt();
-                case PRIMARY_FIRST:
-                    deprecationLogger.deprecated("[_primary_first] has been deprecated in 6.1+, and will be removed in 7.0; " +
-                        "use [_only_nodes] or [_prefer_nodes]");
-                    return indexShard.primaryFirstActiveInitializingShardsIt();
-                case REPLICA_FIRST:
-                    deprecationLogger.deprecated("[_replica_first] has been deprecated in 6.1+, and will be removed in 7.0; " +
-                        "use [_only_nodes] or [_prefer_nodes]");
-                    return indexShard.replicaFirstActiveInitializingShardsIt();
-                case ONLY_LOCAL:
-                    return indexShard.onlyNodeActiveInitializingShardsIt(localNodeId);
-                case ONLY_NODES:
-                    String nodeAttributes = preference.substring(Preference.ONLY_NODES.type().length() + 1);
-                    return indexShard.onlyNodeSelectorActiveInitializingShardsIt(nodeAttributes.split(","), nodes);
-                default:
-                    throw new IllegalArgumentException("unknown preference [" + preferenceType + "]");
+
+            if (preference.charAt(0) == '_') { // NOTE:htt, 对于custom-string的处理跳过，可以支持_shards:xx|custom-string
+                preferenceType = Preference.parse(preference);
+                switch (preferenceType) {
+                    case PREFER_NODES:
+                        final Set<String> nodesIds =
+                                Arrays.stream(
+                                        preference.substring(Preference.PREFER_NODES.type().length() + 1).split(",")
+                                ).collect(Collectors.toSet());
+                        return indexShard.preferNodeActiveInitializingShardsIt(nodesIds);
+                    case LOCAL:
+                        return indexShard.preferNodeActiveInitializingShardsIt(Collections.singleton(localNodeId));
+                    case PRIMARY:
+                        deprecationLogger.deprecated(
+                                "[_primary] has been deprecated in 6.1+, and will be removed in 7.0; " +
+                                        "use [_only_nodes] or [_prefer_nodes]");
+                        return indexShard.primaryActiveInitializingShardIt();
+                    case REPLICA:
+                        deprecationLogger.deprecated(
+                                "[_replica] has been deprecated in 6.1+, and will be removed in 7.0; " +
+                                        "use [_only_nodes] or [_prefer_nodes]");
+                        return indexShard.replicaActiveInitializingShardIt();
+                    case PRIMARY_FIRST:
+                        deprecationLogger.deprecated(
+                                "[_primary_first] has been deprecated in 6.1+, and will be removed in 7.0; " +
+                                        "use [_only_nodes] or [_prefer_nodes]");
+                        return indexShard.primaryFirstActiveInitializingShardsIt();
+                    case REPLICA_FIRST:
+                        deprecationLogger.deprecated(
+                                "[_replica_first] has been deprecated in 6.1+, and will be removed in 7.0; " +
+                                        "use [_only_nodes] or [_prefer_nodes]");
+                        return indexShard.replicaFirstActiveInitializingShardsIt();
+                    case ONLY_LOCAL:
+                        return indexShard.onlyNodeActiveInitializingShardsIt(localNodeId);
+                    case ONLY_NODES:
+                        String nodeAttributes = preference.substring(Preference.ONLY_NODES.type().length() + 1);
+                        return indexShard.onlyNodeSelectorActiveInitializingShardsIt(nodeAttributes.split(","), nodes);
+                    default:
+                        throw new IllegalArgumentException("unknown preference [" + preferenceType + "]");
+                }
             }
         }
         // if not, then use it as the index
