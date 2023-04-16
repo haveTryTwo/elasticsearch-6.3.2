@@ -44,7 +44,7 @@ public class MainResponse extends ActionResponse implements ToXContentObject {
     private Build build;
     boolean available;
 
-    private String privateESVersion = "6.3.2.2"; // NOTE:htt, 区分小版本
+    private String privateESVersion = "6.3.2.3"; // NOTE:htt, 区分小版本
 
     MainResponse() {
     }

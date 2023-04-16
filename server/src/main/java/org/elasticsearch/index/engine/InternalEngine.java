@@ -1952,15 +1952,21 @@ public class InternalEngine extends Engine {
         }
         iwc.setInfoStream(verbose ? InfoStream.getDefault() : new LoggerInfoStream(logger));
         iwc.setMergeScheduler(mergeScheduler);
+
         MergePolicy mergePolicy = config().getMergePolicy();
         // Give us the opportunity to upgrade old segments while performing
         // background merges
         mergePolicy = new ElasticsearchMergePolicy(mergePolicy);
+        iwc.setUseCompoundFile(true); // always use compound on flush - reduces # of file-handles on refresh
+        if (!engineConfig.getIndexSettings().getSettings().getAsBoolean(IndexSettings.CFS_KEY, true)) {
+            logger.info("Now no cfs, just use uncompound file!");
+            mergePolicy.setNoCFSRatio(0.0);
+            iwc.setUseCompoundFile(false); // NOTE:htt, 不启用CFS
+        }
         iwc.setMergePolicy(mergePolicy);
         iwc.setSimilarity(engineConfig.getSimilarity());
         iwc.setRAMBufferSizeMB(engineConfig.getIndexingBufferSize().getMbFrac());
         iwc.setCodec(engineConfig.getCodec());
-        iwc.setUseCompoundFile(true); // always use compound on flush - reduces # of file-handles on refresh
         if (config().getIndexSort() != null) {
             iwc.setIndexSort(config().getIndexSort());
         }

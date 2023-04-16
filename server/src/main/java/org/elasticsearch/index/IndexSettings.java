@@ -255,6 +255,10 @@ public final class IndexSettings {
         1024, 1, Property.Dynamic, Property.IndexScope);
 
     public static final String INDEX_MAPPING_SINGLE_TYPE_SETTING_KEY = "index.mapping.single_type";
+
+    public static final String CFS_KEY = "index.cfs";
+    // NOTE:htt, 注意cfs的调整需要重新启动索引
+    public static final Setting<Boolean> CFS_SETTINGS = Setting.boolSetting(CFS_KEY, true, Property.IndexScope, Property.Dynamic);
     private static final Setting<Boolean> INDEX_MAPPING_SINGLE_TYPE_SETTING; // private - should not be registered
     static {
         Function<Settings, String> defValue = settings -> {
