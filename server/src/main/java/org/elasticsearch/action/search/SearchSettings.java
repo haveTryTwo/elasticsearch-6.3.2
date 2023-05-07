@@ -11,7 +11,7 @@ import org.elasticsearch.common.unit.TimeValue;
  */
 public class SearchSettings { // NOTE:htt, search 查询场景下配置
 
-    public static final Setting<TimeValue> SEARCH_RPCT_TIMEOUT =
+    public static final Setting<TimeValue> SEARCH_RPC_TIMEOUT =
             Setting.positiveTimeSetting("search.rpc.timeout", TimeValue.timeValueSeconds(10),
                     Property.Dynamic, Property.NodeScope); // NOTE:htt, 默认search rpc超时时间为10s
 
@@ -22,8 +22,8 @@ public class SearchSettings { // NOTE:htt, search 查询场景下配置
     public SearchSettings(ClusterService clusterService) {
         this.clusterService = clusterService;
         Settings settings = clusterService.getSettings();
-        this.searchRpcTimeout = SEARCH_RPCT_TIMEOUT.get(settings);
-        clusterService.getClusterSettings().addSettingsUpdateConsumer(SEARCH_RPCT_TIMEOUT, value -> {
+        this.searchRpcTimeout = SEARCH_RPC_TIMEOUT.get(settings);
+        clusterService.getClusterSettings().addSettingsUpdateConsumer(SEARCH_RPC_TIMEOUT, value -> {
             searchRpcTimeout = value;
         });
     }
