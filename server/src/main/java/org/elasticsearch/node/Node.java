@@ -400,7 +400,7 @@ public class Node implements Closeable {
                     analysisModule.getAnalysisRegistry(),
                 clusterModule.getIndexNameExpressionResolver(), indicesModule.getMapperRegistry(), namedWriteableRegistry,
                 threadPool, settingsModule.getIndexScopedSettings(), circuitBreakerService, bigArrays, scriptModule.getScriptService(),
-                client, metaStateService);
+                client, metaStateService, clusterService);
 
             Collection<Object> pluginComponents = pluginsService.filterPlugins(Plugin.class).stream()
                 .flatMap(p -> p.createComponents(client, clusterService, threadPool, resourceWatcherService,
@@ -743,6 +743,12 @@ public class Node implements Closeable {
         }
         Logger logger = Loggers.getLogger(Node.class, NODE_NAME_SETTING.get(settings));
         logger.info("stopping ...");
+
+//        StringBuffer sb = new StringBuffer();
+//        for (StackTraceElement s : Thread.currentThread().getStackTrace()) {
+//            sb.append(s).append("\n");
+//        }
+//        logger.warn("close info: " + sb);
 
         injector.getInstance(ResourceWatcherService.class).stop();
         if (NetworkModule.HTTP_ENABLED.get(settings)) {

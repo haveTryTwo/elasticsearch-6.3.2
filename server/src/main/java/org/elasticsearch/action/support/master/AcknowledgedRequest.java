@@ -35,9 +35,9 @@ import static org.elasticsearch.common.unit.TimeValue.timeValueSeconds;
 public abstract class AcknowledgedRequest<Request extends MasterNodeRequest<Request>> extends MasterNodeRequest<Request>
         implements AckedRequest {
 
-    public static final TimeValue DEFAULT_ACK_TIMEOUT = timeValueSeconds(30);
+    public static final TimeValue DEFAULT_ACK_TIMEOUT = timeValueSeconds(30); // NOTE:htt, 默认30s超时
 
-    protected TimeValue timeout = DEFAULT_ACK_TIMEOUT;
+    protected TimeValue timeout = DEFAULT_ACK_TIMEOUT; // NOTE:htt, 默认30s超时
 
     protected AcknowledgedRequest() {
     }
@@ -68,7 +68,7 @@ public abstract class AcknowledgedRequest<Request extends MasterNodeRequest<Requ
      * Returns the current timeout
      * @return the current timeout as a {@link TimeValue}
      */
-    public final TimeValue timeout() {
+    public final TimeValue timeout() { // NOTE:htt, 默认30s超时
         return  timeout;
     }
 

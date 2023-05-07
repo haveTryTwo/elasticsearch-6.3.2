@@ -25,6 +25,7 @@ import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.util.CollectionUtil;
+import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.core.internal.io.IOUtils;
 import org.apache.lucene.util.RamUsageEstimator;
 import org.elasticsearch.ElasticsearchException;
@@ -147,6 +148,8 @@ public class IndicesService extends AbstractLifecycleComponent
     public static final String INDICES_SHARDS_CLOSED_TIMEOUT = "indices.shards_closed_timeout";
     public static final Setting<TimeValue> INDICES_CACHE_CLEAN_INTERVAL_SETTING =
         Setting.positiveTimeSetting("indices.cache.cleanup_interval", TimeValue.timeValueMinutes(1), Property.NodeScope);
+    public static final Setting<TimeValue> BULK_RPC_TIMEOUT =
+            Setting.timeSetting("indices.bulk.rpc_timeout", TimeValue.timeValueSeconds(30), Property.Dynamic, Property.NodeScope); // NOTE:htt, 写入超时时间，默认30s
     private final PluginsService pluginsService;
     private final NodeEnvironment nodeEnv;
     private final NamedXContentRegistry xContentRegistry;
@@ -172,6 +175,7 @@ public class IndicesService extends AbstractLifecycleComponent
     private final IndicesRequestCache indicesRequestCache;
     private final IndicesQueryCache indicesQueryCache;
     private final MetaStateService metaStateService;
+    private TimeValue blukRpcTimeout; // NOTE:htt, bulk rpc调用的超时时间, 0代表一直等待
 
     @Override
     protected void doStart() {
@@ -183,7 +187,7 @@ public class IndicesService extends AbstractLifecycleComponent
                           AnalysisRegistry analysisRegistry, IndexNameExpressionResolver indexNameExpressionResolver,
                           MapperRegistry mapperRegistry, NamedWriteableRegistry namedWriteableRegistry, ThreadPool threadPool,
                           IndexScopedSettings indexScopedSettings, CircuitBreakerService circuitBreakerService, BigArrays bigArrays,
-                          ScriptService scriptService, Client client, MetaStateService metaStateService) {
+                          ScriptService scriptService, Client client, MetaStateService metaStateService, ClusterService clusterService) {
         super(settings);
         this.threadPool = threadPool;
         this.pluginsService = pluginsService;
@@ -214,6 +218,15 @@ public class IndicesService extends AbstractLifecycleComponent
         this.cleanInterval = INDICES_CACHE_CLEAN_INTERVAL_SETTING.get(settings);
         this.cacheCleaner = new CacheCleaner(indicesFieldDataCache, indicesRequestCache,  logger, threadPool, this.cleanInterval);
         this.metaStateService = metaStateService;
+
+        this.blukRpcTimeout = BULK_RPC_TIMEOUT.get(settings);
+        clusterService.getClusterSettings().addSettingsUpdateConsumer(BULK_RPC_TIMEOUT, value -> {
+            blukRpcTimeout = value;
+        });
+    }
+
+    public TimeValue getBulkRpcTimeout() {
+        return blukRpcTimeout;
     }
 
     @Override

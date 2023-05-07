@@ -427,6 +427,7 @@ public final class ClusterSettings extends AbstractScopedSettings {
                     OperationRouting.USE_ADAPTIVE_REPLICA_SELECTION_SETTING,
                     IndexGraveyard.SETTING_MAX_TOMBSTONES,
                     EnableAssignmentDecider.CLUSTER_TASKS_ALLOCATION_ENABLE_SETTING,
-                    SearchSettings.SEARCH_RPCT_TIMEOUT
+                    SearchSettings.SEARCH_RPC_TIMEOUT,
+                    IndicesService.BULK_RPC_TIMEOUT
             )));
 }

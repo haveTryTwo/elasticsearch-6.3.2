@@ -28,6 +28,7 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionListenerResponseHandler;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.action.UnavailableShardsException;
+import org.elasticsearch.action.bulk.BulkAction;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.action.support.TransportAction;
@@ -823,7 +824,7 @@ public abstract class TransportReplicationAction<
 
         private void performAction(final DiscoveryNode node, final String action, final boolean isPrimaryAction,
                                    final TransportRequest requestToPerform) {
-            transportService.sendRequest(node, action, requestToPerform, transportOptions, new TransportResponseHandler<Response>() {
+            transportService.sendRequest(node, action, requestToPerform, getBulkTransportRequestOptions(action), new TransportResponseHandler<Response>() {
 
                 @Override
                 public Response newInstance() {
@@ -1194,7 +1195,16 @@ public abstract class TransportReplicationAction<
             final DiscoveryNode node,
             final ActionListener<ReplicationOperation.ReplicaResponse> listener) {
         final ActionListenerResponseHandler<ReplicaResponse> handler = new ActionListenerResponseHandler<>(listener, ReplicaResponse::new);
-        transportService.sendRequest(node, transportReplicaAction, replicaRequest, transportOptions, handler);
+        transportService.sendRequest(node, transportReplicaAction, replicaRequest, getBulkTransportRequestOptions(transportReplicaAction), handler);
+    }
+
+    public TransportRequestOptions getBulkTransportRequestOptions(String actionName) {
+        TransportRequestOptions options = transportOptions;
+        TimeValue bulkRpcTimeout = indicesService.getBulkRpcTimeout();
+        if (bulkRpcTimeout != null && !bulkRpcTimeout.equals(TimeValue.ZERO) && actionName.startsWith(BulkAction.NAME)) { // NOTE:htt, 只针对写入支持超时
+            options = TransportRequestOptions.builder(transportOptions).withTimeout(bulkRpcTimeout).build();
+        }
+        return options;
     }
 
     /** a wrapper class to encapsulate a request when being sent to a specific allocation id **/
