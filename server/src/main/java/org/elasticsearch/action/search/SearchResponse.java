@@ -73,7 +73,7 @@ public class SearchResponse extends ActionResponse implements StatusToXContentOb
 
     private int skippedShards;
 
-    private ShardSearchFailure[] shardFailures;
+    private ShardSearchFailure[] shardFailures; // NOTE:htt, 失败的shard信息
 
     private Clusters clusters;
 

@@ -26,9 +26,9 @@ import org.elasticsearch.search.SearchShardTarget;
  * An base action listener that ensures shard target and shard index is set on all responses
  * received by this listener.
  */
-abstract class SearchActionListener<T extends SearchPhaseResult> implements ActionListener<T> {
+abstract class SearchActionListener<T extends SearchPhaseResult> implements ActionListener<T> { // NOTE:htt, search action监听
 
-    private final int requestIndex;
+    private final int requestIndex; // NOTE:htt, 当前请求的下标，对应多个shard请求
     private final SearchShardTarget searchShardTarget;
 
     protected SearchActionListener(SearchShardTarget searchShardTarget,
@@ -39,7 +39,7 @@ abstract class SearchActionListener<T extends SearchPhaseResult> implements Acti
     }
 
     @Override
-    public final void onResponse(T response) {
+    public final void onResponse(T response) { // NOTE:htt, 执行onResponse
         response.setShardIndex(requestIndex);
         setSearchShardTarget(response);
         innerOnResponse(response);

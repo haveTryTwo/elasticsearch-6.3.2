@@ -34,7 +34,7 @@ import java.util.List;
 
 public class SearchPhaseExecutionException extends ElasticsearchException {
     private final String phaseName;
-    private final ShardSearchFailure[] shardFailures;
+    private final ShardSearchFailure[] shardFailures; // NOTE:htt, 失败shard信息
 
     public SearchPhaseExecutionException(String phaseName, String msg, ShardSearchFailure[] shardFailures) {
         this(phaseName, msg, null, shardFailures);

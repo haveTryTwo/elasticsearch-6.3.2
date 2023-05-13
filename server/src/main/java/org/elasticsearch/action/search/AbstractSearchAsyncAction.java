@@ -51,7 +51,7 @@ abstract class AbstractSearchAsyncAction<Result extends SearchPhaseResult> exten
     private final Logger logger;
     private final SearchTransportService searchTransportService;
     private final Executor executor;
-    private final ActionListener<SearchResponse> listener;
+    private final ActionListener<SearchResponse> listener; // NOTE:htt, 调用层传递的listener请求，正常用于REST请求回包
     private final SearchRequest request;
     /**
      * Used by subclasses to resolve node ids to DiscoveryNodes.
@@ -125,7 +125,7 @@ abstract class AbstractSearchAsyncAction<Result extends SearchPhaseResult> exten
             Throwable cause = shardSearchFailures.length == 0 ? null :
                 ElasticsearchException.guessRootCauses(shardSearchFailures[0].getCause())[0];
             logger.debug(() -> new ParameterizedMessage("All shards failed for phase: [{}]", getName()), cause);
-            onPhaseFailure(currentPhase, "all shards failed", cause);
+            onPhaseFailure(currentPhase, "all shards failed", cause); // NOTE:htt, query阶段全部失败，则执行失败
         } else {
             Boolean allowPartialResults = request.allowPartialSearchResults();
             assert allowPartialResults != null : "SearchRequest missing setting for allowPartialSearchResults";            
@@ -162,7 +162,7 @@ abstract class AbstractSearchAsyncAction<Result extends SearchPhaseResult> exten
     }
 
 
-    private ShardSearchFailure[] buildShardFailures() {
+    private ShardSearchFailure[] buildShardFailures() { // NOTE:htt, 构建shard search失败信息
         AtomicArray<ShardSearchFailure> shardFailures = this.shardFailures.get();
         if (shardFailures == null) {
             return ShardSearchFailure.EMPTY_ARRAY;
@@ -185,13 +185,13 @@ abstract class AbstractSearchAsyncAction<Result extends SearchPhaseResult> exten
                     shardFailures = this.shardFailures.get(); // read again otherwise somebody else has created it?
                     if (shardFailures == null) { // still null so we are the first and create a new instance
                         shardFailures = new AtomicArray<>(getNumShards());
-                        this.shardFailures.set(shardFailures);
+                        this.shardFailures.set(shardFailures); // NOTE:htt, 添加失败的shard查询信息
                     }
                 }
             }
             ShardSearchFailure failure = shardFailures.get(shardIndex);
             if (failure == null) {
-                shardFailures.set(shardIndex, new ShardSearchFailure(e, shardTarget));
+                shardFailures.set(shardIndex, new ShardSearchFailure(e, shardTarget)); // NOTE:htt, 设置请求shard对应index回包为failure
             } else {
                 // the failure is already present, try and not override it with an exception that is less meaningless
                 // for example, getting illegal shard state
@@ -219,13 +219,13 @@ abstract class AbstractSearchAsyncAction<Result extends SearchPhaseResult> exten
             try {
                 SearchShardTarget searchShardTarget = entry.getSearchShardTarget();
                 Transport.Connection connection = getConnection(null, searchShardTarget.getNodeId());
-                sendReleaseSearchContext(entry.getRequestId(), connection, searchShardTarget.getOriginalIndices());
+                sendReleaseSearchContext(entry.getRequestId(), connection, searchShardTarget.getOriginalIndices()); // TODO:htt, 释放查询上下文信息
             } catch (Exception inner) {
                 inner.addSuppressed(exception);
                 logger.trace("failed to release context", inner);
             }
         });
-        listener.onFailure(exception);
+        listener.onFailure(exception); // NOTE:htt, 执行失败处理
     }
 
     @Override
@@ -304,7 +304,7 @@ abstract class AbstractSearchAsyncAction<Result extends SearchPhaseResult> exten
     }
 
     @Override
-    public final void onResponse(SearchResponse response) {
+    public final void onResponse(SearchResponse response) { // NOTE:htt, 执行回包给client
         listener.onResponse(response);
     }
 
