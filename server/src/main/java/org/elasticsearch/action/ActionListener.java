@@ -30,17 +30,17 @@ import java.util.function.Consumer;
 /**
  * A listener for action responses or failures.
  */
-public interface ActionListener<Response> {
+public interface ActionListener<Response> { // NOTE:htt, action 回包监听，包括 onResponse()和onFailure()
     /**
      * Handle action response. This response may constitute a failure or a
      * success but it is up to the listener to make that decision.
      */
-    void onResponse(Response response);
+    void onResponse(Response response); // NOTE:htt, 回包正常
 
     /**
      * A failure caused by an exception at some phase of the task.
      */
-    void onFailure(Exception e);
+    void onFailure(Exception e); // NOTE:htt, 回包异常
 
     /**
      * Creates a listener that listens for a response (or failure) and executes the

@@ -27,12 +27,12 @@ import org.elasticsearch.action.support.IndicesOptions;
  * In case of internal requests  originated during the distributed execution of an external request,
  * they will still return the indices that the original request related to.
  */
-public interface IndicesRequest {
+public interface IndicesRequest { // NOTE:htt, 索引请求
 
     /**
      * Returns the array of indices that the action relates to
      */
-    String[] indices();
+    String[] indices(); // NOTE:htt, 当前action涉及的一批索引
 
     /**
      * Returns the indices options used to resolve indices. They tell for instance whether a single index is

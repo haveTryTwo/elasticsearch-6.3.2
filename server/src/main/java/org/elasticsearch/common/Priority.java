@@ -24,11 +24,11 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 
 import java.io.IOException;
 
-public enum Priority {
+public enum Priority { // NOTE:htt, 任务优先级
 
-    IMMEDIATE((byte) 0),
-    URGENT((byte) 1),
-    HIGH((byte) 2),
+    IMMEDIATE((byte) 0), // NOTE:htt, 立即
+    URGENT((byte) 1), // NOTE:htt, 紧迫
+    HIGH((byte) 2), // NOTE:htt, 高
     NORMAL((byte) 3),
     LOW((byte) 4),
     LANGUID((byte) 5);

@@ -202,11 +202,11 @@ final class FetchSearchPhase extends SearchPhase {
                                  AtomicArray<? extends SearchPhaseResult> fetchResultsArr) {
         final InternalSearchResponse internalResponse = searchPhaseController.merge(context.getRequest().scroll() != null,
             reducedQueryPhase, fetchResultsArr.asList(), fetchResultsArr::get);
-        context.executeNextPhase(this, nextPhaseFactory.apply(internalResponse, scrollId));
+        context.executeNextPhase(this, nextPhaseFactory.apply(internalResponse, scrollId)); // NOTE:htt, 执行fetch之后的请求
     }
 
     private static SearchPhase sendResponsePhase(InternalSearchResponse response, String scrollId, SearchPhaseContext context) {
-        return new SearchPhase("response") {
+        return new SearchPhase("response") { // NOTE:htt, search 回包的对象
             @Override
             public void run() throws IOException {
                 context.onResponse(context.buildSearchResponse(response, scrollId));

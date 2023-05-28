@@ -378,7 +378,7 @@ public abstract class TransportWriteAction<
                 logger.warn(new ParameterizedMessage("[{}] {}", replica.shardId(), message), exception);
             }
             shardStateAction.remoteShardFailed(replica.shardId(), replica.allocationId().getId(), primaryTerm, true, message, exception,
-                createShardActionListener(onSuccess, onPrimaryDemoted, onIgnoredFailure));
+                createShardActionListener(onSuccess, onPrimaryDemoted, onIgnoredFailure)); // NOTE:htt, 写入时如果shard写入失败，则通知master进行shard失败处理
         }
 
         @Override

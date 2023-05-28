@@ -39,7 +39,7 @@ public abstract class AbstractRestChannel implements RestChannel {
     private static final Predicate<String> INCLUDE_FILTER = f -> f.charAt(0) != '-';
     private static final Predicate<String> EXCLUDE_FILTER = INCLUDE_FILTER.negate();
 
-    protected final RestRequest request;
+    protected final RestRequest request; // NOTE:htt, 设置http reqest请求
     protected final boolean detailedErrorsEnabled;
     private final String format;
     private final String filterPath;
@@ -145,7 +145,7 @@ public abstract class AbstractRestChannel implements RestChannel {
     }
 
     @Override
-    public RestRequest request() {
+    public RestRequest request() { // NOTE:htt, 返回设置http reqest请求
         return this.request;
     }
 

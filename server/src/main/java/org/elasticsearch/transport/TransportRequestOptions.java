@@ -47,7 +47,7 @@ public class TransportRequestOptions {
 
     public static final TransportRequestOptions EMPTY = new TransportRequestOptions.Builder().build();
 
-    public enum Type {
+    public enum Type { // NOTE:htt, 请求类型
         RECOVERY,
         BULK,
         REG,

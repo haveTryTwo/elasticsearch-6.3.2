@@ -58,13 +58,14 @@ public class OperationRouting extends AbstractComponent {
         super(settings);
 
         // whether to ignore awareness attributes when routing requests
+        // NOTE:htt, 搜索请求启用忽略awareness属性，即搜索时不会优先选择zone相同节点；注意该功能是需要在命令行启动时设置
         boolean ignoreAwarenessAttr = parseBoolean(System.getProperty("es.search.ignore_awareness_attributes"), true);
         if (ignoreAwarenessAttr == false) {
             awarenessAttributes = AwarenessAllocationDecider.CLUSTER_ROUTING_ALLOCATION_AWARENESS_ATTRIBUTE_SETTING.get(settings);
             clusterSettings.addSettingsUpdateConsumer(AwarenessAllocationDecider.CLUSTER_ROUTING_ALLOCATION_AWARENESS_ATTRIBUTE_SETTING,
                     this::setAwarenessAttributes);
         } else {
-            awarenessAttributes = Collections.emptyList();
+            awarenessAttributes = Collections.emptyList(); // NOTE:htt, 如果搜索时忽略awareness属性，则将相应的内容设置为空，此时可以启用自适应查询
         }
 
         this.useAdaptiveReplicaSelection = USE_ADAPTIVE_REPLICA_SELECTION_SETTING.get(settings);

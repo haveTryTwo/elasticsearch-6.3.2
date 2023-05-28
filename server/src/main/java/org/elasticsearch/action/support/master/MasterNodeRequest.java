@@ -34,7 +34,7 @@ public abstract class MasterNodeRequest<Request extends MasterNodeRequest<Reques
 
     public static final TimeValue DEFAULT_MASTER_NODE_TIMEOUT = TimeValue.timeValueSeconds(30);
 
-    protected TimeValue masterNodeTimeout = DEFAULT_MASTER_NODE_TIMEOUT;
+    protected TimeValue masterNodeTimeout = DEFAULT_MASTER_NODE_TIMEOUT; // NOTE:htt, master节点超时时间，默认30s
 
     protected MasterNodeRequest() {
     }

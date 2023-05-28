@@ -39,7 +39,7 @@ public interface RestChannel {
 
     BytesStreamOutput bytesOutput();
 
-    RestRequest request();
+    RestRequest request(); // NOTE:htt, 返回设置http reqest请求
 
     /**
      * @return true iff an error response should contain additional details like exception traces.

@@ -375,7 +375,7 @@ public class TransportBulkAction extends HandledTransportAction<BulkRequest, Bul
                         }
                     }
 
-                    private void finishHim() {
+                    private void finishHim() { // NOTE:htt, 写入操作，最终调用listener返回请求数据，其中具体异常包装在每个BulkItemResponse中，即是否有failure
                         listener.onResponse(new BulkResponse(responses.toArray(new BulkItemResponse[responses.length()]), buildTookInMillis(startTimeNanos)));
                     }
                 });

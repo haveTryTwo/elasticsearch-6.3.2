@@ -23,7 +23,7 @@ import org.elasticsearch.cluster.ack.IndicesClusterStateUpdateRequest;
 /**
  * Cluster state update request that allows to close one or more indices
  */
-public class CloseIndexClusterStateUpdateRequest extends IndicesClusterStateUpdateRequest<CloseIndexClusterStateUpdateRequest> {
+public class CloseIndexClusterStateUpdateRequest extends IndicesClusterStateUpdateRequest<CloseIndexClusterStateUpdateRequest> { // NOTE:htt, 关闭索引请求
 
     CloseIndexClusterStateUpdateRequest() {
 

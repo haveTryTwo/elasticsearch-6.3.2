@@ -50,7 +50,7 @@ final class CountedCollector<R extends SearchPhaseResult> {
     void countDown() {
         assert counter.isCountedDown() == false : "more operations executed than specified";
         if (counter.countDown()) {
-            onFinish.run();
+            onFinish.run(); // NOTE:htt, 执行onFinish()
         }
     }
 

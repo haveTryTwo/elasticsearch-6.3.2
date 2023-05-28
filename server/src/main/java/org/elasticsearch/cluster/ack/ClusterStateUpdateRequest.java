@@ -27,8 +27,8 @@ import org.elasticsearch.common.unit.TimeValue;
  */
 public abstract class ClusterStateUpdateRequest<T extends ClusterStateUpdateRequest<T>> implements AckedRequest {
 
-    private TimeValue ackTimeout;
-    private TimeValue masterNodeTimeout;
+    private TimeValue ackTimeout; // NOTE:htt, ack超时时间
+    private TimeValue masterNodeTimeout; // NOTE:htt, master节点访问超时时间
 
     /**
      * Returns the maximum time interval to wait for acknowledgements

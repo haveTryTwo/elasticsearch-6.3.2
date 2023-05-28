@@ -168,7 +168,7 @@ public abstract class TransportMasterNodeAction<Request extends MasterNodeReques
                                 }
                             }
                         };
-                        threadPool.executor(executor).execute(new ActionRunnable(delegate) {
+                        threadPool.executor(executor).execute(new ActionRunnable(delegate) { // NOTE:htt, 异步执行，包括像 CloseIndexAction操作
                             @Override
                             protected void doRun() throws Exception {
                                 masterOperation(task, request, clusterState, delegate);

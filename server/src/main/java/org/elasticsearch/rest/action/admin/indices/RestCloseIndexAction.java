@@ -34,12 +34,12 @@ import java.io.IOException;
 public class RestCloseIndexAction extends BaseRestHandler {
     public RestCloseIndexAction(Settings settings, RestController controller) {
         super(settings);
-        controller.registerHandler(RestRequest.Method.POST, "/_close", this);
-        controller.registerHandler(RestRequest.Method.POST, "/{index}/_close", this);
+        controller.registerHandler(RestRequest.Method.POST, "/_close", this); // NOTE:htt, 所有索引关闭请求，实际需要指定索引
+        controller.registerHandler(RestRequest.Method.POST, "/{index}/_close", this); // NOTE:htt, 索引关闭rest请求
     }
 
     @Override
-    public String getName() {
+    public String getName() { // NOTE:htt, close 索引action
         return "close_index_action";
     }
 

@@ -25,6 +25,6 @@ import java.lang.Runnable;
  * A {@link Runnable}-like interface which allows throwing checked exceptions.
  */
 @FunctionalInterface
-public interface CheckedRunnable<E extends Exception> {
-    void run() throws E;
+public interface CheckedRunnable<E extends Exception> { // NOTE:htt, 可以执行check的Runnable类
+    void run() throws E; // NOTE:htt, 执行操作并运行抛出check异常
 }

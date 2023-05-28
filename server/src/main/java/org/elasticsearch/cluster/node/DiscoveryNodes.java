@@ -85,7 +85,7 @@ public class DiscoveryNodes extends AbstractDiffable<DiscoveryNodes> implements 
     /**
      * Returns <tt>true</tt> if the local node is the elected master node.
      */
-    public boolean isLocalNodeElectedMaster() {
+    public boolean isLocalNodeElectedMaster() { // NOTE:htt, 当前节点是master节点
         if (localNodeId == null) {
             // we don't know yet the local node id, return false
             return false;
