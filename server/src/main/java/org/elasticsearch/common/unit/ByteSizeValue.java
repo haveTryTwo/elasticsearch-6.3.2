@@ -181,12 +181,12 @@ public class ByteSizeValue implements Writeable, Comparable<ByteSizeValue>, ToXC
         return Strings.format1Decimals(value, suffix);
     }
 
-    public static ByteSizeValue parseBytesSizeValue(String sValue, String settingName) throws ElasticsearchParseException {
+    public static ByteSizeValue parseBytesSizeValue(String sValue, String settingName) throws ElasticsearchParseException { // NOTE:htt, 解析BytesSize值
         return parseBytesSizeValue(sValue, null, settingName);
     }
 
     public static ByteSizeValue parseBytesSizeValue(String sValue, ByteSizeValue defaultValue, String settingName)
-            throws ElasticsearchParseException {
+            throws ElasticsearchParseException { // NOTE:htt, 解析BytesSize值
         settingName = Objects.requireNonNull(settingName);
         if (sValue == null) {
             return defaultValue;

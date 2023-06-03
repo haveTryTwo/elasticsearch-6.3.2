@@ -575,12 +575,12 @@ public class PeerRecoveryTargetService extends AbstractComponent implements Inde
                 }
 
                 RateLimiter rateLimiter = recoverySettings.rateLimiter();
-                if (rateLimiter != null) {
+                if (rateLimiter != null) { // NOTE:htt, 有限流值情况下
                     long bytes = bytesSinceLastPause.addAndGet(request.content().length());
                     if (bytes > rateLimiter.getMinPauseCheckBytes()) {
                         // Time to pause
                         bytesSinceLastPause.addAndGet(-bytes);
-                        long throttleTimeInNanos = rateLimiter.pause(bytes);
+                        long throttleTimeInNanos = rateLimiter.pause(bytes); // NOTE:htt, 超过限流则暂停处等待
                         indexState.addTargetThrottling(throttleTimeInNanos);
                         recoveryTarget.indexShard().recoveryStats().addThrottleTime(throttleTimeInNanos);
                     }

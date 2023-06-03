@@ -93,7 +93,7 @@ public class Setting<T> implements ToXContentObject {
         /**
          * iff this setting can be dynamically updateable
          */
-        Dynamic,
+        Dynamic, // NOTE:htt, 动态配置
 
         /**
          * mark this setting as final, not updateable even when the context is not dynamic
@@ -121,7 +121,7 @@ public class Setting<T> implements ToXContentObject {
     protected final Function<Settings, String> defaultValue;
     @Nullable
     private final Setting<T> fallbackSetting;
-    private final Function<String, T> parser;
+    private final Function<String, T> parser; // NOTE:htt, 解析配置的值，获取实际的值
     private final Validator<T> validator;
     private final EnumSet<Property> properties;
 
@@ -339,14 +339,14 @@ public class Setting<T> implements ToXContentObject {
      * Returns the settings value. If the setting is not present in the given settings object the default value is returned
      * instead.
      */
-    public T get(Settings settings) {
+    public T get(Settings settings) { // NOTE:htt, 获取值并验证
         return get(settings, true);
     }
 
-    private T get(Settings settings, boolean validate) {
-        String value = getRaw(settings);
+    private T get(Settings settings, boolean validate) { // NOTE:htt, 获取值并验证
+        String value = getRaw(settings); // NOTE:htt, 获取配置的值
         try {
-            T parsed = parser.apply(value);
+            T parsed = parser.apply(value); // NOTE:htt, 解析配置的值
             if (validate) {
                 final Iterator<Setting<T>> it = validator.settings();
                 final Map<Setting<T>, T> map;

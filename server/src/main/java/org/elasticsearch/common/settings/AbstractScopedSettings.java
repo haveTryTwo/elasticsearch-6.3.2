@@ -316,7 +316,7 @@ public abstract class AbstractScopedSettings extends AbstractComponent {
     /**
      * Validates that the setting is valid
      */
-    void validate(String key, Settings settings, boolean validateDependencies) {
+    void validate(String key, Settings settings, boolean validateDependencies) { // NOTE:htt, 获取值并验证
         Setting setting = getRaw(key);
         if (setting == null) {
             LevensteinDistance ld = new LevensteinDistance();
@@ -357,7 +357,7 @@ public abstract class AbstractScopedSettings extends AbstractComponent {
                 }
             }
         }
-        setting.get(settings);
+        setting.get(settings); // NOTE:htt, 获取值并验证
     }
 
     /**
@@ -427,7 +427,7 @@ public abstract class AbstractScopedSettings extends AbstractComponent {
         }
     }
 
-    private Setting<?> getRaw(String key) {
+    private Setting<?> getRaw(String key) { // NOTE:htt, 获取key对应的配置信息
         Setting<?> setting = keySettings.get(key);
         if (setting != null) {
             return setting;
@@ -457,7 +457,7 @@ public abstract class AbstractScopedSettings extends AbstractComponent {
     /**
      * Returns <code>true</code> if the setting for the given key is dynamically updateable. Otherwise <code>false</code>.
      */
-    public boolean isDynamicSetting(String key) {
+    public boolean isDynamicSetting(String key) { // NOTE:htt, 是否为动态配置
         final Setting<?> setting = get(key);
         return setting != null && setting.isDynamic();
     }
@@ -514,7 +514,7 @@ public abstract class AbstractScopedSettings extends AbstractComponent {
      * @param type a free text string to allow better exceptions messages
      * @return <code>true</code> if the target has changed otherwise <code>false</code>
      */
-    public boolean updateDynamicSettings(Settings toApply, Settings.Builder target, Settings.Builder updates, String type) {
+    public boolean updateDynamicSettings(Settings toApply, Settings.Builder target, Settings.Builder updates, String type) { // NOTE:htt, 更新动态配置
         return updateSettings(toApply, target, updates, type, true);
     }
 

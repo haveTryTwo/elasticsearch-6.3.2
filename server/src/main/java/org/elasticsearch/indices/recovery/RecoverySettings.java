@@ -32,9 +32,12 @@ import org.elasticsearch.common.unit.TimeValue;
 
 public class RecoverySettings extends AbstractComponent {
 
+    public static final ByteSizeValue MIN_INDICES_RECOVERY_MAX_BYTES_PER_SEC_SETTING = new ByteSizeValue(10, ByteSizeUnit.MB);
+    public static final ByteSizeValue MAX_INDICES_RECOVERY_MAX_BYTES_PER_SEC_SETTING = new ByteSizeValue(1, ByteSizeUnit.GB);
     public static final Setting<ByteSizeValue> INDICES_RECOVERY_MAX_BYTES_PER_SEC_SETTING =
         Setting.byteSizeSetting("indices.recovery.max_bytes_per_sec", new ByteSizeValue(40, ByteSizeUnit.MB),
-            Property.Dynamic, Property.NodeScope);
+                MIN_INDICES_RECOVERY_MAX_BYTES_PER_SEC_SETTING, MAX_INDICES_RECOVERY_MAX_BYTES_PER_SEC_SETTING,
+                Property.Dynamic, Property.NodeScope);
 
     /**
      * how long to wait before retrying after issues cause by cluster state syncing between nodes
@@ -74,8 +77,8 @@ public class RecoverySettings extends AbstractComponent {
 
     public static final ByteSizeValue DEFAULT_CHUNK_SIZE = new ByteSizeValue(512, ByteSizeUnit.KB);
 
-    private volatile ByteSizeValue maxBytesPerSec;
-    private volatile SimpleRateLimiter rateLimiter;
+    private volatile ByteSizeValue maxBytesPerSec; // NOTE:htt, 数据恢复时的限制速率
+    private volatile SimpleRateLimiter rateLimiter; // NOTE:htt, 限流
     private volatile TimeValue retryDelayStateSync;
     private volatile TimeValue retryDelayNetwork;
     private volatile TimeValue activityTimeout;
@@ -97,11 +100,13 @@ public class RecoverySettings extends AbstractComponent {
 
         this.activityTimeout = INDICES_RECOVERY_ACTIVITY_TIMEOUT_SETTING.get(settings);
         this.maxBytesPerSec = INDICES_RECOVERY_MAX_BYTES_PER_SEC_SETTING.get(settings);
-        if (maxBytesPerSec.getBytes() <= 0) {
-            rateLimiter = null;
-        } else {
-            rateLimiter = new SimpleRateLimiter(maxBytesPerSec.getMbFrac());
-        }
+
+        this.setMaxBytesPerSec(this.maxBytesPerSec);
+//        if (maxBytesPerSec.getBytes() <= 0) {
+//            rateLimiter = null;
+//        } else {
+//            rateLimiter = new SimpleRateLimiter(maxBytesPerSec.getMbFrac());
+//        }
 
 
         logger.debug("using max_bytes_per_sec[{}]", maxBytesPerSec);
@@ -168,14 +173,23 @@ public class RecoverySettings extends AbstractComponent {
         this.internalActionLongTimeout = internalActionLongTimeout;
     }
 
-    private void setMaxBytesPerSec(ByteSizeValue maxBytesPerSec) {
-        this.maxBytesPerSec = maxBytesPerSec;
-        if (maxBytesPerSec.getBytes() <= 0) {
-            rateLimiter = null;
-        } else if (rateLimiter != null) {
-            rateLimiter.setMBPerSec(maxBytesPerSec.getMbFrac());
+    private void setMaxBytesPerSec(ByteSizeValue maxBytesPerSec) { // NOTE:htt, 限制indices recovery的值范围，避免值过大或过小以影响集群可用性
+        if (maxBytesPerSec.getBytes() < MIN_INDICES_RECOVERY_MAX_BYTES_PER_SEC_SETTING.getBytes()) {
+            this.maxBytesPerSec = MIN_INDICES_RECOVERY_MAX_BYTES_PER_SEC_SETTING;
+            logger.error("indices.recovery.max_bytes_per_sec is [{}] which is less than [{}], then will be set [{}]",
+                    maxBytesPerSec, MIN_INDICES_RECOVERY_MAX_BYTES_PER_SEC_SETTING, MIN_INDICES_RECOVERY_MAX_BYTES_PER_SEC_SETTING);
+        } else if (maxBytesPerSec.getBytes() > MAX_INDICES_RECOVERY_MAX_BYTES_PER_SEC_SETTING.getBytes()) {
+            this.maxBytesPerSec = MAX_INDICES_RECOVERY_MAX_BYTES_PER_SEC_SETTING;
+            logger.error("indices.recovery.max_bytes_per_sec is [{}] which is larger than [{}], then will be set [{}]",
+                    maxBytesPerSec, MAX_INDICES_RECOVERY_MAX_BYTES_PER_SEC_SETTING, MAX_INDICES_RECOVERY_MAX_BYTES_PER_SEC_SETTING);
         } else {
-            rateLimiter = new SimpleRateLimiter(maxBytesPerSec.getMbFrac());
+            this.maxBytesPerSec = maxBytesPerSec;
+        }
+
+        if (rateLimiter != null) {
+            rateLimiter.setMBPerSec(this.maxBytesPerSec.getMbFrac());
+        } else {
+            rateLimiter = new SimpleRateLimiter(this.maxBytesPerSec.getMbFrac());
         }
     }
 }
