@@ -73,7 +73,7 @@ import java.util.function.LongSupplier;
 /** Performs shard-level bulk (index, delete or update) operations */
 public class TransportShardBulkAction extends TransportWriteAction<BulkShardRequest, BulkShardRequest, BulkShardResponse> {
 
-    public static final String ACTION_NAME = BulkAction.NAME + "[s]";
+    public static final String ACTION_NAME = BulkAction.NAME + "[s]"; // NOTE:htt, 批量写请求
 
     private static final Logger logger = ESLoggerFactory.getLogger(TransportShardBulkAction.class);
 
@@ -92,7 +92,7 @@ public class TransportShardBulkAction extends TransportWriteAction<BulkShardRequ
     }
 
     @Override
-    protected TransportRequestOptions transportOptions() {
+    protected TransportRequestOptions transportOptions() { // NOTE:htt, 写入请求提供链接默认配置
         return BulkAction.INSTANCE.transportOptions(settings);
     }
 

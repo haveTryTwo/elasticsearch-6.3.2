@@ -22,10 +22,10 @@ package org.elasticsearch.action.delete;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.client.ElasticsearchClient;
 
-public class DeleteAction extends Action<DeleteRequest, DeleteResponse, DeleteRequestBuilder> {
+public class DeleteAction extends Action<DeleteRequest, DeleteResponse, DeleteRequestBuilder> { // NOTE:htt, 删除action
 
     public static final DeleteAction INSTANCE = new DeleteAction();
-    public static final String NAME = "indices:data/write/delete";
+    public static final String NAME = "indices:data/write/delete"; // NOTE:htt, 删除命名
 
     private DeleteAction() {
         super(NAME);

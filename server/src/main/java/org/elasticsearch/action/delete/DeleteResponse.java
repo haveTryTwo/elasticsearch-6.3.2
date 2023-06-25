@@ -34,7 +34,7 @@ import static org.elasticsearch.common.xcontent.XContentParserUtils.ensureExpect
  * @see org.elasticsearch.action.delete.DeleteRequest
  * @see org.elasticsearch.client.Client#delete(DeleteRequest)
  */
-public class DeleteResponse extends DocWriteResponse {
+public class DeleteResponse extends DocWriteResponse { // NOTE:htt, 删除记录回包
 
     public DeleteResponse() {
     }
@@ -83,7 +83,7 @@ public class DeleteResponse extends DocWriteResponse {
      * temporarily store the parsed values, then the {@link DocWriteResponse.Builder#build()} method is called to
      * instantiate the {@link DeleteResponse}.
      */
-    public static class Builder extends DocWriteResponse.Builder {
+    public static class Builder extends DocWriteResponse.Builder { // NOTE:htt, 构建删除回包
 
         @Override
         public DeleteResponse build() {

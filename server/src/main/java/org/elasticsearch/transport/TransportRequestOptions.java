@@ -66,10 +66,10 @@ public class TransportRequestOptions {
                 .withType(options.type());
     }
 
-    public static class Builder {
-        private TimeValue timeout;
-        private boolean compress;
-        private Type type = Type.REG;
+    public static class Builder { // NOTE:htt, 构建请求
+        private TimeValue timeout; // NOTE:htt, 超时时间
+        private boolean compress; // NOTE:htt, 是否压缩
+        private Type type = Type.REG; // NOTE:htt, 请求类型
 
         private Builder() {
         }

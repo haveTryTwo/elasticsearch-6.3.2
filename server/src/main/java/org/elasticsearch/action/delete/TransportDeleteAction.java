@@ -38,7 +38,7 @@ import org.elasticsearch.transport.TransportService;
  * Deprecated use TransportBulkAction with a single item instead
  */
 @Deprecated
-public class TransportDeleteAction extends TransportSingleItemBulkWriteAction<DeleteRequest, DeleteResponse> {
+public class TransportDeleteAction extends TransportSingleItemBulkWriteAction<DeleteRequest, DeleteResponse> { // NOTE:htt, 删除记录transport action处理
 
     @Inject
     public TransportDeleteAction(Settings settings, TransportService transportService, ClusterService clusterService,

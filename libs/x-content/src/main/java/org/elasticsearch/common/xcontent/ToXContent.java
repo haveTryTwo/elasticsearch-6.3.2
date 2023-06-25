@@ -29,9 +29,9 @@ import java.util.Map;
  * The output may or may not be a value object. Objects implementing {@link ToXContentObject} output a valid value
  * but those that don't may or may not require emitting a startObject and an endObject.
  */
-public interface ToXContent {
+public interface ToXContent { // NOTE:htt, 转换到Context
 
-    interface Params {
+    interface Params { // NOTE:htt, 参数
         String param(String key);
 
         String param(String key, String defaultValue);
@@ -41,7 +41,7 @@ public interface ToXContent {
         Boolean paramAsBoolean(String key, Boolean defaultValue);
     }
 
-    Params EMPTY_PARAMS = new Params() {
+    Params EMPTY_PARAMS = new Params() { // NOTE:htt, 空参数
         @Override
         public String param(String key) {
             return null;
@@ -64,7 +64,7 @@ public interface ToXContent {
 
     };
 
-    class MapParams implements Params {
+    class MapParams implements Params { // NOTE:htt, map参数
 
         private final Map<String, String> params;
 
@@ -97,9 +97,9 @@ public interface ToXContent {
         }
     }
 
-    class DelegatingMapParams extends MapParams {
+    class DelegatingMapParams extends MapParams { // NOTE:htt, 代理参数
 
-        private final Params delegate;
+        private final Params delegate; // NOTE:htt, 代理
 
         public DelegatingMapParams(Map<String, String> params, Params delegate) {
             super(params);

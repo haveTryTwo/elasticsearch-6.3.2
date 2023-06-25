@@ -27,10 +27,10 @@ package org.elasticsearch.common.xcontent;
  * guarantees that what gets printed out is fully valid syntax without any
  * external addition.
  */
-public interface ToXContentObject extends ToXContent {
+public interface ToXContentObject extends ToXContent { // NOTE:htt, content对象转换
 
     @Override
-    default boolean isFragment() {
+    default boolean isFragment() { // NOTE:htt, 是否为片段
         return false;
     }
 }

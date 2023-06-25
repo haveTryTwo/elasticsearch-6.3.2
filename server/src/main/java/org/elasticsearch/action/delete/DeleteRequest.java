@@ -45,15 +45,15 @@ import static org.elasticsearch.action.ValidateActions.addValidationError;
  * @see org.elasticsearch.client.Client#delete(DeleteRequest)
  * @see org.elasticsearch.client.Requests#deleteRequest(String)
  */
-public class DeleteRequest extends ReplicatedWriteRequest<DeleteRequest> implements DocWriteRequest<DeleteRequest>, CompositeIndicesRequest {
+public class DeleteRequest extends ReplicatedWriteRequest<DeleteRequest> implements DocWriteRequest<DeleteRequest>, CompositeIndicesRequest { // NOTE:htt, 删除记录请求
 
-    private String type;
-    private String id;
+    private String type; // NOTE:htt, type
+    private String id; // NOTE:htt, id
     @Nullable
-    private String routing;
+    private String routing; // NOTE:htt, routing信息
     @Nullable
     private String parent;
-    private long version = Versions.MATCH_ANY;
+    private long version = Versions.MATCH_ANY; // NOTE:htt, 版本号
     private VersionType versionType = VersionType.INTERNAL;
 
     public DeleteRequest() {
@@ -192,7 +192,7 @@ public class DeleteRequest extends ReplicatedWriteRequest<DeleteRequest> impleme
     }
 
     @Override
-    public OpType opType() {
+    public OpType opType() { // NOTE:htt, 删除请求
         return OpType.DELETE;
     }
 

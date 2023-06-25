@@ -364,7 +364,7 @@ public class ActionModule extends AbstractModule {
         this.clusterSettings = clusterSettings;
         this.settingsFilter = settingsFilter;
         this.actionPlugins = actionPlugins;
-        actions = setupActions(actionPlugins);
+        actions = setupActions(actionPlugins); // NOTE:htt, 启动注册对象
         actionFilters = setupActionFilters(actionPlugins);
         autoCreateIndex = transportClient ? null : new AutoCreateIndex(settings, clusterSettings, indexNameExpressionResolver);
         destructiveOperations = new DestructiveOperations(settings, clusterSettings);
@@ -402,7 +402,7 @@ public class ActionModule extends AbstractModule {
                 super("action");
             }
 
-            public void register(ActionHandler<?, ?> handler) {
+            public void register(ActionHandler<?, ?> handler) { // NOTE:htt, 注册对象
                 register(handler.getAction().name(), handler);
             }
 
@@ -483,7 +483,7 @@ public class ActionModule extends AbstractModule {
         actions.register(TermVectorsAction.INSTANCE, TransportTermVectorsAction.class);
         actions.register(MultiTermVectorsAction.INSTANCE, TransportMultiTermVectorsAction.class,
                 TransportShardMultiTermsVectorAction.class);
-        actions.register(DeleteAction.INSTANCE, TransportDeleteAction.class);
+        actions.register(DeleteAction.INSTANCE, TransportDeleteAction.class); // NOTE:htt, 映射REST Delete请求
         actions.register(UpdateAction.INSTANCE, TransportUpdateAction.class);
         actions.register(MultiGetAction.INSTANCE, TransportMultiGetAction.class,
                 TransportShardMultiGetAction.class);
@@ -683,7 +683,7 @@ public class ActionModule extends AbstractModule {
                     = MapBinder.newMapBinder(binder(), GenericAction.class, TransportAction.class);
             for (ActionHandler<?, ?> action : actions.values()) {
                 // bind the action as eager singleton, so the map binder one will reuse it
-                bind(action.getTransportAction()).asEagerSingleton();
+                bind(action.getTransportAction()).asEagerSingleton(); // NOTE:htt, transportaction为单例
                 transportActionsBinder.addBinding(action.getAction()).to(action.getTransportAction()).asEagerSingleton();
                 for (Class<?> supportAction : action.getSupportTransportActions()) {
                     bind(supportAction).asEagerSingleton();

@@ -47,7 +47,7 @@ import static org.elasticsearch.common.xcontent.XContentParserUtils.ensureExpect
 /**
  * A base class for the response of a write operation that involves a single doc
  */
-public abstract class DocWriteResponse extends ReplicationResponse implements WriteResponse, StatusToXContentObject {
+public abstract class DocWriteResponse extends ReplicationResponse implements WriteResponse, StatusToXContentObject { // NOTE:htt, doc索引写入回包
 
     private static final String _SHARDS = "_shards";
     private static final String _INDEX = "_index";
@@ -63,7 +63,7 @@ public abstract class DocWriteResponse extends ReplicationResponse implements Wr
      * An enum that represents the results of CRUD operations, primarily used to communicate the type of
      * operation that occurred.
      */
-    public enum Result implements Writeable {
+    public enum Result implements Writeable { // NOTE:htt, 文档操作结果
         CREATED(0),
         UPDATED(1),
         DELETED(2),
@@ -110,14 +110,14 @@ public abstract class DocWriteResponse extends ReplicationResponse implements Wr
         }
     }
 
-    private ShardId shardId;
-    private String id;
-    private String type;
-    private long version;
-    private long seqNo;
-    private long primaryTerm;
-    private boolean forcedRefresh;
-    protected Result result;
+    private ShardId shardId; // NOTE:htt, shardid信息
+    private String id; // NOTE:htt, id
+    private String type; // NOTE:htt, type类型
+    private long version; // NOTE:htt, 版本
+    private long seqNo; // NOTE:htt, seqNo值
+    private long primaryTerm; // NOTE:htt, 主term值
+    private boolean forcedRefresh; // NOTE:htt, 是否强制刷新
+    protected Result result; // NOTE:htt, 操作结果
 
     public DocWriteResponse(ShardId shardId, String type, String id, long seqNo, long primaryTerm, long version, Result result) {
         this.shardId = shardId;
