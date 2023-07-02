@@ -27,7 +27,7 @@ import org.elasticsearch.transport.TransportRequestOptions;
  */
 public abstract class GenericAction<Request extends ActionRequest, Response extends ActionResponse> {
 
-    private final String name;
+    private final String name; // NOTE:htt, action名称
 
     /**
      * @param name The name of the action, must be unique across actions.

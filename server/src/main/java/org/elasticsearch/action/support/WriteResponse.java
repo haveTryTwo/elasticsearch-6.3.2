@@ -30,7 +30,7 @@ import org.elasticsearch.index.IndexSettings;
  * Interface implemented by responses for actions that modify the documents in an index like {@link IndexResponse}, {@link UpdateResponse},
  * and {@link BulkResponse}. Rather than implement this directly most implementers should extend {@link DocWriteResponse}.
  */
-public interface WriteResponse {
+public interface WriteResponse { // NOTE:htt, 写回包接口
     /**
      * Mark the response as having forced a refresh? Requests that set {@link WriteRequest#setRefreshPolicy(RefreshPolicy)} to
      * {@link RefreshPolicy#IMMEDIATE} should always mark this as true. Requests that set it to {@link RefreshPolicy#WAIT_UNTIL} will only

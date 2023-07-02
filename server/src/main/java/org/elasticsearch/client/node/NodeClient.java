@@ -111,7 +111,7 @@ public class NodeClient extends AbstractClient {
     @SuppressWarnings("unchecked")
     private <    Request extends ActionRequest,
                 Response extends ActionResponse
-            > TransportAction<Request, Response> transportAction(GenericAction<Request, Response> action) {
+            > TransportAction<Request, Response> transportAction(GenericAction<Request, Response> action) { // NOTE:htt, 获取REST映射内部的Action
         if (actions == null) {
             throw new IllegalStateException("NodeClient has not been initialized");
         }

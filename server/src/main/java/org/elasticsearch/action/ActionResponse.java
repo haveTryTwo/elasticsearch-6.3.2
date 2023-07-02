@@ -28,7 +28,7 @@ import java.io.IOException;
 /**
  * Base class for responses to action requests.
  */
-public abstract class ActionResponse extends TransportResponse {
+public abstract class ActionResponse extends TransportResponse { // NOTE:htt, action请求回包
 
     @Override
     public void readFrom(StreamInput in) throws IOException {

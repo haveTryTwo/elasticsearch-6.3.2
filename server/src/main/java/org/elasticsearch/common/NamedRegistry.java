@@ -29,8 +29,8 @@ import static java.util.Objects.requireNonNull;
 /**
  * A registry from String to some class implementation. Used to ensure implementations are registered only once.
  */
-public class NamedRegistry<T> {
-    private final Map<String, T> registry = new HashMap<>();
+public class NamedRegistry<T> { // NOTE:htt, 命名注册
+    private final Map<String, T> registry = new HashMap<>(); // NOTE:htt, 对象注册函数
     private final String targetName;
 
     public NamedRegistry(String targetName) {
@@ -41,7 +41,7 @@ public class NamedRegistry<T> {
         return registry;
     }
 
-    public void register(String name, T t) {
+    public void register(String name, T t) { // NOTE:htt, 注册对象
         requireNonNull(name, "name is required");
         requireNonNull(t, targetName + " is required");
         if (registry.putIfAbsent(name, t) != null) {

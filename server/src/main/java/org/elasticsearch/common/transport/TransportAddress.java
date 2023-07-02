@@ -37,13 +37,13 @@ import java.net.UnknownHostException;
 /**
  * A transport address used for IP socket address (wraps {@link java.net.InetSocketAddress}).
  */
-public final class TransportAddress implements Writeable, ToXContentFragment {
+public final class TransportAddress implements Writeable, ToXContentFragment { // NOTE:htt, transport地址
 
     /**
      * A <a href="https://en.wikipedia.org/wiki/0.0.0.0">non-routeable v4 meta transport address</a> that can be used for
      * testing or in scenarios where targets should be marked as non-applicable from a transport perspective.
      */
-    public static final InetAddress META_ADDRESS;
+    public static final InetAddress META_ADDRESS; // NOTE:htt, ip地址
 
     static {
         try {
@@ -53,7 +53,7 @@ public final class TransportAddress implements Writeable, ToXContentFragment {
         }
     }
 
-    private final InetSocketAddress address;
+    private final InetSocketAddress address; // NOTE:htt, ip:port地址
 
     public TransportAddress(InetAddress address, int port) {
         this(new InetSocketAddress(address, port));

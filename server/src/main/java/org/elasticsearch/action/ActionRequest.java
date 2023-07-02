@@ -25,7 +25,7 @@ import org.elasticsearch.transport.TransportRequest;
 
 import java.io.IOException;
 
-public abstract class ActionRequest extends TransportRequest {
+public abstract class ActionRequest extends TransportRequest { // NOTE:htt, action 请求
 
     public ActionRequest() {
         super();

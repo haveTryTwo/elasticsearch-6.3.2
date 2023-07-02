@@ -692,7 +692,7 @@ public abstract class TransportReplicationAction<
             }
             this.listener = listener;
             this.task = task;
-            this.observer = new ClusterStateObserver(clusterService, request.timeout(), logger, threadPool.getThreadContext());
+            this.observer = new ClusterStateObserver(clusterService, request.timeout(), logger, threadPool.getThreadContext()); // NOTE:htt, 设置请求中提供的超时时间，写入默认是1min
         }
 
         @Override
@@ -1198,10 +1198,10 @@ public abstract class TransportReplicationAction<
         transportService.sendRequest(node, transportReplicaAction, replicaRequest, getBulkTransportRequestOptions(transportReplicaAction), handler);
     }
 
-    public TransportRequestOptions getBulkTransportRequestOptions(String actionName) {
+    public TransportRequestOptions getBulkTransportRequestOptions(String actionName) { // NOTE:htt, 获取写入超时时间
         TransportRequestOptions options = transportOptions;
         TimeValue bulkRpcTimeout = indicesService.getBulkRpcTimeout();
-        if (bulkRpcTimeout != null && !bulkRpcTimeout.equals(TimeValue.ZERO) && actionName.startsWith(BulkAction.NAME)) { // NOTE:htt, 只针对写入支持超时
+        if (bulkRpcTimeout != null && !bulkRpcTimeout.equals(TimeValue.ZERO) && actionName.startsWith(BulkAction.NAME)) { // NOTE:htt, 只针对写入支持超时，其中删除请求会转换为bulk请求，则复用了bulk的超时机制
             options = TransportRequestOptions.builder(transportOptions).withTimeout(bulkRpcTimeout).build();
         }
         return options;

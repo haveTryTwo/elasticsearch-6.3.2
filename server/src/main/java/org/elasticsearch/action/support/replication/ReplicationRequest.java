@@ -45,19 +45,19 @@ import static org.elasticsearch.action.ValidateActions.addValidationError;
  * {@link TransportShardRefreshAction}.
  */
 public abstract class ReplicationRequest<Request extends ReplicationRequest<Request>> extends ActionRequest
-        implements IndicesRequest {
+        implements IndicesRequest { // NOTE:htt, 副本集请求
 
-    public static final TimeValue DEFAULT_TIMEOUT = new TimeValue(1, TimeUnit.MINUTES);
+    public static final TimeValue DEFAULT_TIMEOUT = new TimeValue(1, TimeUnit.MINUTES); // NOTE:htt, 超时时间1min
 
     /**
      * Target shard the request should execute on. In case of index and delete requests,
      * shard id gets resolved by the transport action before performing request operation
      * and at request creation time for shard-level bulk, refresh and flush requests.
      */
-    protected ShardId shardId;
+    protected ShardId shardId; // NOTE:htt, shard信息
 
     protected TimeValue timeout = DEFAULT_TIMEOUT;
-    protected String index;
+    protected String index; // NOTE:htt, 索引
 
     /**
      * The number of shard copies that must be active before proceeding with the replication action.

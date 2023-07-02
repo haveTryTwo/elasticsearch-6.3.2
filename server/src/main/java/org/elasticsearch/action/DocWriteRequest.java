@@ -33,7 +33,7 @@ import java.util.Locale;
  * Generic interface to group ActionRequest, which perform writes to a single document
  * Action requests implementing this can be part of {@link org.elasticsearch.action.bulk.BulkRequest}
  */
-public interface DocWriteRequest<T> extends IndicesRequest {
+public interface DocWriteRequest<T> extends IndicesRequest { // NOTE:htt, 文档写入请求
 
     /**
      * Get the index that this request operates on
@@ -110,7 +110,7 @@ public interface DocWriteRequest<T> extends IndicesRequest {
     /**
      * Requested operation type to perform on the document
      */
-    enum OpType {
+    enum OpType { // NOTE:htt, 索引中doc请求操作类型
         /**
          * Index the source. If there an existing document with the id, it will
          * be replaced.

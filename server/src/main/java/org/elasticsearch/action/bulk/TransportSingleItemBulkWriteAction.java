@@ -47,7 +47,7 @@ public abstract class TransportSingleItemBulkWriteAction<
     Response extends ReplicationResponse & WriteResponse
     > extends TransportWriteAction<Request, Request, Response> {
 
-    private final TransportBulkAction bulkAction;
+    private final TransportBulkAction bulkAction; // NOTE:htt, 批量写处理请求
     private final TransportShardBulkAction shardBulkAction;
 
 
@@ -65,7 +65,7 @@ public abstract class TransportSingleItemBulkWriteAction<
 
 
     @Override
-    protected void doExecute(Task task, final Request request, final ActionListener<Response> listener) {
+    protected void doExecute(Task task, final Request request, final ActionListener<Response> listener) { // NOTE:htt, 单个写操作，重载了doExecute(),并将请求转换为bulk来处理
         bulkAction.execute(task, toSingleItemBulkRequest(request), wrapBulkResponse(listener));
     }
 
@@ -108,20 +108,20 @@ public abstract class TransportSingleItemBulkWriteAction<
 
 
     public static <Response extends ReplicationResponse & WriteResponse>
-    ActionListener<BulkResponse> wrapBulkResponse(ActionListener<Response> listener) {
+    ActionListener<BulkResponse> wrapBulkResponse(ActionListener<Response> listener) { // NOTE:htt, 将bulk批量回包转换为请求的单个回包
         return ActionListener.wrap(bulkItemResponses -> {
             assert bulkItemResponses.getItems().length == 1 : "expected only one item in bulk request";
             BulkItemResponse bulkItemResponse = bulkItemResponses.getItems()[0];
-            if (bulkItemResponse.isFailed() == false) {
+            if (bulkItemResponse.isFailed() == false) { // NOTE:htt, 成功转换
                 final DocWriteResponse response = bulkItemResponse.getResponse();
                 listener.onResponse((Response) response);
-            } else {
+            } else { // NOTE:htt, 失败转换
                 listener.onFailure(bulkItemResponse.getFailure().getCause());
             }
         }, listener::onFailure);
     }
 
-    public static BulkRequest toSingleItemBulkRequest(ReplicatedWriteRequest request) {
+    public static BulkRequest toSingleItemBulkRequest(ReplicatedWriteRequest request) { // NOTE:ht, 转换为单item的bulk请求
         BulkRequest bulkRequest = new BulkRequest();
         bulkRequest.add(((DocWriteRequest) request));
         bulkRequest.setRefreshPolicy(request.getRefreshPolicy());

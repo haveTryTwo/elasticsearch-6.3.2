@@ -61,7 +61,7 @@ public interface WriteRequest<R extends WriteRequest<R>> extends Streamable {
 
     ActionRequestValidationException validate();
 
-    enum RefreshPolicy implements Writeable {
+    enum RefreshPolicy implements Writeable { // NOTE:htt, 请求刷新策略
         /**
          * Don't refresh after this request. The default.
          */
