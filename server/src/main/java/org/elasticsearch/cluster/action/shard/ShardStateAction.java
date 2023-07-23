@@ -19,6 +19,8 @@
 
 package org.elasticsearch.cluster.action.shard;
 
+import java.util.Objects;
+import java.util.concurrent.ConcurrentMap;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.elasticsearch.ElasticsearchException;
@@ -48,6 +50,7 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.util.concurrent.ConcurrentCollections;
 import org.elasticsearch.discovery.Discovery;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.node.NodeClosedException;
@@ -79,6 +82,10 @@ public class ShardStateAction extends AbstractComponent {
     private final TransportService transportService;
     private final ClusterService clusterService;
     private final ThreadPool threadPool;
+
+    // a list of shards that failed during replication
+    // we keep track of these shards in order to avoid sending duplicate failed shard requests for a single failing shard.
+    private final ConcurrentMap<FailedShardEntry, CompositeListener> remoteFailedShardsCache = ConcurrentCollections.newConcurrentMap();
 
     @Inject
     public ShardStateAction(Settings settings, ClusterService clusterService, TransportService transportService,
@@ -146,8 +153,35 @@ public class ShardStateAction extends AbstractComponent {
      */
     public void remoteShardFailed(final ShardId shardId, String allocationId, long primaryTerm, boolean markAsStale, final String message, @Nullable final Exception failure, Listener listener) {
         assert primaryTerm > 0L : "primary term should be strictly positive";
-        FailedShardEntry shardEntry = new FailedShardEntry(shardId, allocationId, primaryTerm, message, failure, markAsStale);
-        sendShardAction(SHARD_FAILED_ACTION_NAME, clusterService.state(), shardEntry, listener);
+        final FailedShardEntry shardEntry = new FailedShardEntry(shardId, allocationId, primaryTerm, message, failure, markAsStale);
+        final CompositeListener compositeListener = new CompositeListener(listener);
+        final CompositeListener existingListener = remoteFailedShardsCache.putIfAbsent(shardEntry, compositeListener);
+        if (existingListener == null) {
+            sendShardAction(SHARD_FAILED_ACTION_NAME, clusterService.state(), shardEntry, new Listener() {
+                @Override
+                public void onSuccess() {
+                    try {
+                        compositeListener.onSuccess();
+                    } finally {
+                        remoteFailedShardsCache.remove(shardEntry);
+                    }
+                }
+                @Override
+                public void onFailure(Exception e) {
+                    try {
+                        compositeListener.onFailure(e);
+                    } finally {
+                        remoteFailedShardsCache.remove(shardEntry);
+                    }
+                }
+            });
+        } else {
+            existingListener.addListener(listener);
+        }
+    }
+
+    int remoteShardFailedCacheSize() {
+        return remoteFailedShardsCache.size();
     }
 
     /**
@@ -349,13 +383,13 @@ public class ShardStateAction extends AbstractComponent {
         }
     }
 
-    public static class FailedShardEntry extends TransportRequest {
-        final ShardId shardId;
-        final String allocationId;
-        final long primaryTerm;
-        final String message;
-        final Exception failure;
-        final boolean markAsStale;
+    public static class FailedShardEntry extends TransportRequest { // NOTE:htt, 异常的shard实体
+        final ShardId shardId; // NOTE:htt, 异常的shardid
+        final String allocationId; // NOTE:htt, allocationID
+        final long primaryTerm; // NOTE:htt, 主term
+        final String message; // NOTE:htt, 消息
+        final Exception failure; // NOTE:htt, 异常情况
+        final boolean markAsStale; // NOTE:htt, 标记为stale
 
         FailedShardEntry(StreamInput in) throws IOException {
             super(in);
@@ -413,6 +447,23 @@ public class ShardStateAction extends AbstractComponent {
             }
             components.add("markAsStale [" + markAsStale + "]");
             return String.join(", ", components);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            FailedShardEntry that = (FailedShardEntry) o;
+            // Exclude message and exception from equals and hashCode
+            return Objects.equals(this.shardId, that.shardId) &&
+                    Objects.equals(this.allocationId, that.allocationId) &&
+                    primaryTerm == that.primaryTerm &&
+                    markAsStale == that.markAsStale;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(shardId, allocationId, primaryTerm, markAsStale);
         }
     }
 
@@ -596,6 +647,72 @@ public class ShardStateAction extends AbstractComponent {
             super(in);
         }
 
+    }
+
+    /**
+     * A composite listener that allows registering multiple listeners dynamically.
+     */
+    static final class CompositeListener implements Listener { // NOTE:htt, 组合listener
+        private boolean isNotified = false;
+        private Exception failure = null;
+        private final List<Listener> listeners = new ArrayList<>(); // NOTE:htt, 添加批量的listener
+
+        CompositeListener(Listener listener) {
+            listeners.add(listener);
+        }
+
+        void addListener(Listener listener) {
+            final boolean ready;
+            synchronized (this) {
+                ready = this.isNotified;
+                if (ready == false) {
+                    listeners.add(listener);
+                }
+            }
+            if (ready) {
+                if (failure != null) {
+                    listener.onFailure(failure);
+                } else {
+                    listener.onSuccess();
+                }
+            }
+        }
+
+        private void onCompleted(Exception failure) { // NOTE:htt, 完成时处理
+            synchronized (this) {
+                this.failure = failure;
+                this.isNotified = true;
+            }
+            RuntimeException firstException = null;
+            for (Listener listener : listeners) { // NOTE:htt, 批量执行已添加listener
+                try {
+                    if (failure != null) {
+                        listener.onFailure(failure);
+                    } else {
+                        listener.onSuccess();
+                    }
+                } catch (RuntimeException innerEx) {
+                    if (firstException == null) {
+                        firstException = innerEx;
+                    } else {
+                        firstException.addSuppressed(innerEx);
+                    }
+                }
+            }
+            if (firstException != null) {
+                throw firstException;
+            }
+        }
+
+        @Override
+        public void onSuccess() { // NOTE:htt, 成功时处理
+            onCompleted(null);
+        }
+
+        @Override
+        public void onFailure(Exception failure) {
+            onCompleted(failure);
+        }
     }
 
 }
