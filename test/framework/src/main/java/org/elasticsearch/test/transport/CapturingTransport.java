@@ -19,6 +19,7 @@
 
 package org.elasticsearch.test.transport;
 
+import java.util.Collection;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.common.CheckedBiConsumer;
@@ -78,7 +79,7 @@ public class CapturingTransport implements Transport {
 
     private ConcurrentMap<Long, Tuple<DiscoveryNode, String>> requests = new ConcurrentHashMap<>();
     private BlockingQueue<CapturedRequest> capturedRequests = ConcurrentCollections.newBlockingQueue();
-    private final AtomicLong requestId = new AtomicLong();
+    private final AtomicLong  requestId = new AtomicLong();
 
 
     /** returns all requests captured so far. Doesn't clear the captured request list. See {@link #clear()} */
@@ -94,26 +95,25 @@ public class CapturingTransport implements Transport {
      * @return the captured requests
      */
     public CapturedRequest[] getCapturedRequestsAndClear() {
-        CapturedRequest[] capturedRequests = capturedRequests();
-        clear();
-        return capturedRequests;
+        List<CapturedRequest> requests = new ArrayList<>(capturedRequests.size());
+        capturedRequests.drainTo(requests); // NOTE:htt, 该方法不阻塞
+        return requests.toArray(new CapturedRequest[0]);
     }
 
+    private Map<String, List<CapturedRequest>> groupRequestsByTargetNode(Collection<CapturedRequest> requests) {
+        Map<String, List<CapturedRequest>> result = new HashMap<>();
+        for (CapturedRequest request : requests) {
+            result.computeIfAbsent(request.node.getId(), node -> new ArrayList<>()).add(request);
+        }
+
+        return result;
+    }
     /**
      * returns all requests captured so far, grouped by target node.
      * Doesn't clear the captured request list. See {@link #clear()}
      */
     public Map<String, List<CapturedRequest>> capturedRequestsByTargetNode() {
-        Map<String, List<CapturedRequest>> map = new HashMap<>();
-        for (CapturedRequest request : capturedRequests) {
-            List<CapturedRequest> nodeList = map.get(request.node.getId());
-            if (nodeList == null) {
-                nodeList = new ArrayList<>();
-                map.put(request.node.getId(), nodeList);
-            }
-            nodeList.add(request);
-        }
-        return map;
+        return groupRequestsByTargetNode(capturedRequests);
     }
 
     /**

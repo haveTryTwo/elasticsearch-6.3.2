@@ -37,14 +37,14 @@ import java.util.Objects;
 
 public class MainResponse extends ActionResponse implements ToXContentObject {
 
-    private String nodeName;
-    private Version version;
-    private ClusterName clusterName;
+    private String nodeName; // NOTE:htt, 节点名称
+    private Version version; // NOTE:htt, ES 版本
+    private ClusterName clusterName; // NOTE:htt, 集群名称
     private String clusterUuid;
     private Build build;
     boolean available;
 
-    private String privateESVersion = "6.3.2.5"; // NOTE:htt, 区分小版本
+    private String privateESVersion = "6.3.2.6"; // NOTE:htt, 区分小版本
 
     MainResponse() {
     }
