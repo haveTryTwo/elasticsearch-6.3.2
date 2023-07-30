@@ -41,9 +41,9 @@ public class ShardStats implements Streamable, Writeable, ToXContentFragment {
     @Nullable
     private CommitStats commitStats;
     @Nullable
-    private SeqNoStats seqNoStats;
-    private String dataPath;
-    private String statePath;
+    private SeqNoStats seqNoStats; // NOTE:htt, sequence no 统计信息
+    private String dataPath; // NOTE:htt, 分片的磁盘路径
+    private String statePath; // NOTE:htt, 分片stat路径
     private boolean isCustomDataPath;
 
     ShardStats() {

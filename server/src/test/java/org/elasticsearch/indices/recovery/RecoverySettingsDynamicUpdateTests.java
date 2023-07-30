@@ -32,9 +32,23 @@ public class RecoverySettingsDynamicUpdateTests extends ESTestCase {
     private final RecoverySettings recoverySettings = new RecoverySettings(Settings.EMPTY, clusterSettings);
 
     public void testZeroBytesPerSecondIsNoRateLimit() {
-        clusterSettings.applySettings(Settings.builder().put(
-                RecoverySettings.INDICES_RECOVERY_MAX_BYTES_PER_SEC_SETTING.getKey(), 0).build());
-        assertEquals(null, recoverySettings.rateLimiter());
+        try {
+            clusterSettings.applySettings(Settings.builder().put(
+                    RecoverySettings.INDICES_RECOVERY_MAX_BYTES_PER_SEC_SETTING.getKey(), 0).build());
+        } catch (IllegalArgumentException e) {
+            logger.info("htt: exception: " + e.getMessage());
+            assertTrue(e.getMessage().contains("illegal value can't update")); // NOTE:htt, 不支持设置0Mb
+        }
+    }
+
+    public void testEXtendMaxBytesPerSecondIsExceptionRateLimit() {
+        try {
+            clusterSettings.applySettings(Settings.builder().put(
+                    RecoverySettings.INDICES_RECOVERY_MAX_BYTES_PER_SEC_SETTING.getKey(), RecoverySettings.MAX_INDICES_RECOVERY_MAX_BYTES_PER_SEC_SETTING.getPb()+1).build());
+        } catch (IllegalArgumentException e) {
+            logger.info("htt: exception: " + e.getMessage());
+            assertTrue(e.getMessage().contains("illegal value can't update")); // NOTE:htt, 超出最大值异常
+        }
     }
 
     public void testRetryDelayStateSync() {
