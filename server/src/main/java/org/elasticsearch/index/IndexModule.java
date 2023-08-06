@@ -292,11 +292,12 @@ public final class IndexModule {
         return false;
     }
 
-    public enum Type {
+    public enum Type { // NOTE:htt, 文件类型
         NIOFS,
         MMAPFS,
         SIMPLEFS,
-        FS;
+        FS,
+        HYBRIDFS; // NOTE:htt, hybrids类型
 
         public String getSettingsKey() {
             return this.name().toLowerCase(Locale.ROOT);

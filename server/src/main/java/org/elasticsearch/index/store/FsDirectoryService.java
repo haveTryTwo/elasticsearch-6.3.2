@@ -19,9 +19,15 @@
 
 package org.elasticsearch.index.store;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Function;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.FileSwitchDirectory;
+import org.apache.lucene.store.IOContext;
+import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.LockFactory;
 import org.apache.lucene.store.MMapDirectory;
 import org.apache.lucene.store.NIOFSDirectory;
@@ -31,6 +37,7 @@ import org.apache.lucene.store.SimpleFSLockFactory;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Setting.Property;
+import org.elasticsearch.core.internal.io.IOUtils;
 import org.elasticsearch.index.IndexModule;
 import org.elasticsearch.index.IndexSettings;
 import org.elasticsearch.index.shard.ShardPath;
@@ -54,7 +61,10 @@ public class FsDirectoryService extends DirectoryService {
                 throw new IllegalArgumentException("unrecognized [index.store.fs.fs_lock] \"" + s + "\": must be native or simple");
         } // can we set on both - node and index level, some nodes might be running on NFS so they might need simple rather than native
     }, Property.IndexScope, Property.NodeScope);
-
+    public static final List<String> DEFAULT_HYBRID_EXTENSIONS = Collections.unmodifiableList(Arrays.asList("cfs"));
+    public static final Setting<List<String>> INDEX_STORE_HYBRID_EXTENSIONS =
+            Setting.listSetting("index.store.hybrid.extensions", DEFAULT_HYBRID_EXTENSIONS, Function.identity(),
+                    Property.IndexScope, Property.NodeScope);
     private final ShardPath path;
 
     @Inject
@@ -79,7 +89,15 @@ public class FsDirectoryService extends DirectoryService {
     protected Directory newFSDirectory(Path location, LockFactory lockFactory) throws IOException {
         final String storeType = indexSettings.getSettings().get(IndexModule.INDEX_STORE_TYPE_SETTING.getKey(),
             IndexModule.Type.FS.getSettingsKey());
-        if (IndexModule.Type.FS.match(storeType)) {
+
+        if (IndexModule.Type.HYBRIDFS.match(storeType)) {
+            final FSDirectory primaryDirectory = FSDirectory.open(location, lockFactory);
+            if (primaryDirectory instanceof MMapDirectory) { // NOTE:htt, 如果支持mmap读取文件，则采用hybrid方式
+                return new HybridDirectory(location, lockFactory, primaryDirectory,indexSettings);
+            } else {
+                return primaryDirectory;
+            }
+        } else if (IndexModule.Type.FS.match(storeType)) {
             return FSDirectory.open(location, lockFactory); // use lucene defaults
         } else if (IndexModule.Type.SIMPLEFS.match(storeType)) {
             return new SimpleFSDirectory(location, lockFactory);
@@ -111,5 +129,51 @@ public class FsDirectoryService extends DirectoryService {
             };
         }
         return directory;
+    }
+
+    public static class HybridDirectory extends NIOFSDirectory {
+        private final FSDirectory randomAccessDirectory;
+        protected final Set<String> hybridExtensions;
+        HybridDirectory(Path location, LockFactory lockFactory, FSDirectory randomAccessDirectory) throws IOException {
+            super(location, lockFactory);
+            this.randomAccessDirectory = randomAccessDirectory;
+            hybridExtensions = new HashSet<>(DEFAULT_HYBRID_EXTENSIONS);
+        }
+        HybridDirectory(Path location, LockFactory lockFactory, FSDirectory randomAccessDirectory, IndexSettings indexSettings) throws IOException {
+            super(location, lockFactory);
+            this.randomAccessDirectory = randomAccessDirectory;
+            hybridExtensions = new HashSet<>(indexSettings.getValue(INDEX_STORE_HYBRID_EXTENSIONS));
+        }
+        public Set<String> getHybridExtensions() {
+            return hybridExtensions;
+        }
+
+        @Override
+        public IndexInput openInput(String name, IOContext context) throws IOException {
+            String extension = FileSwitchDirectory.getExtension(name);
+            // We are mmapping norms, docvalues as well as term dictionaries, all other files are served through NIOFS
+            // this provides good random access performance and does not lead to page cache thrashing.
+            if (hybridExtensions.contains(extension)) {
+                // we need to do these checks on the outer directory since the inner doesn't know about pending deletes
+                ensureOpen();
+                ensureCanRead(name);
+                // we only use the mmap to open inputs. Everything else is managed by the NIOFSDirectory otherwise
+                // we might run into trouble with files that are pendingDelete in one directory but still
+                // listed in listAll() from the other. We on the other hand don't want to list files from both dirs
+                // and intersect for perf reasons.
+                return randomAccessDirectory.openInput(name, context);
+            } else {
+                return super.openInput(name, context);
+            }
+        }
+
+        @Override
+        public void close() throws IOException {
+            IOUtils.close(super::close, randomAccessDirectory);
+        }
+
+        Directory getRandomAccessDirectory() {
+            return randomAccessDirectory;
+        }
     }
 }

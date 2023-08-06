@@ -29,18 +29,18 @@ import org.elasticsearch.common.settings.Settings;
 import java.io.IOException;
 import java.util.Objects;
 
-public class ClusterName implements Writeable {
+public class ClusterName implements Writeable { // NOTE:htt, 集群名称
 
     public static final Setting<ClusterName> CLUSTER_NAME_SETTING = new Setting<>("cluster.name", "elasticsearch", (s) -> {
         if (s.isEmpty()) {
             throw new IllegalArgumentException("[cluster.name] must not be empty");
         }
-        return new ClusterName(s);
+        return new ClusterName(s); // NOTE:htt, 集群name
     }, Setting.Property.NodeScope);
 
-    public static final ClusterName DEFAULT = CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY);
+    public static final ClusterName DEFAULT = CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY); // NOTE:htt, 空集群名称
 
-    private final String value;
+    private final String value; // NOTE:htt, 集群名称
 
     public ClusterName(StreamInput input) throws IOException {
         this(input.readString());

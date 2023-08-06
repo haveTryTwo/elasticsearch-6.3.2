@@ -155,6 +155,7 @@ public final class IndexScopedSettings extends AbstractScopedSettings {
         EngineConfig.INDEX_OPTIMIZE_AUTO_GENERATED_IDS,
         IndexMetaData.SETTING_WAIT_FOR_ACTIVE_SHARDS,
         IndexSettings.CFS_SETTINGS,
+        FsDirectoryService.INDEX_STORE_HYBRID_EXTENSIONS,
         // validate that built-in similarities don't get redefined
         Setting.groupSetting("index.similarity.", (s) -> {
             Map<String, Settings> groups = s.getAsGroups();
