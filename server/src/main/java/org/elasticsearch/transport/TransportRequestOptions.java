@@ -21,11 +21,11 @@ package org.elasticsearch.transport;
 
 import org.elasticsearch.common.unit.TimeValue;
 
-public class TransportRequestOptions {
+public class TransportRequestOptions { // NOTE:htt, transport请求option
 
-    private final TimeValue timeout;
-    private final boolean compress;
-    private final Type type;
+    private final TimeValue timeout; // NOTE:htt, 超时
+    private final boolean compress; // NOTE:htt, 是否压缩
+    private final Type type; // NOTE:htt, 请求type
 
     private TransportRequestOptions(TimeValue timeout, boolean compress, Type type) {
         this.timeout = timeout;

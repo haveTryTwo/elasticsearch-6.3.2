@@ -81,9 +81,25 @@ public class IndexStoreTests extends ESTestCase {
                         assertTrue(directory.toString(), directory instanceof NIOFSDirectory);
                     }
                     break;
+                case HYBRIDFS:
+                    assertHybridDirectory(directory);
+                    break;
                 default:
                     fail();
             }
+        }
+    }
+
+    private void assertHybridDirectory(Directory directory) {
+        assertTrue(directory.toString(), directory instanceof FsDirectoryService.HybridDirectory);
+        Directory randomAccessDirectory = ((FsDirectoryService.HybridDirectory) directory).getRandomAccessDirectory();
+
+        if (Constants.JRE_IS_64BIT && MMapDirectory.UNMAP_SUPPORTED) {
+            assertTrue("randomAccessDirectory:  " +  randomAccessDirectory.toString(), randomAccessDirectory instanceof MMapDirectory);
+        } else if (Constants.WINDOWS) {
+            assertTrue("randomAccessDirectory:  " +  randomAccessDirectory.toString(), randomAccessDirectory instanceof SimpleFSDirectory);
+        } else {
+            assertTrue("randomAccessDirectory:  " +  randomAccessDirectory.toString(), randomAccessDirectory instanceof NIOFSDirectory);
         }
     }
 
