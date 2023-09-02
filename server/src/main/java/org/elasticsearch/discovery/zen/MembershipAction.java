@@ -44,27 +44,27 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
-public class MembershipAction extends AbstractComponent {
+public class MembershipAction extends AbstractComponent { // NOTE:htt, 处理节点加入、验证、离开请求
 
     public static final String DISCOVERY_JOIN_ACTION_NAME = "internal:discovery/zen/join";
     public static final String DISCOVERY_JOIN_VALIDATE_ACTION_NAME = "internal:discovery/zen/join/validate";
     public static final String DISCOVERY_LEAVE_ACTION_NAME = "internal:discovery/zen/leave";
 
-    public interface JoinCallback {
+    public interface JoinCallback { // NOTE:htt, 加入callback
         void onSuccess();
 
         void onFailure(Exception e);
     }
 
-    public interface MembershipListener {
+    public interface MembershipListener { // NOTE:htt, 成员加入或离开监听
         void onJoin(DiscoveryNode node, JoinCallback callback);
 
         void onLeave(DiscoveryNode node);
     }
 
-    private final TransportService transportService;
+    private final TransportService transportService; // NOTE: htt, 建立tcp连接并发送请求到对应节点
 
-    private final MembershipListener listener;
+    private final MembershipListener listener; // NOTE:htt, 成员加入或离开监听
 
     public MembershipAction(Settings settings, TransportService transportService, MembershipListener listener,
                             Collection<BiConsumer<DiscoveryNode,ClusterState>> joinValidators) {
@@ -82,17 +82,17 @@ public class MembershipAction extends AbstractComponent {
             ThreadPool.Names.GENERIC, new LeaveRequestRequestHandler());
     }
 
-    public void sendLeaveRequest(DiscoveryNode masterNode, DiscoveryNode node) {
+    public void sendLeaveRequest(DiscoveryNode masterNode, DiscoveryNode node) { // NOTE:htt, master节点发送离开请求给node
         transportService.sendRequest(node, DISCOVERY_LEAVE_ACTION_NAME, new LeaveRequest(masterNode),
             EmptyTransportResponseHandler.INSTANCE_SAME);
     }
 
-    public void sendLeaveRequestBlocking(DiscoveryNode masterNode, DiscoveryNode node, TimeValue timeout) {
+    public void sendLeaveRequestBlocking(DiscoveryNode masterNode, DiscoveryNode node, TimeValue timeout) { // NOTE:htt, node节点发送离开请求给mater节点，并在超时时间范围内等待
         transportService.submitRequest(masterNode, DISCOVERY_LEAVE_ACTION_NAME, new LeaveRequest(node),
             EmptyTransportResponseHandler.INSTANCE_SAME).txGet(timeout.millis(), TimeUnit.MILLISECONDS);
     }
 
-    public void sendJoinRequestBlocking(DiscoveryNode masterNode, DiscoveryNode node, TimeValue timeout) {
+    public void sendJoinRequestBlocking(DiscoveryNode masterNode, DiscoveryNode node, TimeValue timeout) { // NOTE:htt, node节点发送加入请求给mater节点，并在超时时间范围内等待
         transportService.submitRequest(masterNode, DISCOVERY_JOIN_ACTION_NAME, new JoinRequest(node),
             EmptyTransportResponseHandler.INSTANCE_SAME).txGet(timeout.millis(), TimeUnit.MILLISECONDS);
     }
@@ -100,14 +100,14 @@ public class MembershipAction extends AbstractComponent {
     /**
      * Validates the join request, throwing a failure if it failed.
      */
-    public void sendValidateJoinRequestBlocking(DiscoveryNode node, ClusterState state, TimeValue timeout) {
+    public void sendValidateJoinRequestBlocking(DiscoveryNode node, ClusterState state, TimeValue timeout) { // NOTE:htt, 发送验证请求给node节点，并在超时时间范围内等待
         transportService.submitRequest(node, DISCOVERY_JOIN_VALIDATE_ACTION_NAME, new ValidateJoinRequest(state),
             EmptyTransportResponseHandler.INSTANCE_SAME).txGet(timeout.millis(), TimeUnit.MILLISECONDS);
     }
 
-    public static class JoinRequest extends TransportRequest {
+    public static class JoinRequest extends TransportRequest { // NOTE: htt, join request including node
 
-        DiscoveryNode node;
+        DiscoveryNode node; //  NOTE: htt, local node which would try to jion master
 
         public JoinRequest() {
         }
@@ -130,7 +130,7 @@ public class MembershipAction extends AbstractComponent {
     }
 
 
-    private class JoinRequestRequestHandler implements TransportRequestHandler<JoinRequest> {
+    private class JoinRequestRequestHandler implements TransportRequestHandler<JoinRequest> { // NOTE:htt, 处理节点加入请求
 
         @Override
         public void messageReceived(final JoinRequest request, final TransportChannel channel) throws Exception {
@@ -138,7 +138,7 @@ public class MembershipAction extends AbstractComponent {
                 @Override
                 public void onSuccess() {
                     try {
-                        channel.sendResponse(TransportResponse.Empty.INSTANCE);
+                        channel.sendResponse(TransportResponse.Empty.INSTANCE); // NOTE:htt, 加入成功则回包
                     } catch (Exception e) {
                         onFailure(e);
                     }
@@ -147,7 +147,7 @@ public class MembershipAction extends AbstractComponent {
                 @Override
                 public void onFailure(Exception e) {
                     try {
-                        channel.sendResponse(e);
+                        channel.sendResponse(e); // NOTE:htt, 否则会异常包
                     } catch (Exception inner) {
                         inner.addSuppressed(e);
                         logger.warn("failed to send back failure on join request", inner);
@@ -157,8 +157,8 @@ public class MembershipAction extends AbstractComponent {
         }
     }
 
-    static class ValidateJoinRequest extends TransportRequest {
-        private ClusterState state;
+    static class ValidateJoinRequest extends TransportRequest { // NOTE:htt, 验证加入请求
+        private ClusterState state; // NOTE:htt, 集群状态
 
         ValidateJoinRequest() {}
 
@@ -179,8 +179,8 @@ public class MembershipAction extends AbstractComponent {
         }
     }
 
-    static class ValidateJoinRequestRequestHandler implements TransportRequestHandler<ValidateJoinRequest> {
-        private final Supplier<DiscoveryNode> localNodeSupplier;
+    static class ValidateJoinRequestRequestHandler implements TransportRequestHandler<ValidateJoinRequest> { // NOTE:htt, 验证节点加入请求
+        private final Supplier<DiscoveryNode> localNodeSupplier; // NOTE:htt, 本地节点
         private final Collection<BiConsumer<DiscoveryNode, ClusterState>> joinValidators;
 
         ValidateJoinRequestRequestHandler(Supplier<DiscoveryNode> localNodeSupplier,
@@ -193,8 +193,8 @@ public class MembershipAction extends AbstractComponent {
         public void messageReceived(ValidateJoinRequest request, TransportChannel channel) throws Exception {
             DiscoveryNode node = localNodeSupplier.get();
             assert node != null : "local node is null";
-            joinValidators.stream().forEach(action -> action.accept(node, request.state));
-            channel.sendResponse(TransportResponse.Empty.INSTANCE);
+            joinValidators.stream().forEach(action -> action.accept(node, request.state)); // NOTE:htt, 验证节点以及对应的集群状态
+            channel.sendResponse(TransportResponse.Empty.INSTANCE); // NOTE:htt, 成功后正常回包
         }
     }
 
@@ -254,9 +254,9 @@ public class MembershipAction extends AbstractComponent {
         }
     }
 
-    public static class LeaveRequest extends TransportRequest {
+    public static class LeaveRequest extends TransportRequest { // NOTE:htt, 节点离开请求
 
-        private DiscoveryNode node;
+        private DiscoveryNode node; // NOTE:htt, 离开节点
 
         public LeaveRequest() {
         }
@@ -278,12 +278,12 @@ public class MembershipAction extends AbstractComponent {
         }
     }
 
-    private class LeaveRequestRequestHandler implements TransportRequestHandler<LeaveRequest> {
+    private class LeaveRequestRequestHandler implements TransportRequestHandler<LeaveRequest> { // NOTE:htt, 节点离开请求处理
 
         @Override
         public void messageReceived(LeaveRequest request, TransportChannel channel) throws Exception {
-            listener.onLeave(request.node);
-            channel.sendResponse(TransportResponse.Empty.INSTANCE);
+            listener.onLeave(request.node); // NOTE:htt, 处理节点离开请求
+            channel.sendResponse(TransportResponse.Empty.INSTANCE); // NOTE:htt, 处理成功后回包
         }
     }
 }

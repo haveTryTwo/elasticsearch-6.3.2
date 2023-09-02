@@ -50,7 +50,7 @@ import java.util.Set;
 
 public class FsDirectoryService extends DirectoryService {
 
-    protected final IndexStore indexStore;
+    protected final IndexStore indexStore; // NOTE:htt, indexStore的机制
     public static final Setting<LockFactory> INDEX_LOCK_FACTOR_SETTING = new Setting<>("index.store.fs.fs_lock", "native", (s) -> {
         switch (s) {
             case "native":
@@ -61,7 +61,7 @@ public class FsDirectoryService extends DirectoryService {
                 throw new IllegalArgumentException("unrecognized [index.store.fs.fs_lock] \"" + s + "\": must be native or simple");
         } // can we set on both - node and index level, some nodes might be running on NFS so they might need simple rather than native
     }, Property.IndexScope, Property.NodeScope);
-    public static final List<String> DEFAULT_HYBRID_EXTENSIONS = Collections.unmodifiableList(Arrays.asList("cfs"));
+    public static final List<String> DEFAULT_HYBRID_EXTENSIONS = Collections.unmodifiableList(Arrays.asList("cfs")); // NOTE:htt, 默认的extensions
     public static final Setting<List<String>> INDEX_STORE_HYBRID_EXTENSIONS =
             Setting.listSetting("index.store.hybrid.extensions", DEFAULT_HYBRID_EXTENSIONS, Function.identity(),
                     Property.IndexScope, Property.NodeScope);
@@ -131,9 +131,9 @@ public class FsDirectoryService extends DirectoryService {
         return directory;
     }
 
-    public static class HybridDirectory extends NIOFSDirectory {
+    public static class HybridDirectory extends NIOFSDirectory { // NOTE:htt, HybridDirectory支持
         private final FSDirectory randomAccessDirectory;
-        protected final Set<String> hybridExtensions;
+        protected final Set<String> hybridExtensions; // NOTE:htt, hybrids支持的拓展文件
         HybridDirectory(Path location, LockFactory lockFactory, FSDirectory randomAccessDirectory) throws IOException {
             super(location, lockFactory);
             this.randomAccessDirectory = randomAccessDirectory;
