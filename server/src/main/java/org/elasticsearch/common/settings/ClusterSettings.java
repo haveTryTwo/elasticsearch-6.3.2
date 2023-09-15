@@ -428,6 +428,7 @@ public final class ClusterSettings extends AbstractScopedSettings {
                     IndexGraveyard.SETTING_MAX_TOMBSTONES,
                     EnableAssignmentDecider.CLUSTER_TASKS_ALLOCATION_ENABLE_SETTING,
                     SearchSettings.SEARCH_RPC_TIMEOUT,
-                    IndicesService.BULK_RPC_TIMEOUT
+                    IndicesService.BULK_RPC_TIMEOUT,
+                    IndicesService.GET_RPC_TIMEOUT
             )));
 }

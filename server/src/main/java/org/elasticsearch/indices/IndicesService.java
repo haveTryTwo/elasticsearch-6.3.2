@@ -150,6 +150,9 @@ public class IndicesService extends AbstractLifecycleComponent
         Setting.positiveTimeSetting("indices.cache.cleanup_interval", TimeValue.timeValueMinutes(1), Property.NodeScope);
     public static final Setting<TimeValue> BULK_RPC_TIMEOUT =
             Setting.timeSetting("indices.bulk.rpc_timeout", TimeValue.timeValueSeconds(30), Property.Dynamic, Property.NodeScope); // NOTE:htt, 写入超时时间，默认30s
+    public static final Setting<TimeValue> GET_RPC_TIMEOUT =
+            Setting.positiveTimeSetting("get.rpc.timeout", TimeValue.timeValueSeconds(10),
+                    Property.Dynamic, Property.NodeScope); // NOTE:htt, 默认get rpc超时时间为10s
     private final PluginsService pluginsService;
     private final NodeEnvironment nodeEnv;
     private final NamedXContentRegistry xContentRegistry;
@@ -176,6 +179,8 @@ public class IndicesService extends AbstractLifecycleComponent
     private final IndicesQueryCache indicesQueryCache;
     private final MetaStateService metaStateService;
     private TimeValue blukRpcTimeout; // NOTE:htt, bulk rpc调用的超时时间, 0代表一直等待
+
+    private TimeValue getRpcTimeout; // NOTE:htt, get rpc调用的超时时间, 0代表一直等待
 
     @Override
     protected void doStart() {
@@ -223,10 +228,19 @@ public class IndicesService extends AbstractLifecycleComponent
         clusterService.getClusterSettings().addSettingsUpdateConsumer(BULK_RPC_TIMEOUT, value -> {
             blukRpcTimeout = value;
         });
+
+        this.getRpcTimeout = GET_RPC_TIMEOUT.get(settings);
+        clusterService.getClusterSettings().addSettingsUpdateConsumer(GET_RPC_TIMEOUT, value -> {
+            getRpcTimeout = value;
+        });
     }
 
     public TimeValue getBulkRpcTimeout() {
         return blukRpcTimeout;
+    }
+
+    public TimeValue getGetRpcTimeout() {
+        return getRpcTimeout;
     }
 
     @Override

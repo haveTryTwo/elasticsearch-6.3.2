@@ -23,6 +23,7 @@ import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.action.NoShardAvailableActionException;
+import org.elasticsearch.action.get.GetAction;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.TransportAction;
 import org.elasticsearch.action.support.TransportActions;
@@ -38,11 +39,13 @@ import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.logging.LoggerMessageFormat;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportChannel;
 import org.elasticsearch.transport.TransportException;
 import org.elasticsearch.transport.TransportRequestHandler;
+import org.elasticsearch.transport.TransportRequestOptions;
 import org.elasticsearch.transport.TransportResponseHandler;
 import org.elasticsearch.transport.TransportService;
 
@@ -101,8 +104,8 @@ public abstract class TransportSingleShardAction<Request extends SingleShardRequ
 
     protected abstract boolean resolveIndex(Request request);
 
-    protected ClusterBlockException checkGlobalBlock(ClusterState state) {
-        return state.blocks().globalBlockedException(ClusterBlockLevel.READ);
+    protected ClusterBlockException checkGlobalBlock(ClusterState state) { // NOTE: htt, 获得集群级别 读阻塞异常
+        return state.blocks().globalBlockedException(ClusterBlockLevel.READ); // NOTE:htt, 集群级别读阻塞异常
     }
 
     protected ClusterBlockException checkRequestBlock(ClusterState state, InternalRequest request) {
@@ -119,6 +122,11 @@ public abstract class TransportSingleShardAction<Request extends SingleShardRequ
      */
     @Nullable
     protected abstract ShardsIterator shards(ClusterState state, InternalRequest request);
+
+    public TransportRequestOptions getRequestOptions() { // NOTE:htt, 获取请求的超时时间，默认为空
+        TransportRequestOptions options = TransportRequestOptions.EMPTY;
+        return options;
+    }
 
     class AsyncSingleAction {
 
@@ -161,7 +169,7 @@ public abstract class TransportSingleShardAction<Request extends SingleShardRequ
         public void start() {
             if (shardIt == null) {
                 // just execute it on the local node
-                transportService.sendRequest(clusterService.localNode(), transportShardAction, internalRequest.request(), new TransportResponseHandler<Response>() {
+                transportService.sendRequest(clusterService.localNode(), transportShardAction, internalRequest.request(), getRequestOptions(), new TransportResponseHandler<Response>() { // NOTE:htt, 支持超时时间
                     @Override
                     public Response newInstance() {
                         return newResponse();

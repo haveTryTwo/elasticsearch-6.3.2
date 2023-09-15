@@ -30,12 +30,14 @@ import org.elasticsearch.cluster.routing.ShardIterator;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.IndexService;
 import org.elasticsearch.index.get.GetResult;
 import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.indices.IndicesService;
 import org.elasticsearch.threadpool.ThreadPool;
+import org.elasticsearch.transport.TransportRequestOptions;
 import org.elasticsearch.transport.TransportService;
 
 /**
@@ -52,6 +54,17 @@ public class TransportGetAction extends TransportSingleShardAction<GetRequest, G
         super(settings, GetAction.NAME, threadPool, clusterService, transportService, actionFilters, indexNameExpressionResolver,
                 GetRequest::new, ThreadPool.Names.GET);
         this.indicesService = indicesService;
+    }
+
+    @Override
+    public TransportRequestOptions getRequestOptions() { // NOTE:htt, 获取get请求的超时时间
+        TransportRequestOptions options = TransportRequestOptions.EMPTY;
+        TimeValue getTimeOut = indicesService.getGetRpcTimeout();
+        if (getTimeOut != null && !getTimeOut.equals(TimeValue.ZERO)) { // NOTE:htt, get rpc超时时间有效则进行设置
+            options = TransportRequestOptions.builder().withTimeout(getTimeOut).build();
+        }
+
+        return options;
     }
 
     @Override
