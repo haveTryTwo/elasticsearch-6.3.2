@@ -707,8 +707,8 @@ public final class XContentBuilder implements Closeable, Flushable {
     // typed methods over this.
     //////////////////////////////////
 
-    public XContentBuilder field(String name, Object value) throws IOException {
-        return field(name).value(value);
+    public XContentBuilder field(String name, Object value) throws IOException { // NOTE:htt, 添加key->value
+        return field(name).value(value); // NOTE:htt, 添加key->value
     }
 
     public XContentBuilder array(String name, Object... values) throws IOException {

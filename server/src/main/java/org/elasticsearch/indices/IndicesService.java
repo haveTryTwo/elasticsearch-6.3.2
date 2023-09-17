@@ -151,7 +151,7 @@ public class IndicesService extends AbstractLifecycleComponent
     public static final Setting<TimeValue> BULK_RPC_TIMEOUT =
             Setting.timeSetting("indices.bulk.rpc_timeout", TimeValue.timeValueSeconds(30), Property.Dynamic, Property.NodeScope); // NOTE:htt, 写入超时时间，默认30s
     public static final Setting<TimeValue> GET_RPC_TIMEOUT =
-            Setting.positiveTimeSetting("get.rpc.timeout", TimeValue.timeValueSeconds(10),
+            Setting.positiveTimeSetting("indices.get.rpc_timeout", TimeValue.timeValueSeconds(10),
                     Property.Dynamic, Property.NodeScope); // NOTE:htt, 默认get rpc超时时间为10s
     private final PluginsService pluginsService;
     private final NodeEnvironment nodeEnv;
