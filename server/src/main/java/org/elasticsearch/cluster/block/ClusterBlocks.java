@@ -48,14 +48,14 @@ import static java.util.stream.Stream.concat;
 /**
  * Represents current cluster level blocks to block dirty operations done against the cluster.
  */
-public class ClusterBlocks extends AbstractDiffable<ClusterBlocks> {
+public class ClusterBlocks extends AbstractDiffable<ClusterBlocks> { // NOTE: htt,集群阻塞，包括全局以及索引block, cluster blocks including global and indices blocks
     public static final ClusterBlocks EMPTY_CLUSTER_BLOCK = new ClusterBlocks(emptySet(), ImmutableOpenMap.of());
 
-    private final Set<ClusterBlock> global;
+    private final Set<ClusterBlock> global; // NOTE: htt, global block
 
-    private final ImmutableOpenMap<String, Set<ClusterBlock>> indicesBlocks;
+    private final ImmutableOpenMap<String, Set<ClusterBlock>> indicesBlocks; // NOTE: htt, 索引对应的indices block
 
-    private final EnumMap<ClusterBlockLevel, ImmutableLevelHolder> levelHolders;
+    private final EnumMap<ClusterBlockLevel, ImmutableLevelHolder> levelHolders; // NOTE: htt, 记录 block level(read/write) 对应的 ClusterBlock(包括 global级以及indices级)
 
     ClusterBlocks(Set<ClusterBlock> global, ImmutableOpenMap<String, Set<ClusterBlock>> indicesBlocks) {
         this.global = global;
@@ -71,7 +71,7 @@ public class ClusterBlocks extends AbstractDiffable<ClusterBlocks> {
         return indicesBlocks;
     }
 
-    public Set<ClusterBlock> global(ClusterBlockLevel level) {
+    public Set<ClusterBlock> global(ClusterBlockLevel level) { // NOTE: htt, 获取集群级别的阻塞
         return levelHolders.get(level).global();
     }
 
@@ -79,7 +79,7 @@ public class ClusterBlocks extends AbstractDiffable<ClusterBlocks> {
         return levelHolders.get(level).indices();
     }
 
-    private Set<ClusterBlock> blocksForIndex(ClusterBlockLevel level, String index) {
+    private Set<ClusterBlock> blocksForIndex(ClusterBlockLevel level, String index) { // NOTE: htt, 获取指定索引的阻塞信息
         return indices(level).getOrDefault(index, emptySet());
     }
 
@@ -106,7 +106,7 @@ public class ClusterBlocks extends AbstractDiffable<ClusterBlocks> {
     /**
      * Returns <tt>true</tt> if one of the global blocks as its disable state persistence flag set.
      */
-    public boolean disableStatePersistence() {
+    public boolean disableStatePersistence() { // NOTE: htt, 全局block，禁止state持久化
         for (ClusterBlock clusterBlock : global) {
             if (clusterBlock.disableStatePersistence()) {
                 return true;
@@ -155,11 +155,11 @@ public class ClusterBlocks extends AbstractDiffable<ClusterBlocks> {
         }
     }
 
-    private boolean globalBlocked(ClusterBlockLevel level) {
+    private boolean globalBlocked(ClusterBlockLevel level) { // NOTE: htt, 集群级别是否阻塞
         return global(level).isEmpty() == false;
     }
 
-    public ClusterBlockException globalBlockedException(ClusterBlockLevel level) {
+    public ClusterBlockException globalBlockedException(ClusterBlockLevel level) { // NOTE: htt, 获得集群级别阻塞异常
         if (globalBlocked(level) == false) {
             return null;
         }
@@ -173,8 +173,8 @@ public class ClusterBlocks extends AbstractDiffable<ClusterBlocks> {
         }
     }
 
-    public ClusterBlockException indexBlockedException(ClusterBlockLevel level, String index) {
-        if (!indexBlocked(level, index)) {
+    public ClusterBlockException indexBlockedException(ClusterBlockLevel level, String index) { // NOTE: htt, 获取索引级别是否阻塞，包括集群级别阻塞 和 索引级别阻塞
+        if (!indexBlocked(level, index)) { // NOTE: htt, 判断索引级别是否阻塞，先判断集群级别阻塞，如果没有再判断索引级别阻塞
             return null;
         }
         Stream<ClusterBlock> blocks = concat(
@@ -183,7 +183,7 @@ public class ClusterBlocks extends AbstractDiffable<ClusterBlocks> {
         return new ClusterBlockException(unmodifiableSet(blocks.collect(toSet())));
     }
 
-    public boolean indexBlocked(ClusterBlockLevel level, String index) {
+    public boolean indexBlocked(ClusterBlockLevel level, String index) { // NOTE: htt, 判断索引级别是否阻塞，先判断集群级别阻塞，如果没有再判断索引级别阻塞
         return globalBlocked(level) || blocksForIndex(level, index).isEmpty() == false;
     }
 
@@ -264,7 +264,7 @@ public class ClusterBlocks extends AbstractDiffable<ClusterBlocks> {
         }
     }
 
-    public ClusterBlocks(StreamInput in) throws IOException {
+    public ClusterBlocks(StreamInput in) throws IOException { // NOTE:htt, 读取集群和索引拦截信息 blocks
         Set<ClusterBlock> global = readBlockSet(in);
         int size = in.readVInt();
         ImmutableOpenMap.Builder<String, Set<ClusterBlock>> indicesBuilder = ImmutableOpenMap.builder(size);
@@ -276,7 +276,7 @@ public class ClusterBlocks extends AbstractDiffable<ClusterBlocks> {
         levelHolders = generateLevelHolders(global, indicesBlocks);
     }
 
-    private static Set<ClusterBlock> readBlockSet(StreamInput in) throws IOException {
+    private static Set<ClusterBlock> readBlockSet(StreamInput in) throws IOException { // NOTE:htt, 读取集群或某个索引拦截信息
         int totalBlocks = in.readVInt();
         Set<ClusterBlock> blocks = new HashSet<>(totalBlocks);
         for (int i = 0; i < totalBlocks;i++) {
@@ -289,10 +289,10 @@ public class ClusterBlocks extends AbstractDiffable<ClusterBlocks> {
         return AbstractDiffable.readDiffFrom(ClusterBlocks::new, in);
     }
 
-    static class ImmutableLevelHolder {
+    static class ImmutableLevelHolder { // NOTE: htt, 集群和索引级别的阻塞
 
-        private final Set<ClusterBlock> global;
-        private final ImmutableOpenMap<String, Set<ClusterBlock>> indices;
+        private final Set<ClusterBlock> global; // NOTE: htt, 集群级别的阻塞, global level block
+        private final ImmutableOpenMap<String, Set<ClusterBlock>> indices; // NOTE: htt, 索引级别的阻塞, indices block，indices -> set<ClusterBlock>
 
         ImmutableLevelHolder(Set<ClusterBlock> global, ImmutableOpenMap<String, Set<ClusterBlock>> indices) {
             this.global = global;
@@ -312,11 +312,11 @@ public class ClusterBlocks extends AbstractDiffable<ClusterBlocks> {
         return new Builder();
     }
 
-    public static class Builder {
+    public static class Builder { // NOTE: htt, create clusterBlocks including global/indices blocks
 
         private Set<ClusterBlock> global = new HashSet<>();
 
-        private Map<String, Set<ClusterBlock>> indices = new HashMap<>();
+        private Map<String, Set<ClusterBlock>> indices = new HashMap<>(); // NOTE:htt, 索引对应的block
 
         public Builder() {
         }
@@ -332,30 +332,30 @@ public class ClusterBlocks extends AbstractDiffable<ClusterBlocks> {
             return this;
         }
 
-        public Builder addBlocks(IndexMetaData indexMetaData) {
+        public Builder addBlocks(IndexMetaData indexMetaData) { // NOTE: htt, 针对索引添加相应的阻塞判断, add indexBlock
             String indexName = indexMetaData.getIndex().getName();
             if (indexMetaData.getState() == IndexMetaData.State.CLOSE) {
                 addIndexBlock(indexName, MetaDataIndexStateService.INDEX_CLOSED_BLOCK);
             }
-            if (IndexMetaData.INDEX_READ_ONLY_SETTING.get(indexMetaData.getSettings())) {
+            if (IndexMetaData.INDEX_READ_ONLY_SETTING.get(indexMetaData.getSettings())) { // NOTE:htt, 针对索引添加只读
                 addIndexBlock(indexName, IndexMetaData.INDEX_READ_ONLY_BLOCK);
             }
-            if (IndexMetaData.INDEX_BLOCKS_READ_SETTING.get(indexMetaData.getSettings())) {
+            if (IndexMetaData.INDEX_BLOCKS_READ_SETTING.get(indexMetaData.getSettings())) { // NOTE:htt, 针对索引添加 读阻塞
                 addIndexBlock(indexName, IndexMetaData.INDEX_READ_BLOCK);
             }
-            if (IndexMetaData.INDEX_BLOCKS_WRITE_SETTING.get(indexMetaData.getSettings())) {
+            if (IndexMetaData.INDEX_BLOCKS_WRITE_SETTING.get(indexMetaData.getSettings())) { // NOTE:htt, 针对索引添加 写阻塞
                 addIndexBlock(indexName, IndexMetaData.INDEX_WRITE_BLOCK);
             }
-            if (IndexMetaData.INDEX_BLOCKS_METADATA_SETTING.get(indexMetaData.getSettings())) {
+            if (IndexMetaData.INDEX_BLOCKS_METADATA_SETTING.get(indexMetaData.getSettings())) { // NOTE:htt, 针对索引 添加元信息阻塞
                 addIndexBlock(indexName, IndexMetaData.INDEX_METADATA_BLOCK);
             }
-            if (IndexMetaData.INDEX_BLOCKS_READ_ONLY_ALLOW_DELETE_SETTING.get(indexMetaData.getSettings())) {
+            if (IndexMetaData.INDEX_BLOCKS_READ_ONLY_ALLOW_DELETE_SETTING.get(indexMetaData.getSettings())) { // NOTE:htt, 针对索引添加只读但是支持写
                 addIndexBlock(indexName, IndexMetaData.INDEX_READ_ONLY_ALLOW_DELETE_BLOCK);
             }
             return this;
         }
 
-        public Builder updateBlocks(IndexMetaData indexMetaData) {
+        public Builder updateBlocks(IndexMetaData indexMetaData) { // NOTE:htt, 更新索引的 block
             // let's remove all blocks for this index and add them back -- no need to remove all individual blocks....
             indices.remove(indexMetaData.getIndex().getName());
             return addBlocks(indexMetaData);
@@ -377,7 +377,7 @@ public class ClusterBlocks extends AbstractDiffable<ClusterBlocks> {
         }
 
 
-        public Builder addIndexBlock(String index, ClusterBlock block) {
+        public Builder addIndexBlock(String index, ClusterBlock block) { // NOTE:htt, 指定索引添加对应的block
             if (!indices.containsKey(index)) {
                 indices.put(index, new HashSet<>());
             }

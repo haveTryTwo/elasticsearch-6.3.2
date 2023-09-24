@@ -58,7 +58,7 @@ public class Netty4HttpRequest extends RestRequest {
         this.request = request;
         this.channel = channel;
         if (request.content().isReadable()) {
-            this.content = Netty4Utils.toBytesReference(request.content());
+            this.content = Netty4Utils.toBytesReference(request.content()); // NOTE:htt, 解析http请求中的content
         } else {
             this.content = BytesArray.EMPTY;
         }

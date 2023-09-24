@@ -32,17 +32,17 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.Locale;
 
-public class ClusterBlock implements Streamable, ToXContentFragment {
+public class ClusterBlock implements Streamable, ToXContentFragment { // NOTE: htt, cluster block info include id/levels/status/retryable
 
     private int id;
 
-    private String description;
+    private String description; // NOTE: htt, block description
 
     private EnumSet<ClusterBlockLevel> levels;
 
-    private boolean retryable;
+    private boolean retryable; // NOTE: htt, 阻塞是否可以重试
 
-    private boolean disableStatePersistence = false;
+    private boolean disableStatePersistence = false; // NOTE: htt, 禁止state持久化，默认为false
 
     private boolean allowReleaseResources;
 
@@ -52,7 +52,7 @@ public class ClusterBlock implements Streamable, ToXContentFragment {
     }
 
     public ClusterBlock(int id, String description, boolean retryable, boolean disableStatePersistence, boolean allowReleaseResources, RestStatus status,
-                        EnumSet<ClusterBlockLevel> levels) {
+                        EnumSet<ClusterBlockLevel> levels) { // NOTE: htt, DiscoverySettings.NO_MASTER_BLOCK_WRITES retryable is true, so
         this.id = id;
         this.description = description;
         this.retryable = retryable;

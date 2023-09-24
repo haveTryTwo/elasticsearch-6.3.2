@@ -22,7 +22,7 @@ package org.elasticsearch.cluster.block;
 
 import java.util.EnumSet;
 
-public enum ClusterBlockLevel {
+public enum ClusterBlockLevel { // NOTE: htt, 集群阻塞情况，包括 READ/WRITE/ 元数据READ/元数据WRITE, cluster block level include R/W/M_R/M_W
     READ,
     WRITE,
     METADATA_READ,

@@ -25,7 +25,7 @@ import org.elasticsearch.common.xcontent.XContent;
 /**
  * Handler for REST requests
  */
-public interface RestHandler {
+public interface RestHandler { // NOTE:htt, 执行 http restful 请求处理
 
     /**
      * Handles a rest request.
