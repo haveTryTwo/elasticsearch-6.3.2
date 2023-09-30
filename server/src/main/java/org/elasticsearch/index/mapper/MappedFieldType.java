@@ -55,19 +55,19 @@ import java.util.Objects;
 /**
  * This defines the core properties and functions to operate on a field.
  */
-public abstract class MappedFieldType extends FieldType {
+public abstract class MappedFieldType extends FieldType { // NOTE: htt, field include name,analyzer, doc values and index type
 
-    private String name;
-    private float boost;
+    private String name; // NOTE: htt, 字段名称
+    private float boost; // NOTE: htt, 权重
     // TODO: remove this docvalues flag and use docValuesType
-    private boolean docValues;
-    private NamedAnalyzer indexAnalyzer;
-    private NamedAnalyzer searchAnalyzer;
+    private boolean docValues; // NOTE: htt, 是否有列存
+    private NamedAnalyzer indexAnalyzer; // NOTE: htt, 写入分析器
+    private NamedAnalyzer searchAnalyzer; // NOTE: htt, 查询分析器
     private NamedAnalyzer searchQuoteAnalyzer;
-    private SimilarityProvider similarity;
+    private SimilarityProvider similarity; // NOTE: htt, 相关度算法
     private Object nullValue;
     private String nullValueAsString; // for sending null value to _all field
-    private boolean eagerGlobalOrdinals;
+    private boolean eagerGlobalOrdinals; // NOTE: htt, Should global ordinals be loaded eagerly on refresh? Accepts true or false (default). Enabling this is a good idea on fields that are frequently used for (significant) terms aggregations
 
     protected MappedFieldType(MappedFieldType ref) {
         super(ref);
@@ -85,10 +85,10 @@ public abstract class MappedFieldType extends FieldType {
 
     public MappedFieldType() {
         setTokenized(true);
-        setStored(false);
+        setStored(false); // NOTE:htt, 不支持行存，因为source字段已经支持行存，从source字段中取数据即可
         setStoreTermVectors(false);
         setOmitNorms(false);
-        setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
+        setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS); // NOTE: htt, 默认支持分词、频率（打分）、POSITION（支持Phrase查询）
         setBoost(1.0f);
     }
 
@@ -158,7 +158,7 @@ public abstract class MappedFieldType extends FieldType {
      * If strict is true, all properties must be equal.
      * Otherwise, only properties which must never change in an index are checked.
      */
-    public void checkCompatibility(MappedFieldType other, List<String> conflicts, boolean strict) {
+    public void checkCompatibility(MappedFieldType other, List<String> conflicts, boolean strict) { // NOTE: htt, check mapped field type
         checkTypeName(other);
 
         boolean indexed =  indexOptions() != IndexOptions.NONE;
@@ -386,7 +386,7 @@ public abstract class MappedFieldType extends FieldType {
      * An enum used to describe the relation between the range of terms in a
      * shard when compared with a query range
      */
-    public enum Relation {
+    public enum Relation { // NOTE: htt, relation
         WITHIN,
         INTERSECTS,
         DISJOINT;

@@ -40,12 +40,12 @@ import static java.util.Collections.unmodifiableMap;
  * Wrapper around everything that defines a mapping, without references to
  * utility classes like MapperService, ...
  */
-public final class Mapping implements ToXContentFragment {
+public final class Mapping implements ToXContentFragment { // NOTE: htt, wrapper mapper for an index
 
     final Version indexCreated;
-    final RootObjectMapper root;
-    final MetadataFieldMapper[] metadataMappers;
-    final Map<Class<? extends MetadataFieldMapper>, MetadataFieldMapper> metadataMappersMap;
+    final RootObjectMapper root; // NOTE: htt, user's mapping，索引的映射
+    final MetadataFieldMapper[] metadataMappers; // NOTE: htt, inner meata data mapper such as _id/_version/_type/_seq_no
+    final Map<Class<? extends MetadataFieldMapper>, MetadataFieldMapper> metadataMappersMap; // NOTE: htt, 字段及其映射
     final Map<String, Object> meta;
 
     public Mapping(Version indexCreated, RootObjectMapper rootObjectMapper, MetadataFieldMapper[] metadataMappers, Map<String, Object> meta) {
@@ -86,7 +86,7 @@ public final class Mapping implements ToXContentFragment {
     }
 
     /** @see DocumentMapper#merge(Mapping, boolean) */
-    public Mapping merge(Mapping mergeWith, boolean updateAllTypes) {
+    public Mapping merge(Mapping mergeWith, boolean updateAllTypes) { // NOTE: htt, 合并mappnig
         RootObjectMapper mergedRoot = root.merge(mergeWith.root, updateAllTypes);
         Map<Class<? extends MetadataFieldMapper>, MetadataFieldMapper> mergedMetaDataMappers = new HashMap<>(metadataMappersMap);
         for (MetadataFieldMapper metaMergeWith : mergeWith.metadataMappers) {
@@ -95,7 +95,7 @@ public final class Mapping implements ToXContentFragment {
             if (mergeInto == null) {
                 merged = metaMergeWith;
             } else {
-                merged = mergeInto.merge(metaMergeWith, updateAllTypes);
+                merged = mergeInto.merge(metaMergeWith, updateAllTypes); // NOTE: htt, 合并mapping
             }
             mergedMetaDataMappers.put(merged.getClass(), merged);
         }

@@ -24,7 +24,7 @@ import org.elasticsearch.common.io.stream.StreamInput;
 
 import java.io.IOException;
 
-public class MapperException extends ElasticsearchException {
+public class MapperException extends ElasticsearchException { // NOTE: htt, mapper exception
     public MapperException(StreamInput in) throws IOException {
         super(in);
     }

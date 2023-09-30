@@ -56,7 +56,7 @@ import java.util.Map;
  * stored, but we need to keep it so that its FieldType can be used to generate
  * queries.
  */
-public class IdFieldMapper extends MetadataFieldMapper {
+public class IdFieldMapper extends MetadataFieldMapper { // NOTE: htt, id field mapper
 
     public static final String NAME = "_id";
 
@@ -65,13 +65,13 @@ public class IdFieldMapper extends MetadataFieldMapper {
     public static class Defaults {
         public static final String NAME = IdFieldMapper.NAME;
 
-        public static final MappedFieldType FIELD_TYPE = new IdFieldType();
+        public static final MappedFieldType FIELD_TYPE = new IdFieldType(); // NOTE: htt, default no index and no doc value in lucene
         public static final MappedFieldType NESTED_FIELD_TYPE;
 
-        static {
+        static { // NOTE: htt, no set doc values which could not used as sort，_id 会设置索引以及独立的store行存, 支持索引但是不支持排序
             FIELD_TYPE.setTokenized(false);
-            FIELD_TYPE.setIndexOptions(IndexOptions.DOCS);
-            FIELD_TYPE.setStored(true);
+            FIELD_TYPE.setIndexOptions(IndexOptions.DOCS); // NOTE: htt, set index
+            FIELD_TYPE.setStored(true); // NOTE: htt, store _id
             FIELD_TYPE.setOmitNorms(true);
             FIELD_TYPE.setIndexAnalyzer(Lucene.KEYWORD_ANALYZER);
             FIELD_TYPE.setSearchAnalyzer(Lucene.KEYWORD_ANALYZER);
@@ -84,7 +84,7 @@ public class IdFieldMapper extends MetadataFieldMapper {
         }
     }
 
-    public static class TypeParser implements MetadataFieldMapper.TypeParser {
+    public static class TypeParser implements MetadataFieldMapper.TypeParser { // NOTE: htt, type parser
         @Override
         public MetadataFieldMapper.Builder parse(String name, Map<String, Object> node, ParserContext parserContext) throws MapperParsingException {
             throw new MapperParsingException(NAME + " is not configurable");
@@ -97,7 +97,7 @@ public class IdFieldMapper extends MetadataFieldMapper {
         }
     }
 
-    static final class IdFieldType extends TermBasedFieldType {
+    static final class IdFieldType extends TermBasedFieldType { // NOTE: htt, id field type
 
         IdFieldType() {
         }

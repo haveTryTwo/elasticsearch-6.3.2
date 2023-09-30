@@ -31,9 +31,9 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public abstract class Mapper implements ToXContentFragment, Iterable<Mapper> {
+public abstract class Mapper implements ToXContentFragment, Iterable<Mapper> { // NOTE: htt, mapper which has name, merge() and update field type()
 
-    public static class BuilderContext {
+    public static class BuilderContext { // NOTE: htt, builder context
         private final Settings indexSettings;
         private final ContentPath contentPath;
 
@@ -56,7 +56,7 @@ public abstract class Mapper implements ToXContentFragment, Iterable<Mapper> {
         }
     }
 
-    public abstract static class Builder<T extends Builder, Y extends Mapper> {
+    public abstract static class Builder<T extends Builder, Y extends Mapper> { // NOTE: htt, builder a mapper
 
         public String name;
 
@@ -74,23 +74,23 @@ public abstract class Mapper implements ToXContentFragment, Iterable<Mapper> {
         public abstract Y build(BuilderContext context);
     }
 
-    public interface TypeParser {
+    public interface TypeParser { // NOTE: htt, typer parser
 
-        class ParserContext {
+        class ParserContext { // NOTE: htt, parse context include index analyzer and similarity, mapper service
 
-            private final String type;
+            private final String type; // NOTE: htt, 类型，6.x之后支持一种，默认为_doc
 
-            private final IndexAnalyzers indexAnalyzers;
+            private final IndexAnalyzers indexAnalyzers; // NOTE: htt, 索引的分析器
 
-            private final Function<String, SimilarityProvider> similarityLookupService;
+            private final Function<String, SimilarityProvider> similarityLookupService; // NOTE: htt, 相关度算法，包括BM25，TF/IDF，boolean
 
             private final MapperService mapperService;
 
             private final Function<String, TypeParser> typeParsers;
 
-            private final Version indexVersionCreated;
+            private final Version indexVersionCreated; // NOTE: htt, 创建的索引版本
 
-            private final Supplier<QueryShardContext> queryShardContextSupplier;
+            private final Supplier<QueryShardContext> queryShardContextSupplier; // NOTE: htt, 指定索引下的shard查询的上下文
 
             public ParserContext(String type, IndexAnalyzers indexAnalyzers, Function<String, SimilarityProvider> similarityLookupService,
                                  MapperService mapperService, Function<String, TypeParser> typeParsers,
@@ -153,11 +153,11 @@ public abstract class Mapper implements ToXContentFragment, Iterable<Mapper> {
             }
 
         }
-
+        // NOTE: htt, node为字段下属性以及对应的值，如 doc_values: true
         Mapper.Builder<?,?> parse(String name, Map<String, Object> node, ParserContext parserContext) throws MapperParsingException;
     }
 
-    private final String simpleName;
+    private final String simpleName; // NOTE: htt, mapper的简单名称
 
     public Mapper(String simpleName) {
         Objects.requireNonNull(simpleName);

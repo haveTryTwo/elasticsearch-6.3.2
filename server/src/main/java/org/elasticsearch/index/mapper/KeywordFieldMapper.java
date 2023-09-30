@@ -51,17 +51,17 @@ import static org.elasticsearch.index.mapper.TypeParsers.parseField;
 /**
  * A field mapper for keywords. This mapper accepts strings and indexes them as-is.
  */
-public final class KeywordFieldMapper extends FieldMapper {
+public final class KeywordFieldMapper extends FieldMapper { // NOTE: htt, keyword类型字段映射涉及的相关信息
 
     public static final String CONTENT_TYPE = "keyword";
 
-    public static class Defaults {
+    public static class Defaults { // NOTE: htt, keyword类型映射，默认启动分词
         public static final MappedFieldType FIELD_TYPE = new KeywordFieldType();
 
         static {
             FIELD_TYPE.setTokenized(false);
             FIELD_TYPE.setOmitNorms(true);
-            FIELD_TYPE.setIndexOptions(IndexOptions.DOCS);
+            FIELD_TYPE.setIndexOptions(IndexOptions.DOCS); // NOTE: htt, 整个字段被搜索
             FIELD_TYPE.freeze();
         }
 
@@ -69,7 +69,7 @@ public final class KeywordFieldMapper extends FieldMapper {
         public static final int IGNORE_ABOVE = Integer.MAX_VALUE;
     }
 
-    public static class Builder extends FieldMapper.Builder<Builder, KeywordFieldMapper> {
+    public static class Builder extends FieldMapper.Builder<Builder, KeywordFieldMapper> { // NOTE: htt, 构建 keywordFieldMapper
 
         protected String nullValue = Defaults.NULL_VALUE;
         protected int ignoreAbove = Defaults.IGNORE_ABOVE;
@@ -125,7 +125,7 @@ public final class KeywordFieldMapper extends FieldMapper {
         @Override
         public Mapper.Builder<?,?> parse(String name, Map<String, Object> node, ParserContext parserContext) throws MapperParsingException {
             KeywordFieldMapper.Builder builder = new KeywordFieldMapper.Builder(name);
-            parseField(builder, name, node, parserContext);
+            parseField(builder, name, node, parserContext); // NOTE: htt, 解析字段类型
             for (Iterator<Map.Entry<String, Object>> iterator = node.entrySet().iterator(); iterator.hasNext();) {
                 Map.Entry<String, Object> entry = iterator.next();
                 String propName = entry.getKey();
@@ -145,7 +145,7 @@ public final class KeywordFieldMapper extends FieldMapper {
                 } else if (propName.equals("eager_global_ordinals")) {
                     builder.eagerGlobalOrdinals(XContentMapValues.nodeBooleanValue(propNode, "eager_global_ordinals"));
                     iterator.remove();
-                } else if (propName.equals("normalizer")) {
+                } else if (propName.equals("normalizer")) { // NOTE; htt, 设置分析器
                     if (propNode != null) {
                         NamedAnalyzer normalizer = parserContext.getIndexAnalyzers().getNormalizer(propNode.toString());
                         if (normalizer == null) {
@@ -160,7 +160,7 @@ public final class KeywordFieldMapper extends FieldMapper {
         }
     }
 
-    public static final class KeywordFieldType extends StringFieldType {
+    public static final class KeywordFieldType extends StringFieldType { // NOTE: htt, keyword字段类型，对应的分析器为 keyword类型
 
         private NamedAnalyzer normalizer = null;
 
@@ -216,9 +216,9 @@ public final class KeywordFieldMapper extends FieldMapper {
 
         @Override
         public Query existsQuery(QueryShardContext context) {
-            if (hasDocValues()) {
+            if (hasDocValues()) { // NOTE: htt, 如果有列存，则通过列存查询字段是否有值
                 return new DocValuesFieldExistsQuery(name());
-            } else {
+            } else { // NOTE: htt, 如果没有列存，则通过 _field_names 字段索引来查询是否有值
                 return new TermQuery(new Term(FieldNamesFieldMapper.NAME, name()));
             }
         }
@@ -351,7 +351,7 @@ public final class KeywordFieldMapper extends FieldMapper {
             Field field = new Field(fieldType().name(), binaryValue, fieldType());
             fields.add(field);
         }
-        if (fieldType().hasDocValues()) {
+        if (fieldType().hasDocValues()) { // NOTE: htt, 启动doc_value
             fields.add(new SortedSetDocValuesField(fieldType().name(), binaryValue));
         } else if (fieldType().stored() || fieldType().indexOptions() != IndexOptions.NONE) {
             createFieldNamesField(context, fields);

@@ -21,11 +21,11 @@ package org.elasticsearch.index.mapper;
 
 import java.util.Collection;
 
-enum MapperUtils {
+enum MapperUtils { // NOTE: htt, 支持字段映射的合并
     ;
 
     /** Split mapper and its descendants into object and field mappers. */
-    public static void collect(Mapper mapper, Collection<ObjectMapper> objectMappers, Collection<FieldMapper> fieldMappers) {
+    public static void collect(Mapper mapper, Collection<ObjectMapper> objectMappers, Collection<FieldMapper> fieldMappers) { // NOTE: htt, 将映射添加到 objectMappers或 fieldMappes
         if (mapper instanceof RootObjectMapper) {
             // root mapper isn't really an object mapper
         } else if (mapper instanceof ObjectMapper) {

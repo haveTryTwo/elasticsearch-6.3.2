@@ -74,12 +74,12 @@ import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.unmodifiableMap;
 
-public class MapperService extends AbstractIndexComponent implements Closeable {
+public class MapperService extends AbstractIndexComponent implements Closeable { // NOTE: htt, 更新字段映射，并且会进行映射检查
 
     /**
      * The reason why a mapping is being merged.
      */
-    public enum MergeReason {
+    public enum MergeReason { // NOTE: htt, merge mapper reason
         /**
          * Create or update a mapping.
          */
@@ -92,54 +92,54 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
         MAPPING_RECOVERY;
     }
 
-    public static final String DEFAULT_MAPPING = "_default_";
-    public static final String SINGLE_MAPPING_NAME = "_doc";
+    public static final String DEFAULT_MAPPING = "_default_"; // NOTE: htt, _default_ mapping，在6.0.0之前已经废弃
+    public static final String SINGLE_MAPPING_NAME = "_doc"; // NOTE: htt, single _doc mapping
     public static final Setting<Long> INDEX_MAPPING_NESTED_FIELDS_LIMIT_SETTING =
-        Setting.longSetting("index.mapping.nested_fields.limit", 50L, 0, Property.Dynamic, Property.IndexScope);
+        Setting.longSetting("index.mapping.nested_fields.limit", 50L, 0, Property.Dynamic, Property.IndexScope); // NOTE; htt, max nested field is 50
     public static final Setting<Long> INDEX_MAPPING_TOTAL_FIELDS_LIMIT_SETTING =
-        Setting.longSetting("index.mapping.total_fields.limit", 1000L, 0, Property.Dynamic, Property.IndexScope);
+        Setting.longSetting("index.mapping.total_fields.limit", 1000L, 0, Property.Dynamic, Property.IndexScope); // NOTE: htt, max fields is 1000
     public static final Setting<Long> INDEX_MAPPING_DEPTH_LIMIT_SETTING =
-            Setting.longSetting("index.mapping.depth.limit", 20L, 1, Property.Dynamic, Property.IndexScope);
+            Setting.longSetting("index.mapping.depth.limit", 20L, 1, Property.Dynamic, Property.IndexScope); // NOTE: htt, max depth limit is 20
     public static final boolean INDEX_MAPPER_DYNAMIC_DEFAULT = true;
-    public static final Setting<Boolean> INDEX_MAPPER_DYNAMIC_SETTING =
+    public static final Setting<Boolean> INDEX_MAPPER_DYNAMIC_SETTING = // NOTE: htt, 是否允许动态映射，默认为true
         Setting.boolSetting("index.mapper.dynamic", INDEX_MAPPER_DYNAMIC_DEFAULT, Property.Dynamic, Property.IndexScope);
 
     //TODO this needs to be cleaned up: _timestamp and _ttl are not supported anymore, _field_names, _seq_no, _version and _source are
     //also missing, not sure if on purpose. See IndicesModule#getMetadataMappers
-    private static ObjectHashSet<String> META_FIELDS = ObjectHashSet.from(
+    private static ObjectHashSet<String> META_FIELDS = ObjectHashSet.from( // NOTE: htt, meta field
             "_uid", "_id", "_type", "_all", "_parent", "_routing", "_index",
             "_size", "_timestamp", "_ttl"
     );
 
     private static final DeprecationLogger DEPRECATION_LOGGER = new DeprecationLogger(Loggers.getLogger(MapperService.class));
 
-    private final IndexAnalyzers indexAnalyzers;
+    private final IndexAnalyzers indexAnalyzers; // NOTE: htt, 索引分析器
 
     /**
      * Will create types automatically if they do not exists in the mapping definition yet
      */
-    private final boolean dynamic;
+    private final boolean dynamic; // NOTE: htt, whether dynamic，默认为true
 
-    private volatile String defaultMappingSource;
+    private volatile String defaultMappingSource; // NOTE: htt, _default_ type对应的映射的source信息，6.0.0之前已废弃
 
-    private volatile Map<String, DocumentMapper> mappers = emptyMap();
+    private volatile Map<String, DocumentMapper> mappers = emptyMap(); // NOTE: htt, 索引type 对应的 document Mapper
 
-    private volatile FieldTypeLookup fieldTypes;
-    private volatile Map<String, ObjectMapper> fullPathObjectMappers = emptyMap();
+    private volatile FieldTypeLookup fieldTypes; // NOTE: htt, field lookup
+    private volatile Map<String, ObjectMapper> fullPathObjectMappers = emptyMap(); // NOTE: htt, 字段路径对应的mapper
     private boolean hasNested = false; // updated dynamically to true when a nested object is added
     private boolean allEnabled = false; // updated dynamically to true when _all is enabled
 
-    private final DocumentMapperParser documentParser;
+    private final DocumentMapperParser documentParser;  // NOTE: htt, 文档的mapper解析，包括解析指定字段的mapping
 
-    private final MapperAnalyzerWrapper indexAnalyzer;
-    private final MapperAnalyzerWrapper searchAnalyzer;
+    private final MapperAnalyzerWrapper indexAnalyzer; // NOTE: htt, 写入分析器
+    private final MapperAnalyzerWrapper searchAnalyzer; // NOTE; htt, 查询分析器
     private final MapperAnalyzerWrapper searchQuoteAnalyzer;
 
     private volatile Map<String, MappedFieldType> unmappedFieldTypes = emptyMap();
 
-    private volatile Set<String> parentTypes = emptySet();
+    private volatile Set<String> parentTypes = emptySet(); // NOTE: htt, 父文档type, 6.0.0之后废弃
 
-    final MapperRegistry mapperRegistry;
+    final MapperRegistry mapperRegistry; // NOTE: htt, 字段mapping
 
     public MapperService(IndexSettings indexSettings, IndexAnalyzers indexAnalyzers, NamedXContentRegistry xContentRegistry,
                          SimilarityService similarityService, MapperRegistry mapperRegistry,
@@ -162,7 +162,7 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
         } else {
             this.dynamic = this.indexSettings.getValue(INDEX_MAPPER_DYNAMIC_SETTING);
         }
-        defaultMappingSource = "{\"_default_\":{}}";
+        defaultMappingSource = "{\"_default_\":{}}"; // NOTE: htt, _default_ type类型
 
         if (logger.isTraceEnabled()) {
             logger.trace("using dynamic[{}], default mapping source[{}]", dynamic, defaultMappingSource);
@@ -232,7 +232,7 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
         final Map<String, DocumentMapper> updatedEntries;
         try {
             // only update entries if needed
-            updatedEntries = internalMerge(indexMetaData, MergeReason.MAPPING_RECOVERY, true, true);
+            updatedEntries = internalMerge(indexMetaData, MergeReason.MAPPING_RECOVERY, true, true); // NOTE: emep, 映射更新
         } catch (Exception e) {
             logger.warn(() -> new ParameterizedMessage("[{}] failed to apply mappings", index()), e);
             throw e;
@@ -264,7 +264,7 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
             }
         }
 
-        return requireRefresh;
+        return requireRefresh; // NOTE: htt, 返回是否更新
     }
 
     public void merge(Map<String, Map<String, Object>> mappings, MergeReason reason, boolean updateAllTypes) {
@@ -280,7 +280,7 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
         internalMerge(mappingSourcesCompressed, reason, updateAllTypes);
     }
 
-    public void merge(IndexMetaData indexMetaData, MergeReason reason, boolean updateAllTypes) {
+    public void merge(IndexMetaData indexMetaData, MergeReason reason, boolean updateAllTypes) { // NOTE:htt, 合并Mapping信息
         internalMerge(indexMetaData, reason, updateAllTypes, false);
     }
 
@@ -296,10 +296,10 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
             if (onlyUpdateIfNeeded) {
                 DocumentMapper existingMapper = documentMapper(mappingMetaData.type());
                 if (existingMapper == null || mappingMetaData.source().equals(existingMapper.mappingSource()) == false) {
-                    map.put(mappingMetaData.type(), mappingMetaData.source());
+                    map.put(mappingMetaData.type(), mappingMetaData.source()); // NOTE: htt, 更新 索引type 对应的 mapping映射
                 }
             } else {
-                map.put(mappingMetaData.type(), mappingMetaData.source());
+                map.put(mappingMetaData.type(), mappingMetaData.source()); // NOTE; htt, 直接更新
             }
         }
         return internalMerge(map, reason, updateAllTypes);
@@ -309,7 +309,7 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
         DocumentMapper defaultMapper = null;
         String defaultMappingSource = null;
 
-        if (mappings.containsKey(DEFAULT_MAPPING)) {
+        if (mappings.containsKey(DEFAULT_MAPPING)) { // NOTE: htt, _default_ tye解析，6.0.0已废弃
             // verify we can parse it
             // NOTE: never apply the default here
             try {
@@ -346,7 +346,7 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
 
             try {
                 DocumentMapper documentMapper =
-                    documentParser.parse(type, entry.getValue(), applyDefault ? defaultMappingSourceOrLastStored : null);
+                    documentParser.parse(type, entry.getValue(), applyDefault ? defaultMappingSourceOrLastStored : null); // NOTE: htt, 将source转换为对应文档映射
                 documentMappers.add(documentMapper);
             } catch (Exception e) {
                 throw new MapperParsingException("Failed to parse mapping [{}]: {}", e, entry.getKey(), e.getMessage());
@@ -402,8 +402,8 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
         if (indexSettings.isSingleType()) {
             Set<String> actualTypes = new HashSet<>(mappers.keySet());
             documentMappers.forEach(mapper -> actualTypes.add(mapper.type()));
-            actualTypes.remove(DEFAULT_MAPPING);
-            if (actualTypes.size() > 1) {
+            actualTypes.remove(DEFAULT_MAPPING);  // NOTE: htt, 删除_default_ type，如果是单type（6.0.0之后）
+            if (actualTypes.size() > 1) { // NOTE: htt, 6.0.0 这里仅支持单个type
                 throw new IllegalArgumentException(
                     "Rejecting mapping update to [" + index().getName() + "] as the final mapping would have more than 1 type: " + actualTypes);
             }
@@ -420,7 +420,7 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
             DocumentMapper oldMapper = mappers.get(mapper.type());
             DocumentMapper newMapper;
             if (oldMapper != null) {
-                newMapper = oldMapper.merge(mapper.mapping(), updateAllTypes);
+                newMapper = oldMapper.merge(mapper.mapping(), updateAllTypes); // NOTE: htt, 同一个type的映射合并
             } else {
                 newMapper = mapper;
             }
@@ -430,13 +430,13 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
             List<FieldMapper> fieldMappers = new ArrayList<>();
             Collections.addAll(fieldMappers, newMapper.mapping().metadataMappers);
             MapperUtils.collect(newMapper.mapping().root(), objectMappers, fieldMappers);
-            checkFieldUniqueness(newMapper.type(), objectMappers, fieldMappers, fullPathObjectMappers, fieldTypes);
+            checkFieldUniqueness(newMapper.type(), objectMappers, fieldMappers, fullPathObjectMappers, fieldTypes); // NOTE: htt, 唯一性检查
             checkObjectsCompatibility(objectMappers, updateAllTypes, fullPathObjectMappers);
             checkPartitionedIndexConstraints(newMapper);
 
             // update lookup data-structures
             // this will in particular make sure that the merged fields are compatible with other types
-            fieldTypes = fieldTypes.copyAndAddAll(newMapper.type(), fieldMappers, updateAllTypes);
+            fieldTypes = fieldTypes.copyAndAddAll(newMapper.type(), fieldMappers, updateAllTypes); // NOTE: htt, 更新字段映射类型，并且会检查是否允许对应映射的更新
 
             for (ObjectMapper objectMapper : objectMappers) {
                 if (fullPathObjectMappers == this.fullPathObjectMappers) {
@@ -451,7 +451,7 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
             }
 
             if (indexSettings.getIndexVersionCreated().onOrAfter(Version.V_6_0_0_beta1)) {
-                validateCopyTo(fieldMappers, fullPathObjectMappers, fieldTypes);
+                validateCopyTo(fieldMappers, fullPathObjectMappers, fieldTypes); // NOTE: htt, 检查 copy_to 一致性
             }
 
             if (reason == MergeReason.MAPPING_UPDATE) {
@@ -460,7 +460,7 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
                 // the master node restoring mappings from disk or data nodes
                 // deserializing cluster state that was sent by the master node,
                 // this check will be skipped.
-                checkTotalFieldsLimit(objectMappers.size() + fieldMappers.size());
+                checkTotalFieldsLimit(objectMappers.size() + fieldMappers.size()); // NOTE: htt, 小于1000个字段检查
             }
 
             if (oldMapper == null && newMapper.parentFieldMapper().active()) {
@@ -485,10 +485,10 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
             // the master node restoring mappings from disk or data nodes
             // deserializing cluster state that was sent by the master node,
             // this check will be skipped.
-            checkNestedFieldsLimit(fullPathObjectMappers);
-            checkDepthLimit(fullPathObjectMappers.keySet());
+            checkNestedFieldsLimit(fullPathObjectMappers); // NOTE: htt, nested字段检查，默认50个以内
+            checkDepthLimit(fullPathObjectMappers.keySet()); // NOTE: htt, 深度检查，默认20以内
         }
-        checkIndexSortCompatibility(indexSettings.getIndexSortConfig(), hasNested);
+        checkIndexSortCompatibility(indexSettings.getIndexSortConfig(), hasNested); // NOTE: htt, index sort 不支持nested
 
         for (Map.Entry<String, DocumentMapper> entry : mappers.entrySet()) {
             if (entry.getKey().equals(DEFAULT_MAPPING)) {
@@ -496,7 +496,7 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
             }
             DocumentMapper documentMapper = entry.getValue();
             // apply changes to the field types back
-            DocumentMapper updatedDocumentMapper = documentMapper.updateFieldType(fieldTypes.fullNameToFieldType);
+            DocumentMapper updatedDocumentMapper = documentMapper.updateFieldType(fieldTypes.fullNameToFieldType); // NOTE: htt, 和fullNameToFieldType中映射合并
             if (updatedDocumentMapper != documentMapper) {
                 // update both mappers and result
                 entry.setValue(updatedDocumentMapper);
@@ -611,7 +611,7 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
         }
     }
 
-    private void checkNestedFieldsLimit(Map<String, ObjectMapper> fullPathObjectMappers) {
+    private void checkNestedFieldsLimit(Map<String, ObjectMapper> fullPathObjectMappers) { // NOTE:htt, 检查nested字段个数是否小于50
         long allowedNestedFields = indexSettings.getValue(INDEX_MAPPING_NESTED_FIELDS_LIMIT_SETTING);
         long actualNestedFields = 0;
         for (ObjectMapper objectMapper : fullPathObjectMappers.values()) {
@@ -763,17 +763,17 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
      * Returns the document mapper created, including a mapping update if the
      * type has been dynamically created.
      */
-    public DocumentMapperForType documentMapperWithAutoCreate(String type) {
+    public DocumentMapperForType documentMapperWithAutoCreate(String type) { // NOTE: htt, 如果mapping不存在，则解析mapping，以便自动创建
         DocumentMapper mapper = mappers.get(type);
-        if (mapper != null) {
+        if (mapper != null) { // NOTE: htt, 如果已存在则返回
             return new DocumentMapperForType(mapper, null);
         }
-        if (!dynamic) {
+        if (!dynamic) { // NOTE: htt, 如果不允许动态更新mapping，返回出粗
             throw new TypeMissingException(index(),
                     new IllegalStateException("trying to auto create mapping, but dynamic mapping is disabled"), type);
         }
-        mapper = parse(type, null, true);
-        return new DocumentMapperForType(mapper, mapper.mapping());
+        mapper = parse(type, null, true); // NOTE: htt, 未找到对应type的文档映射，则直接使用 _default_ 映射， 6.0.0 之后废弃
+        return new DocumentMapperForType(mapper, mapper.mapping()); // NOTE: htt, 返回新的mapping
     }
 
     /**
@@ -862,10 +862,10 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
     }
 
     /** An analyzer wrapper that can lookup fields within the index mappings */
-    final class MapperAnalyzerWrapper extends DelegatingAnalyzerWrapper {
+    final class MapperAnalyzerWrapper extends DelegatingAnalyzerWrapper { // NOTE: htt, 提供默认以及特定映射对应的分析器
 
-        private final Analyzer defaultAnalyzer;
-        private final Function<MappedFieldType, Analyzer> extractAnalyzer;
+        private final Analyzer defaultAnalyzer; // NOTE: emp, 默认分析器
+        private final Function<MappedFieldType, Analyzer> extractAnalyzer; // NOTE: htt, 特定映射对应的分析器
 
         MapperAnalyzerWrapper(Analyzer defaultAnalyzer, Function<MappedFieldType, Analyzer> extractAnalyzer) {
             super(Analyzer.PER_FIELD_REUSE_STRATEGY);
@@ -893,11 +893,11 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
         }
         if (indexSettings.getIndexVersionCreated().onOrAfter(Version.V_6_0_0_beta1)) {
             assert indexSettings.isSingleType();
-            return new Term(IdFieldMapper.NAME, Uid.encodeId(id));
+            return new Term(IdFieldMapper.NAME, Uid.encodeId(id)); // NOTE: htt, 6.x之后uid直接使用id
         } else if (indexSettings.isSingleType()) {
-            return new Term(IdFieldMapper.NAME, id);
+            return new Term(IdFieldMapper.NAME, id); // NOTE: htt, 6.x 之前，单type直接使用id
         } else {
-            return new Term(UidFieldMapper.NAME, Uid.createUidAsBytes(type, id));
+            return new Term(UidFieldMapper.NAME, Uid.createUidAsBytes(type, id)); // NOTE: htt, 6.x之前，多type，使用 type+id生成uid
         }
     }
 }
