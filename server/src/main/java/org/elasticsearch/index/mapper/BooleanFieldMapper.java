@@ -54,12 +54,12 @@ import static org.elasticsearch.index.mapper.TypeParsers.parseField;
 /**
  * A field mapper for boolean fields.
  */
-public class BooleanFieldMapper extends FieldMapper {
+public class BooleanFieldMapper extends FieldMapper { // NOTE: htt, boolean字段映射
     private static final DeprecationLogger deprecationLogger = new DeprecationLogger(Loggers.getLogger(BooleanFieldMapper.class));
 
     public static final String CONTENT_TYPE = "boolean";
 
-    public static class Defaults {
+    public static class Defaults { // NOTE: htt, boolean类型默认支持索引，但是不支持列存
         public static final MappedFieldType FIELD_TYPE = new BooleanFieldType();
 
         static {
@@ -77,7 +77,7 @@ public class BooleanFieldMapper extends FieldMapper {
         public static final BytesRef FALSE = new BytesRef("F");
     }
 
-    public static class Builder extends FieldMapper.Builder<Builder, BooleanFieldMapper> {
+    public static class Builder extends FieldMapper.Builder<Builder, BooleanFieldMapper> { // NOTE: htt, 构建 booleanFieldMapper
 
         public Builder(String name) {
             super(name, Defaults.FIELD_TYPE, Defaults.FIELD_TYPE);
@@ -100,15 +100,15 @@ public class BooleanFieldMapper extends FieldMapper {
         }
     }
 
-    public static class TypeParser implements Mapper.TypeParser {
+    public static class TypeParser implements Mapper.TypeParser { // NOTE: htt, boolean列下解析
         @Override
         public Mapper.Builder parse(String name, Map<String, Object> node, ParserContext parserContext) throws MapperParsingException {
             BooleanFieldMapper.Builder builder = new BooleanFieldMapper.Builder(name);
             parseField(builder, name, node, parserContext);
             for (Iterator<Map.Entry<String, Object>> iterator = node.entrySet().iterator(); iterator.hasNext();) {
                 Map.Entry<String, Object> entry = iterator.next();
-                String propName = entry.getKey();
-                Object propNode = entry.getValue();
+                String propName = entry.getKey(); // NOTE: htt, key
+                Object propNode = entry.getValue(); // NOTE: htt, value
                 if (propName.equals("null_value")) {
                     if (propNode == null) {
                         throw new MapperParsingException("Property [null_value] cannot be null.");
@@ -121,7 +121,7 @@ public class BooleanFieldMapper extends FieldMapper {
         }
     }
 
-    public static final class BooleanFieldType extends TermBasedFieldType {
+    public static final class BooleanFieldType extends TermBasedFieldType { // NOTE: htt, boolean 类型
 
         public BooleanFieldType() {}
 

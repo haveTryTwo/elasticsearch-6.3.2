@@ -49,22 +49,22 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.StreamSupport;
 
-public abstract class FieldMapper extends Mapper implements Cloneable {
+public abstract class FieldMapper extends Mapper implements Cloneable { // NOTE: htt, field mapper inlcluding type, index, doc valuse, copyto
     public static final Setting<Boolean> IGNORE_MALFORMED_SETTING =
         Setting.boolSetting("index.mapping.ignore_malformed", false, Property.IndexScope);
     public static final Setting<Boolean> COERCE_SETTING =
         Setting.boolSetting("index.mapping.coerce", false, Property.IndexScope);
-    public abstract static class Builder<T extends Builder, Y extends FieldMapper> extends Mapper.Builder<T, Y> {
+    public abstract static class Builder<T extends Builder, Y extends FieldMapper> extends Mapper.Builder<T, Y> { // NOTE: htt, build field mapper
 
-        protected final MappedFieldType fieldType;
-        protected final MappedFieldType defaultFieldType;
-        private final IndexOptions defaultOptions;
+        protected final MappedFieldType fieldType; // NOTE: htt, 字段类型, field include name,analyzer, doc values and index type
+        protected final MappedFieldType defaultFieldType; // NOTE: htt, 默认字段类型
+        private final IndexOptions defaultOptions; // NOTE: htt, index的option选择
         protected boolean omitNormsSet = false;
         protected Boolean includeInAll;
         protected boolean indexOptionsSet = false;
         protected boolean docValuesSet = false;
         protected final MultiFields.Builder multiFieldsBuilder;
-        protected CopyTo copyTo = CopyTo.empty();
+        protected CopyTo copyTo = CopyTo.empty(); // NOTE: htt, copyTo 的目标字段
 
         protected Builder(String name, MappedFieldType fieldType, MappedFieldType defaultFieldType) {
             super(name);
@@ -79,7 +79,7 @@ public abstract class FieldMapper extends Mapper implements Cloneable {
             return fieldType;
         }
 
-        public T index(boolean index) {
+        public T index(boolean index) { // NOTE: htt, set index option if index enable
             if (index) {
                 if (fieldType.indexOptions() == IndexOptions.NONE) {
                     /*
@@ -113,12 +113,12 @@ public abstract class FieldMapper extends Mapper implements Cloneable {
             return true;
         }
 
-        public T store(boolean store) {
+        public T store(boolean store) { // NOTE: htt, set store
             this.fieldType.setStored(store);
             return builder;
         }
 
-        public T docValues(boolean docValues) {
+        public T docValues(boolean docValues) { // NOTE: htt, set doc values
             this.fieldType.setHasDocValues(docValues);
             this.docValuesSet = true;
             return builder;
@@ -236,11 +236,11 @@ public abstract class FieldMapper extends Mapper implements Cloneable {
                 fieldType.setOmitNorms(fieldType.omitNorms() && fieldType.boost() == 1.0f);
             }
             if (fieldType.indexAnalyzer() == null && fieldType.tokenized() == false && fieldType.indexOptions() != IndexOptions.NONE) {
-                fieldType.setIndexAnalyzer(Lucene.KEYWORD_ANALYZER);
+                fieldType.setIndexAnalyzer(Lucene.KEYWORD_ANALYZER); // TODO: htt, keyword analyzer
                 fieldType.setSearchAnalyzer(Lucene.KEYWORD_ANALYZER);
             }
             boolean defaultDocValues = defaultDocValues(context.indexCreatedVersion());
-            defaultFieldType.setHasDocValues(defaultDocValues);
+            defaultFieldType.setHasDocValues(defaultDocValues); // NOTE: htt, 如果是全词索引，则默认支持列存
             if (docValuesSet == false) {
                 fieldType.setHasDocValues(defaultDocValues);
             }
@@ -248,10 +248,10 @@ public abstract class FieldMapper extends Mapper implements Cloneable {
     }
 
     protected final Version indexCreatedVersion;
-    protected MappedFieldType fieldType;
+    protected MappedFieldType fieldType; // NOTE: htt, 字段类型
     protected final MappedFieldType defaultFieldType;
-    protected MultiFields multiFields;
-    protected CopyTo copyTo;
+    protected MultiFields multiFields; // NOTE: htt, multi fields
+    protected CopyTo copyTo;  // NOTE: htt, copy to fields
 
     protected FieldMapper(String simpleName, MappedFieldType fieldType, MappedFieldType defaultFieldType, Settings indexSettings, MultiFields multiFields, CopyTo copyTo) {
         super(simpleName);
@@ -291,7 +291,7 @@ public abstract class FieldMapper extends Mapper implements Cloneable {
      * update if dynamic mappings modified the mappings, or {@code null} if
      * mappings were not modified.
      */
-    public Mapper parse(ParseContext context) throws IOException {
+    public Mapper parse(ParseContext context) throws IOException { // NOTE: htt, context解析后添加对应字段
         final List<IndexableField> fields = new ArrayList<>(2);
         try {
             parseCreateField(context, fields);
@@ -505,13 +505,13 @@ public abstract class FieldMapper extends Mapper implements Cloneable {
 
     protected abstract String contentType();
 
-    public static class MultiFields {
+    public static class MultiFields { // NOTE: htt, multi fields
 
         public static MultiFields empty() {
             return new MultiFields(ImmutableOpenMap.<String, FieldMapper>of());
         }
 
-        public static class Builder {
+        public static class Builder { // NOTE: htt, 嵌套类型builder
 
             private final ImmutableOpenMap.Builder<String, Mapper.Builder> mapperBuilders = ImmutableOpenMap.builder();
 
@@ -541,7 +541,7 @@ public abstract class FieldMapper extends Mapper implements Cloneable {
             }
         }
 
-        private final ImmutableOpenMap<String, FieldMapper> mappers;
+        private final ImmutableOpenMap<String, FieldMapper> mappers; // NOTE: htt, <build->name, build>
 
         private MultiFields(ImmutableOpenMap<String, FieldMapper> mappers) {
             ImmutableOpenMap.Builder<String, FieldMapper> builder = new ImmutableOpenMap.Builder<>();
@@ -633,7 +633,7 @@ public abstract class FieldMapper extends Mapper implements Cloneable {
     /**
      * Represents a list of fields with optional boost factor where the current field should be copied to
      */
-    public static class CopyTo {
+    public static class CopyTo { // NOTE: htt, copy to fields
 
         private static final CopyTo EMPTY = new CopyTo(Collections.emptyList());
 
@@ -658,7 +658,7 @@ public abstract class FieldMapper extends Mapper implements Cloneable {
             return builder;
         }
 
-        public static class Builder {
+        public static class Builder { // NOTE: htt, builder a copyTo
             private final List<String> copyToBuilders = new ArrayList<>();
 
             public Builder add(String field) {

@@ -25,5 +25,5 @@ package org.elasticsearch.index.mapper;
  *
  *
  */
-public interface ArrayValueMapperParser {
+public interface ArrayValueMapperParser { // NOTE: htt, array value mapper
 }

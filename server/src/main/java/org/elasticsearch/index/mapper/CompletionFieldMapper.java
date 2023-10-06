@@ -86,7 +86,7 @@ public class CompletionFieldMapper extends FieldMapper implements ArrayValueMapp
 
     public static final String CONTENT_TYPE = "completion";
 
-    public static class Defaults {
+    public static class Defaults { // NOTE: htt,
         public static final MappedFieldType FIELD_TYPE = new CompletionFieldType();
         static {
             FIELD_TYPE.setOmitNorms(true);
@@ -97,10 +97,10 @@ public class CompletionFieldMapper extends FieldMapper implements ArrayValueMapp
         public static final int DEFAULT_MAX_INPUT_LENGTH = 50;
     }
 
-    public static class Fields {
+    public static class Fields { // NOTE: htt, fields
         // Mapping field names
-        public static final ParseField ANALYZER = new ParseField("analyzer");
-        public static final ParseField SEARCH_ANALYZER = new ParseField("search_analyzer");
+        public static final ParseField ANALYZER = new ParseField("analyzer"); // NOTE: htt, 写入分词analyzer，中文用ik
+        public static final ParseField SEARCH_ANALYZER = new ParseField("search_analyzer"); // NOTE: htt, 搜索分词，中文用ik
         public static final ParseField PRESERVE_SEPARATORS = new ParseField("preserve_separators");
         public static final ParseField PRESERVE_POSITION_INCREMENTS = new ParseField("preserve_position_increments");
         public static final ParseField TYPE = new ParseField("type");
@@ -175,9 +175,9 @@ public class CompletionFieldMapper extends FieldMapper implements ArrayValueMapp
         }
     }
 
-    public static final class CompletionFieldType extends TermBasedFieldType {
+    public static final class CompletionFieldType extends TermBasedFieldType { // NOTE: htt, complection filed type, 前缀匹配或者单词补全场景使用
 
-        private static PostingsFormat postingsFormat;
+        private static PostingsFormat postingsFormat; // NOTE: htt, postings list format
 
         private boolean preserveSep = Defaults.DEFAULT_PRESERVE_SEPARATORS;
         private boolean preservePositionIncrements = Defaults.DEFAULT_POSITION_INCREMENTS;
@@ -209,7 +209,7 @@ public class CompletionFieldMapper extends FieldMapper implements ArrayValueMapp
         }
 
         @Override
-        public NamedAnalyzer indexAnalyzer() {
+        public NamedAnalyzer indexAnalyzer() { // NOTE: htt, 写入分词器，中文用ik
             final NamedAnalyzer indexAnalyzer = super.indexAnalyzer();
             if (indexAnalyzer != null && !(indexAnalyzer.analyzer() instanceof CompletionAnalyzer)) {
                 return new NamedAnalyzer(indexAnalyzer.name(), AnalyzerScope.INDEX,
@@ -220,7 +220,7 @@ public class CompletionFieldMapper extends FieldMapper implements ArrayValueMapp
         }
 
         @Override
-        public NamedAnalyzer searchAnalyzer() {
+        public NamedAnalyzer searchAnalyzer() { // NOTE: htt, 搜索分词器，中文用ik
             final NamedAnalyzer searchAnalyzer = super.searchAnalyzer();
             if (searchAnalyzer != null && !(searchAnalyzer.analyzer() instanceof CompletionAnalyzer)) {
                 return new NamedAnalyzer(searchAnalyzer.name(), AnalyzerScope.INDEX,
@@ -255,7 +255,7 @@ public class CompletionFieldMapper extends FieldMapper implements ArrayValueMapp
         /**
          * @return postings format to use for this field-type
          */
-        public static synchronized PostingsFormat postingsFormat() {
+        public static synchronized PostingsFormat postingsFormat() { // NOTE: htt, 单词补全
             if (postingsFormat == null) {
                 postingsFormat = new Completion50PostingsFormat();
             }

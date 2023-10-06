@@ -19,7 +19,7 @@
 
 package org.elasticsearch.index.mapper;
 
-public final class ContentPath {
+public final class ContentPath { // NOTE: htt, content path
 
     private static final char DELIMITER = '.';
 

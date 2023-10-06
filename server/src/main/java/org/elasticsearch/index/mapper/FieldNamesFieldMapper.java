@@ -46,7 +46,7 @@ import java.util.Objects;
  *
  * Added in Elasticsearch 1.3.
  */
-public class FieldNamesFieldMapper extends MetadataFieldMapper {
+public class FieldNamesFieldMapper extends MetadataFieldMapper { // NOTE: htt, _field_names mapper for exists/missing queries on inverted index
 
     private static final DeprecationLogger DEPRECATION_LOGGER = new DeprecationLogger(
             ESLoggerFactory.getLogger(FieldNamesFieldMapper.class));
@@ -58,11 +58,11 @@ public class FieldNamesFieldMapper extends MetadataFieldMapper {
     public static class Defaults {
         public static final String NAME = FieldNamesFieldMapper.NAME;
 
-        public static final boolean ENABLED = true;
+        public static final boolean ENABLED = true; // NOTE: emep, _field_names default enable
         public static final MappedFieldType FIELD_TYPE = new FieldNamesFieldType();
 
         static {
-            FIELD_TYPE.setIndexOptions(IndexOptions.DOCS);
+            FIELD_TYPE.setIndexOptions(IndexOptions.DOCS); // NOTE: htt, _field_names just index
             FIELD_TYPE.setTokenized(false);
             FIELD_TYPE.setStored(false);
             FIELD_TYPE.setOmitNorms(true);
@@ -102,7 +102,7 @@ public class FieldNamesFieldMapper extends MetadataFieldMapper {
         }
     }
 
-    public static class TypeParser implements MetadataFieldMapper.TypeParser {
+    public static class TypeParser implements MetadataFieldMapper.TypeParser { // NOTE: htt, type parse for _field_names
         @Override
         public MetadataFieldMapper.Builder<?,?> parse(String name, Map<String, Object> node, ParserContext parserContext) throws MapperParsingException {
             Builder builder = new Builder(parserContext.mapperService().fullName(NAME));
@@ -131,7 +131,7 @@ public class FieldNamesFieldMapper extends MetadataFieldMapper {
         }
     }
 
-    public static final class FieldNamesFieldType extends TermBasedFieldType {
+    public static final class FieldNamesFieldType extends TermBasedFieldType { // NOTE: htt, field names field type including term query
 
         private boolean enabled = Defaults.ENABLED;
 
@@ -231,7 +231,7 @@ public class FieldNamesFieldMapper extends MetadataFieldMapper {
         return null;
     }
 
-    static Iterable<String> extractFieldNames(final String fullPath) {
+    static Iterable<String> extractFieldNames(final String fullPath) { // NOTE: htt, get _field_names
         return new Iterable<String>() {
             @Override
             public Iterator<String> iterator() {

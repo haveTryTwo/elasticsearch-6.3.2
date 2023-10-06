@@ -34,11 +34,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class DynamicTemplate implements ToXContentObject {
+public class DynamicTemplate implements ToXContentObject { // NOTE: htt, dynamic template
 
     private static final DeprecationLogger DEPRECATION_LOGGER = new DeprecationLogger(Loggers.getLogger(DynamicTemplate.class));
 
-    public enum MatchType {
+    public enum MatchType { // NOTE: htt, dynamic template
         SIMPLE {
             @Override
             public boolean matches(String pattern, String value) {
@@ -74,7 +74,7 @@ public class DynamicTemplate implements ToXContentObject {
     }
 
     /** The type of a field as detected while parsing a json document. */
-    public enum XContentFieldType {
+    public enum XContentFieldType { // NOTE; htt, content field type
         OBJECT {
             @Override
             public String defaultMappingType() {
@@ -238,17 +238,17 @@ public class DynamicTemplate implements ToXContentObject {
 
     private final String name;
 
-    private final String pathMatch;
+    private final String pathMatch; // NOTE: htt, 带路径的匹配，用于类似的object/nested结构中
 
     private final String pathUnmatch;
 
-    private final String match;
+    private final String match; // NOTE: htt, 名称匹配
 
     private final String unmatch;
 
     private final MatchType matchType;
 
-    private final XContentFieldType xcontentFieldType;
+    private final XContentFieldType xcontentFieldType;// NOTE: htt, type match
 
     private final Map<String, Object> mapping;
 

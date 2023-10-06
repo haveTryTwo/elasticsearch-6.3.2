@@ -46,7 +46,7 @@ import java.util.Map;
 import static org.elasticsearch.common.xcontent.support.XContentMapValues.nodeMapValue;
 import static org.elasticsearch.index.mapper.TypeParsers.parseTextField;
 
-public class AllFieldMapper extends MetadataFieldMapper {
+public class AllFieldMapper extends MetadataFieldMapper { // NOTE: htt, _all field mapper
 
     private static final DeprecationLogger deprecationLogger = new DeprecationLogger(Loggers.getLogger(AllFieldMapper.class));
 
@@ -62,7 +62,7 @@ public class AllFieldMapper extends MetadataFieldMapper {
 
         public static final MappedFieldType FIELD_TYPE = new AllFieldType();
 
-        static {
+        static { // NOTE: htt, enable index but not store and dynamic
             FIELD_TYPE.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
             FIELD_TYPE.setTokenized(true);
             FIELD_TYPE.setName(NAME);
@@ -184,7 +184,7 @@ public class AllFieldMapper extends MetadataFieldMapper {
         }
     }
 
-    static final class AllFieldType extends StringFieldType {
+    static final class AllFieldType extends StringFieldType { // NOTE: htt, all field type
 
         AllFieldType() {
         }

@@ -34,10 +34,10 @@ import java.util.Set;
 /**
  * An immutable container for looking up {@link MappedFieldType}s by their name.
  */
-class FieldTypeLookup implements Iterable<MappedFieldType> {
+class FieldTypeLookup implements Iterable<MappedFieldType> { // NOTE: htt, field type lookup which check added type whether allowed?
 
     /** Full field name to field type */
-    final CopyOnWriteHashMap<String, MappedFieldType> fullNameToFieldType;
+    final CopyOnWriteHashMap<String, MappedFieldType> fullNameToFieldType; // NOTE: htt, 字段名对应字段类型
 
     /** Full field name to types containing a mapping for this full name. */
     final CopyOnWriteHashMap<String, Set<String>> fullNameToTypes;
@@ -91,7 +91,7 @@ class FieldTypeLookup implements Iterable<MappedFieldType> {
             MappedFieldType fullNameFieldType = fullName.get(fieldType.name());
 
             // is the update even legal?
-            checkCompatibility(type, fieldMapper, updateAllTypes);
+            checkCompatibility(type, fieldMapper, updateAllTypes); // NOTE: htt, check type of field whether can be modified?
 
             if (fieldType.equals(fullNameFieldType) == false) {
                 fullName = fullName.copyAndPut(fieldType.name(), fieldMapper.fieldType());
@@ -125,7 +125,7 @@ class FieldTypeLookup implements Iterable<MappedFieldType> {
             List<String> conflicts = new ArrayList<>();
             final Set<String> types = fullNameToTypes.get(fieldMapper.fieldType().name());
             boolean strict = beStrict(type, types, updateAllTypes);
-            fieldType.checkCompatibility(fieldMapper.fieldType(), conflicts, strict);
+            fieldType.checkCompatibility(fieldMapper.fieldType(), conflicts, strict); // NOTE: htt, 检查映射更新的唯一性，即某些特性一旦确认就不能更改
             if (conflicts.isEmpty() == false) {
                 throw new IllegalArgumentException("Mapper for [" + fieldMapper.fieldType().name() + "] conflicts with existing mapping in other types:\n" + conflicts.toString());
             }
