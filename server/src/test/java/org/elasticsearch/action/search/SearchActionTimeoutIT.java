@@ -30,7 +30,7 @@ public class SearchActionTimeoutIT extends ESIntegTestCase { // NOTE:htt, 查询
                 .put(SearchSettings.SEARCH_RPC_TIMEOUT.getKey(), timeValue).build();
     }
 
-    private Settings buildSsearchNullSettings() {
+    private Settings buildSearchNullSettings() {
         return Settings.builder()
                 .putNull(SearchSettings.SEARCH_RPC_TIMEOUT.getKey()).build();
     }
@@ -38,8 +38,8 @@ public class SearchActionTimeoutIT extends ESIntegTestCase { // NOTE:htt, 查询
     @After
     public void clearSearchSettings() {
         client().admin().cluster().prepareUpdateSettings()
-                .setTransientSettings(buildSsearchNullSettings())
-                .setPersistentSettings(buildSsearchNullSettings()).get();
+                .setTransientSettings(buildSearchNullSettings())
+                .setPersistentSettings(buildSearchNullSettings()).get();
     }
 
     public void updateSearchRPCTimeoutSettings(TimeValue timeValue) {
@@ -52,10 +52,12 @@ public class SearchActionTimeoutIT extends ESIntegTestCase { // NOTE:htt, 查询
         String indexName = "just_test_search";
         String type = "_doc";
 
-        // NOTE: no timeout
         BulkResponse bulkResponses = client().bulk(buildBulk(indexName, type, 10000)).get();
         assertFalse(bulkResponses.hasFailures());
 
+        // NOTE: no timeout
+        clearSearchSettings();
+        updateSearchRPCTimeoutSettings(TimeValue.ZERO);
         SearchResponse searchResponse = client().search(buildSearchReq(indexName, type)).get();
         assertEquals(0, searchResponse.getFailedShards());
 
