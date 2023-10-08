@@ -232,7 +232,7 @@ public abstract class TransportSingleShardAction<Request extends SingleShardRequ
                             node
                     );
                 }
-                transportService.sendRequest(node, transportShardAction, internalRequest.request(), new TransportResponseHandler<Response>() {
+                transportService.sendRequest(node, transportShardAction, internalRequest.request(), getRequestOptions(), new TransportResponseHandler<Response>() {
 
                     @Override
                     public Response newInstance() {
