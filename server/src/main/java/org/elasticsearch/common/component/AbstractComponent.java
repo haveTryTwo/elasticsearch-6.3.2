@@ -27,11 +27,11 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.node.Node;
 
-public abstract class AbstractComponent {
+public abstract class AbstractComponent { // NOTE: htt, abstract component including logger and settings
 
     protected final Logger logger;
     protected final DeprecationLogger deprecationLogger;
-    protected final Settings settings;
+    protected final Settings settings; // NOTE: htt, 配置信息
 
     public AbstractComponent(Settings settings) {
         this.logger = Loggers.getLogger(getClass(), settings);

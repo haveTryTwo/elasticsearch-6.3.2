@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public abstract class AbstractLifecycleComponent extends AbstractComponent implements LifecycleComponent {
+public abstract class AbstractLifecycleComponent extends AbstractComponent implements LifecycleComponent { // NOTE: htt, start/stop/close and AOP
 
     protected final Lifecycle lifecycle = new Lifecycle();
 
@@ -63,7 +63,7 @@ public abstract class AbstractLifecycleComponent extends AbstractComponent imple
         for (LifecycleListener listener : listeners) {
             listener.beforeStart();
         }
-        doStart();
+        doStart(); // NOTE: htt, 调用内部启动命令
         lifecycle.moveToStarted();
         for (LifecycleListener listener : listeners) {
             listener.afterStart();

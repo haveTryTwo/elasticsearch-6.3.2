@@ -53,9 +53,9 @@ package org.elasticsearch.common.component;
  * }
  * </pre>
  */
-public class Lifecycle {
+public class Lifecycle { // NOTE: htt, component state
 
-    public enum State {
+    public enum State { // NOTE: htt, INITIALIZED -> STARTED -> STOPPED -> CLOSED
         INITIALIZED,
         STOPPED,
         STARTED,

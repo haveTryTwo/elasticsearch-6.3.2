@@ -401,9 +401,9 @@ public class DiscoveryNode implements Writeable, ToXContentFragment {
      * Each role has its name and a corresponding abbreviation used by cat apis.
      */
     public enum Role {
-        MASTER("master", "m"),
-        DATA("data", "d"),
-        INGEST("ingest", "i");
+        MASTER("master", "m"), // NOTE:htt, master节点
+        DATA("data", "d"), // NOTE:htt, 数据节点
+        INGEST("ingest", "i"); // NOTE:htt, ingest节点
 
         private final String roleName;
         private final String abbreviation;

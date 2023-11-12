@@ -33,7 +33,7 @@ import java.util.function.BiConsumer;
 
 public class DiscoveryNodeFilters {
 
-    public enum OpType {
+    public enum OpType { // NOTE:htt, 操作类型
         AND,
         OR
     }

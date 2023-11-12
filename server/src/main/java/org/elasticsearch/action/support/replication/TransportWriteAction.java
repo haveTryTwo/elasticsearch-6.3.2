@@ -96,7 +96,7 @@ public abstract class TransportWriteAction<
     }
 
     @Override
-    protected ReplicationOperation.Replicas newReplicasProxy(long primaryTerm) {
+    protected ReplicationOperation.Replicas newReplicasProxy(long primaryTerm) { // NOTE:htt, 集成TransportReplicationAction.newReplicasProxy，生成写的副本同步机制
         return new WriteActionReplicasProxy(primaryTerm);
     }
 

@@ -36,7 +36,7 @@ import java.util.function.ToIntBiFunction;
 /**
  * A reference to bytes.
  */
-public abstract class BytesReference implements Accountable, Comparable<BytesReference>, ToXContentFragment {
+public abstract class BytesReference implements Accountable, Comparable<BytesReference>, ToXContentFragment { // NOTE:htt, 定义了字符串引用工具类
 
     private Integer hash = null; // we cache the hash of this reference since it can be quite costly to re-calculated it
 
@@ -57,7 +57,7 @@ public abstract class BytesReference implements Accountable, Comparable<BytesRef
     /**
      * Returns the byte at the specified index. Need to be between 0 and length.
      */
-    public abstract byte get(int index);
+    public abstract byte get(int index); // NOTE:htt, 获取指定inde位置的字节
 
     /**
      * The length.
@@ -97,7 +97,7 @@ public abstract class BytesReference implements Accountable, Comparable<BytesRef
     /**
      * Converts to Lucene BytesRef.
      */
-    public abstract BytesRef toBytesRef();
+    public abstract BytesRef toBytesRef(); // NOTE:htt, 转换为 BytesRef
 
     /**
      * Returns a BytesRefIterator for this BytesReference. This method allows
@@ -158,7 +158,7 @@ public abstract class BytesReference implements Accountable, Comparable<BytesRef
      * Returns a compact array from the given BytesReference. The returned array won't be copied unless necessary. If you need
      * to modify the returned array use <tt>BytesRef.deepCopyOf(reference.toBytesRef()</tt> instead
      */
-    public static byte[] toBytes(BytesReference reference) {
+    public static byte[] toBytes(BytesReference reference) { // NOTE:htt, 将BytesReference转换为byte[]数组
         final BytesRef bytesRef = reference.toBytesRef();
         if (bytesRef.offset == 0 && bytesRef.length == bytesRef.bytes.length) {
             return bytesRef.bytes;

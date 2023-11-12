@@ -53,25 +53,25 @@ import java.util.function.Supplier;
 /**
  * A module for loading classes for node discovery.
  */
-public class DiscoveryModule {
+public class DiscoveryModule { // NOTE: htt, module to register zenDiscovery/singleNodeDiscovery and get zenDiscovery as default
 
     public static final Setting<String> DISCOVERY_TYPE_SETTING =
-        new Setting<>("discovery.type", "zen", Function.identity(), Property.NodeScope);
+        new Setting<>("discovery.type", "zen", Function.identity(), Property.NodeScope); // NOTE: htt, discovery type is zen
     public static final Setting<Optional<String>> DISCOVERY_HOSTS_PROVIDER_SETTING =
         new Setting<>("discovery.zen.hosts_provider", (String)null, Optional::ofNullable, Property.NodeScope);
 
-    private final Discovery discovery;
+    private final Discovery discovery; // NOTE: htt, register discovery including zenDiscovry and singleNodeDiscovry
 
     public DiscoveryModule(Settings settings, ThreadPool threadPool, TransportService transportService,
                            NamedWriteableRegistry namedWriteableRegistry, NetworkService networkService, MasterService masterService,
                            ClusterApplier clusterApplier, ClusterSettings clusterSettings, List<DiscoveryPlugin> plugins,
                            AllocationService allocationService) {
         final UnicastHostsProvider hostsProvider;
-        final Collection<BiConsumer<DiscoveryNode,ClusterState>> joinValidators = new ArrayList<>();
-        Map<String, Supplier<UnicastHostsProvider>> hostProviders = new HashMap<>();
+        final Collection<BiConsumer<DiscoveryNode,ClusterState>> joinValidators = new ArrayList<>(); // NOTE: htt, join validators
+        Map<String, Supplier<UnicastHostsProvider>> hostProviders = new HashMap<>(); // NOTE: htt, hostProvides which key is hostProviderName, value is hostProvider
         for (DiscoveryPlugin plugin : plugins) {
             plugin.getZenHostsProviders(transportService, networkService).entrySet().forEach(entry -> {
-                if (hostProviders.put(entry.getKey(), entry.getValue()) != null) {
+                if (hostProviders.put(entry.getKey(), entry.getValue()) != null) { // NOTE:htt, 不能注册两次
                     throw new IllegalArgumentException("Cannot register zen hosts provider [" + entry.getKey() + "] twice");
                 }
             });
@@ -86,16 +86,16 @@ public class DiscoveryModule {
             if (hostsProviderSupplier == null) {
                 throw new IllegalArgumentException("Unknown zen hosts provider [" + hostsProviderName.get() + "]");
             }
-            hostsProvider = Objects.requireNonNull(hostsProviderSupplier.get());
+            hostsProvider = Objects.requireNonNull(hostsProviderSupplier.get()); // NOTE: htt, first get host provider
         } else {
             hostsProvider = Collections::emptyList;
         }
 
         Map<String, Supplier<Discovery>> discoveryTypes = new HashMap<>();
-        discoveryTypes.put("zen",
+        discoveryTypes.put("zen",                                              // NOTE: htt, put zenDiscovery
             () -> new ZenDiscovery(settings, threadPool, transportService, namedWriteableRegistry, masterService, clusterApplier,
                 clusterSettings, hostsProvider, allocationService, Collections.unmodifiableCollection(joinValidators)));
-        discoveryTypes.put("single-node", () -> new SingleNodeDiscovery(settings, transportService, masterService, clusterApplier));
+        discoveryTypes.put("single-node", () -> new SingleNodeDiscovery(settings, transportService, masterService, clusterApplier)); // NOTE: htt, put singleNodeDiscovery
         for (DiscoveryPlugin plugin : plugins) {
             plugin.getDiscoveryTypes(threadPool, transportService, namedWriteableRegistry,
                 masterService, clusterApplier, clusterSettings, hostsProvider, allocationService).entrySet().forEach(entry -> {
@@ -105,7 +105,7 @@ public class DiscoveryModule {
             });
         }
         String discoveryType = DISCOVERY_TYPE_SETTING.get(settings);
-        Supplier<Discovery> discoverySupplier = discoveryTypes.get(discoveryType);
+        Supplier<Discovery> discoverySupplier = discoveryTypes.get(discoveryType); // NOTE: htt, second get current discovery
         if (discoverySupplier == null) {
             throw new IllegalArgumentException("Unknown discovery type [" + discoveryType + "]");
         }
