@@ -19,7 +19,7 @@
 
 package org.elasticsearch.index;
 
-public interface IndexComponent {
+public interface IndexComponent { // NOTE:htt, IndexComponent组件接口
 
-    Index index();
+    Index index(); // NOTE:htt, 获取Index
 }

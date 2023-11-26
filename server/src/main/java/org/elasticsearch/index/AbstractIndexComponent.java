@@ -23,11 +23,11 @@ import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.DeprecationLogger;
 import org.elasticsearch.common.logging.Loggers;
 
-public abstract class AbstractIndexComponent implements IndexComponent {
+public abstract class AbstractIndexComponent implements IndexComponent { // NOTE:htt, 抽象的IndexComponent
 
-    protected final Logger logger;
+    protected final Logger logger; // NOTE:htt, 日志
     protected final DeprecationLogger deprecationLogger;
-    protected final IndexSettings indexSettings;
+    protected final IndexSettings indexSettings; // NOTE:htt, index配置
 
     /**
      * Constructs a new index component, with the index name and its settings.

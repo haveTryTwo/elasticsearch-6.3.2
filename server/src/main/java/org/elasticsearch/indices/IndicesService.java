@@ -538,8 +538,19 @@ public class IndicesService extends AbstractLifecycleComponent
                                   Consumer<IndexShard.ShardFailure> onShardFailure,
                                   Consumer<ShardId> globalCheckpointSyncer) throws IOException {
         ensureChangesAllowed();
+
+        // NOTE:htt, 选择当前节点下所有分片的路径信息，让分片的分布更加均匀
+        Map<NodeEnvironment.NodePath, Long> globalDataPathToShardCount = new HashMap<NodeEnvironment.NodePath, Long>();
+        for(IndexService indexService : this) {
+            Map<NodeEnvironment.NodePath, Long> pathToShard = nodeEnv.shardCountPerPath(indexService.index()); // NOTE: htt, 获得当前节点下多个目录下索引的shard个数
+            pathToShard.forEach(
+                (key, value) ->globalDataPathToShardCount.merge(key, value, (v1, v2) -> Long.valueOf(v1 + v2))
+            );
+        }
+
+
         IndexService indexService = indexService(shardRouting.index());
-        IndexShard indexShard = indexService.createShard(shardRouting, globalCheckpointSyncer);
+        IndexShard indexShard = indexService.createShard(shardRouting, globalCheckpointSyncer, globalDataPathToShardCount);
         indexShard.addShardFailureCallback(onShardFailure);
         indexShard.startRecovery(recoveryState, recoveryTargetService, recoveryListener, repositoriesService,
             (type, mapping) -> {

@@ -365,7 +365,7 @@ public class IndexRequest extends ReplicatedWriteRequest<IndexRequest> implement
             XContentBuilder builder = XContentFactory.contentBuilder(xContentType);
             builder.startObject();
             for (int i = 0; i < source.length; i++) {
-                builder.field(source[i++].toString(), source[i]);
+                builder.field(source[i++].toString(), source[i]); // NOTE:htt, 将请求中多字段，添加到source字段中
             }
             builder.endObject();
             return source(builder);
@@ -377,7 +377,7 @@ public class IndexRequest extends ReplicatedWriteRequest<IndexRequest> implement
     /**
      * Sets the document to index in bytes form.
      */
-    public IndexRequest source(BytesReference source, XContentType xContentType) {
+    public IndexRequest source(BytesReference source, XContentType xContentType) { // NOTE:htt, 设置source内容，以及contentType
         this.source = Objects.requireNonNull(source);
         this.contentType = Objects.requireNonNull(xContentType);
         return this;
