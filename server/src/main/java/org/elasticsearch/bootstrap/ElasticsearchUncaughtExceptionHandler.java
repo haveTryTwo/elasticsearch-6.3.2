@@ -30,7 +30,7 @@ import java.security.PrivilegedAction;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-class ElasticsearchUncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
+class ElasticsearchUncaughtExceptionHandler implements Thread.UncaughtExceptionHandler { // NOTE: htt, es uncaught exception
 
     private final Supplier<String> loggingPrefixSupplier;
 
@@ -83,7 +83,7 @@ class ElasticsearchUncaughtExceptionHandler implements Thread.UncaughtExceptionH
         AccessController.doPrivileged(new PrivilegedHaltAction(status));
     }
 
-    static class PrivilegedHaltAction implements PrivilegedAction<Void> {
+    static class PrivilegedHaltAction implements PrivilegedAction<Void> { // NOTE; htt, halt action
 
         private final int status;
 

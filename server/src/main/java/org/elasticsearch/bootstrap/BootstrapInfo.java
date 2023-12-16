@@ -28,7 +28,7 @@ import java.util.Enumeration;
  * Exposes system startup information
  */
 @SuppressForbidden(reason = "exposes read-only view of system properties")
-public final class BootstrapInfo {
+public final class BootstrapInfo { // TODO: 获取启动时相关系统信息
 
     /** no instantiation */
     private BootstrapInfo() {}

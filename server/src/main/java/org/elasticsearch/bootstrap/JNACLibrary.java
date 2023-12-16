@@ -32,7 +32,7 @@ import java.util.List;
 /**
  * java mapping to some libc functions
  */
-final class JNACLibrary {
+final class JNACLibrary { // NOTE: htt, JNA calling to libc
 
     private static final Logger logger = Loggers.getLogger(JNACLibrary.class);
 

@@ -24,12 +24,12 @@ import java.util.Objects;
 /**
  * Encapsulates a bootstrap check.
  */
-public interface BootstrapCheck {
+public interface BootstrapCheck { // NOTE: htt, Bootstrap check
 
     /**
      * Encapsulate the result of a bootstrap check.
      */
-    final class BootstrapCheckResult {
+    final class BootstrapCheckResult { // NOTE: htt, bootstrap check result which null meanings success
 
         private final String message;
 

@@ -24,7 +24,7 @@ import org.elasticsearch.common.settings.Settings;
 /**
  * Context that is passed to every bootstrap check to make decisions on.
  */
-public class BootstrapContext {
+public class BootstrapContext { // NOTE: htt, bootstrap context
     /**
      * The nodes settings
      */
@@ -32,7 +32,7 @@ public class BootstrapContext {
     /**
      * The nodes local state metadata loaded on startup
      */
-    public final MetaData metaData;
+    public final MetaData metaData; // NOTE: htt, cluster meta data info
 
     public BootstrapContext(Settings settings, MetaData metaData) {
         this.settings = settings;

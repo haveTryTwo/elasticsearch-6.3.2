@@ -37,7 +37,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 /** custom policy for union of static and dynamic permissions */
-final class ESPolicy extends Policy {
+final class ESPolicy extends Policy { // NOTE: htt, es policy check include dynamic check/ plugins check and untrusted check
 
     /** template policy file, the one used in tests */
     static final String POLICY_RESOURCE = "security.policy";
@@ -140,7 +140,7 @@ final class ESPolicy extends Policy {
      * Wraps a bad default permission, applying a pre-implies to any permissions before checking if the wrapped bad default permission
      * implies a permission.
      */
-    private static class BadDefaultPermission extends Permission {
+    private static class BadDefaultPermission extends Permission { // NOTE: htt, default bad permission
 
         private final Permission badDefaultPermission;
         private final Predicate<Permission> preImplies;
@@ -201,7 +201,7 @@ final class ESPolicy extends Policy {
      * Wraps the Java system policy, filtering out bad default permissions that
      * are granted to all domains. Note, before java 8 these were even worse.
      */
-    static class SystemPolicy extends Policy {
+    static class SystemPolicy extends Policy { // NOTE: htt, system policy delegate
         final Policy delegate;
 
         SystemPolicy(Policy delegate) {

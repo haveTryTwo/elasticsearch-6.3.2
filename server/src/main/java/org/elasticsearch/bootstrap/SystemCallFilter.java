@@ -90,7 +90,7 @@ import java.util.Map;
  *      https://docs.oracle.com/cd/E23824_01/html/821-1456/prbac-2.html</a>
  */
 // not an example of how to write code!!!
-final class SystemCallFilter {
+final class SystemCallFilter { // NOTE: htt, 针对不同操作系统带用相应接口设置过滤
     private static final Logger logger = Loggers.getLogger(SystemCallFilter.class);
 
     // Linux implementation, based on seccomp(2) or prctl(2) with bpf filtering
@@ -209,7 +209,7 @@ final class SystemCallFilter {
     static final int SECCOMP_DATA_NR_OFFSET   = 0x00;
     static final int SECCOMP_DATA_ARCH_OFFSET = 0x04;
 
-    static class Arch {
+    static class Arch { // NOTE: htt, arch info
         /** AUDIT_ARCH_XXX constant from linux/audit.h */
         final int audit;
         /** syscall limit (necessary for blacklisting on amd64, to ban 32-bit syscalls) */

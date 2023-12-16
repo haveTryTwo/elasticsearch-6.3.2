@@ -39,7 +39,7 @@ import java.util.List;
 /**
  * Library for Windows/Kernel32
  */
-final class JNAKernel32Library {
+final class JNAKernel32Library { // NOTE: htt, library for kernel32
 
     private static final Logger logger = Loggers.getLogger(JNAKernel32Library.class);
 
@@ -106,7 +106,7 @@ final class JNAKernel32Library {
      * <p>
      * See http://msdn.microsoft.com/en-us/library/windows/desktop/ms683242%28v=vs.85%29.aspx
      */
-    class NativeHandlerCallback implements StdCallLibrary.StdCallCallback {
+    class NativeHandlerCallback implements StdCallLibrary.StdCallCallback { // NOTE: htt, native handler callback
 
         private final ConsoleCtrlHandler handler;
 
@@ -139,7 +139,7 @@ final class JNAKernel32Library {
      *
      * https://msdn.microsoft.com/en-us/library/windows/desktop/aa366775%28v=vs.85%29.aspx
      */
-    public static class MemoryBasicInformation extends Structure {
+    public static class MemoryBasicInformation extends Structure { // NOTE: htt, memory info
         public Pointer BaseAddress;
         public Pointer AllocationBase;
         public NativeLong AllocationProtect;
@@ -154,7 +154,7 @@ final class JNAKernel32Library {
         }
     }
 
-    public static class SizeT extends IntegerType {
+    public static class SizeT extends IntegerType { // NOTE: htt, SizeT type
 
         // JNA requires this no-arg constructor to be public,
         // otherwise it fails to register kernel32 library
@@ -262,7 +262,7 @@ final class JNAKernel32Library {
      *
      * https://msdn.microsoft.com/en-us/library/windows/desktop/ms684147%28v=vs.85%29.aspx
      */
-    public static class JOBOBJECT_BASIC_LIMIT_INFORMATION extends Structure implements Structure.ByReference {
+    public static class JOBOBJECT_BASIC_LIMIT_INFORMATION extends Structure implements Structure.ByReference { // NOTE: htt, JOB object limit info
       public long PerProcessUserTimeLimit;
       public long PerJobUserTimeLimit;
       public int LimitFlags;

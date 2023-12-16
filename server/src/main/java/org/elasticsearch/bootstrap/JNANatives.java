@@ -35,7 +35,7 @@ import static org.elasticsearch.bootstrap.JNAKernel32Library.SizeT;
  * This class performs the actual work with JNA and library bindings to call native methods. It should only be used after
  * we are sure that the JNA classes are available to the JVM
  */
-class JNANatives {
+class JNANatives { // TODO: htt, 设置本地的 FILE_SIZE, VIERTUAL_MEMORY, MAX_NUMBER_OF_THREADS 等
 
     /** no instantiation */
     private JNANatives() {}
@@ -57,7 +57,7 @@ class JNANatives {
 
     static long MAX_FILE_SIZE = Long.MIN_VALUE;
 
-    static void tryMlockall() {
+    static void tryMlockall() { // NOTE: htt, try mllockall
         int errno = Integer.MIN_VALUE;
         String errMsg = null;
         boolean rlimitSuccess = false;
@@ -65,7 +65,7 @@ class JNANatives {
         long hardLimit = 0;
 
         try {
-            int result = JNACLibrary.mlockall(JNACLibrary.MCL_CURRENT);
+            int result = JNACLibrary.mlockall(JNACLibrary.MCL_CURRENT); // NOTE: htt, mlockall current, so the futher memory won't be locked
             if (result == 0) {
                 LOCAL_MLOCKALL = true;
                 return;

@@ -28,7 +28,7 @@ import java.nio.file.Path;
  * The Natives class is a wrapper class that checks if the classes necessary for calling native methods are available on
  * startup. If they are not available, this class will avoid calling code that loads these classes.
  */
-final class Natives {
+final class Natives { // TODO: htt, 通过 JNA 来调用libc等接口获取系统变量等
     /** no instantiation */
     private Natives() {}
 
@@ -52,7 +52,7 @@ final class Natives {
         JNA_AVAILABLE = v;
     }
 
-    static void tryMlockall() {
+    static void tryMlockall() { // NOTE: htt, try to mlockall of current memory
         if (!JNA_AVAILABLE) {
             logger.warn("cannot mlockall because JNA is not available");
             return;

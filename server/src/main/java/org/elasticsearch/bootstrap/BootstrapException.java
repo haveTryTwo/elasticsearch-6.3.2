@@ -29,7 +29,7 @@ import java.nio.file.Path;
  * {@link Bootstrap#init(boolean, Path, boolean, org.elasticsearch.env.Environment)}
  * does not have to declare all of these checked exceptions.
  */
-class BootstrapException extends Exception {
+class BootstrapException extends Exception { // NOTE: htt, boot strap exception
 
     /**
      * Wraps an existing exception.

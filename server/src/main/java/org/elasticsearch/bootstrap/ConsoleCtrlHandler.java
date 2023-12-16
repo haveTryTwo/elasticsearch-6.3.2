@@ -19,7 +19,7 @@
 
 package org.elasticsearch.bootstrap;
 
-public interface ConsoleCtrlHandler {
+public interface ConsoleCtrlHandler {  // NOTE: htt, ctrl hanlde
 
     int CTRL_CLOSE_EVENT = 2;
 

@@ -43,7 +43,7 @@ import java.util.Locale;
 /**
  * This class starts elasticsearch.
  */
-class Elasticsearch extends EnvironmentAwareCommand {
+class Elasticsearch extends EnvironmentAwareCommand { // NOTE: htt, 启动入口
 
     private final OptionSpecBuilder versionOption;
     private final OptionSpecBuilder daemonizeOption;
@@ -72,7 +72,7 @@ class Elasticsearch extends EnvironmentAwareCommand {
     /**
      * Main entry point for starting elasticsearch
      */
-    public static void main(final String[] args) throws Exception { // NOTE:htt, 启动入口
+    public static void main(final String[] args) throws Exception { // NOTE: htt, ES服务端直接启动入口
         // we want the JVM to think there is a security manager installed so that if internal policy decisions that would be based on the
         // presence of a security manager or lack thereof act as if there is a security manager present (e.g., DNS cache policy)
         System.setSecurityManager(new SecurityManager() {

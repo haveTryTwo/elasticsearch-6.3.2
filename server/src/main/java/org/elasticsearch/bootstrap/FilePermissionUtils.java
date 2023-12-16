@@ -27,7 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Permissions;
 
-public class FilePermissionUtils {
+public class FilePermissionUtils { // NOTE:htt, file permission utils to add path  to permissions
 
     /** no instantiation */
     private FilePermissionUtils() {}
@@ -41,9 +41,9 @@ public class FilePermissionUtils {
      * @param permissions set of file permissions to grant to the path
      */
     @SuppressForbidden(reason = "only place where creating Java-9 compatible FilePermission objects is possible")
-    public static void addSingleFilePath(Permissions policy, Path path, String permissions) throws IOException { // NOTE:htt, 文件加上权限
+    public static void addSingleFilePath(Permissions policy, Path path, String permissions) throws IOException {
         policy.add(new FilePermission(path.toString(), permissions));
-        if (VERSION_IS_AT_LEAST_JAVA_9 && Files.exists(path)) { // NOTE:htt, 文件存在则加上权限
+        if (VERSION_IS_AT_LEAST_JAVA_9 && Files.exists(path)) {
             // Java 9 FilePermission model requires this due to the removal of pathname canonicalization,
             // see also https://github.com/elastic/elasticsearch/issues/21534
             Path realPath = path.toRealPath();
@@ -62,22 +62,22 @@ public class FilePermissionUtils {
      * @param permissions       set of file permissions to grant to the path
      */
     @SuppressForbidden(reason = "only place where creating Java-9 compatible FilePermission objects is possible")
-    public static void  addDirectoryPath(Permissions policy, String configurationName, Path path, String permissions) throws IOException { // NOTE:htt, 确认目录存在并且加上权限
+    public static void addDirectoryPath(Permissions policy, String configurationName, Path path, String permissions) throws IOException {
         // paths may not exist yet, this also checks accessibility
         try {
-            Security.ensureDirectoryExists(path); // NOTE:htt, 确认目录存在
+            Security.ensureDirectoryExists(path);
         } catch (IOException e) {
             throw new IllegalStateException("Unable to access '" + configurationName + "' (" + path + ")", e);
         }
 
         // add each path twice: once for itself, again for files underneath it
-        policy.add(new FilePermission(path.toString(), permissions)); // NOTE:htt, 路径权限
+        policy.add(new FilePermission(path.toString(), permissions));
         policy.add(new FilePermission(path.toString() + path.getFileSystem().getSeparator() + "-", permissions));
         if (VERSION_IS_AT_LEAST_JAVA_9) {
             // Java 9 FilePermission model requires this due to the removal of pathname canonicalization,
             // see also https://github.com/elastic/elasticsearch/issues/21534
             Path realPath = path.toRealPath();
-            if (path.toString().equals(realPath.toString()) == false) { // NOTE:htt, 绝对路径加入权限
+            if (path.toString().equals(realPath.toString()) == false) {
                 policy.add(new FilePermission(realPath.toString(), permissions));
                 policy.add(new FilePermission(realPath.toString() + realPath.getFileSystem().getSeparator() + "-", permissions));
             }

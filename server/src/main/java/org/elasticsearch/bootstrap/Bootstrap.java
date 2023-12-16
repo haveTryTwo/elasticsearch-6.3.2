@@ -71,23 +71,23 @@ final class Bootstrap {
     private volatile Node node;
     private final CountDownLatch keepAliveLatch = new CountDownLatch(1);
     private final Thread keepAliveThread;
-    private final Spawner spawner = new Spawner();
+    private final Spawner spawner = new Spawner(); // NOTE: htt, 启动的controller进程
 
     /** creates a new instance */
     Bootstrap() {
-        keepAliveThread = new Thread(new Runnable() {
+        keepAliveThread = new Thread(new Runnable() { // NOTE: htt, 创建一个保活的用户线程
             @Override
             public void run() {
                 try {
-                    keepAliveLatch.await();
+                    keepAliveLatch.await(); // NOTE:htt, 使用CountDownLatch来确保线程存活
                 } catch (InterruptedException e) {
                     // bail out
                 }
             }
         }, "elasticsearch[keepAlive/" + Version.CURRENT + "]");
-        keepAliveThread.setDaemon(false);
+        keepAliveThread.setDaemon(false); // NOTE:htt, 设置为用户线程
         // keep this thread alive (non daemon thread) until we shutdown
-        Runtime.getRuntime().addShutdownHook(new Thread() {
+        Runtime.getRuntime().addShutdownHook(new Thread() { // NOTE:htt, 注册term信号监听，当有term信号时则触发countDown()，以便保活线程退出
             @Override
             public void run() {
                 keepAliveLatch.countDown();
@@ -100,17 +100,17 @@ final class Bootstrap {
         final Logger logger = Loggers.getLogger(Bootstrap.class);
 
         // check if the user is running as root, and bail
-        if (Natives.definitelyRunningAsRoot()) {
+        if (Natives.definitelyRunningAsRoot()) { // NOTE: htt, not run as root
             throw new RuntimeException("can not run elasticsearch as root");
         }
 
         // enable system call filter
-        if (systemCallFilter) {
+        if (systemCallFilter) { // NOTE: htt, try install system call filter in diff os
             Natives.tryInstallSystemCallFilter(tmpFile);
         }
 
         // mlockall if requested
-        if (mlockAll) {
+        if (mlockAll) { // NOTE: htt, mlockAll
             if (Constants.WINDOWS) {
                Natives.tryVirtualLock();
             } else {
@@ -119,11 +119,11 @@ final class Bootstrap {
         }
 
         // listener for windows close event
-        if (ctrlHandler) {
+        if (ctrlHandler) { // NOTE:htt, crontrol-c事件
             Natives.addConsoleCtrlHandler(new ConsoleCtrlHandler() {
                 @Override
                 public boolean handle(int code) {
-                    if (CTRL_CLOSE_EVENT == code) {
+                    if (CTRL_CLOSE_EVENT == code) { // NOTE:htt, 当有control-c事件则触发stop()
                         logger.info("running graceful exit on windows");
                         try {
                             Bootstrap.stop();
@@ -144,7 +144,7 @@ final class Bootstrap {
             // we've already logged this.
         }
 
-        Natives.trySetMaxNumberOfThreads();
+        Natives.trySetMaxNumberOfThreads(); // NOTE: htt, set max number of threads
         Natives.trySetMaxSizeVirtualMemory();
         Natives.trySetMaxFileSize();
 
@@ -163,26 +163,26 @@ final class Bootstrap {
         Settings settings = environment.settings();
 
         try {
-            spawner.spawnNativeControllers(environment);
+            spawner.spawnNativeControllers(environment); // NOTE: htt, 启动 modules 目录下的 controller
         } catch (IOException e) {
             throw new BootstrapException(e);
         }
 
         initializeNatives(
                 environment.tmpFile(),
-                BootstrapSettings.MEMORY_LOCK_SETTING.get(settings),
+                BootstrapSettings.MEMORY_LOCK_SETTING.get(settings), // NOTE: htt, bootstrap.memory_lock:true in elasticsearch.yml
                 BootstrapSettings.SYSTEM_CALL_FILTER_SETTING.get(settings),
                 BootstrapSettings.CTRLHANDLER_SETTING.get(settings));
 
         // initialize probes before the security manager is installed
         initializeProbes();
 
-        if (addShutdownHook) { // NOTE:htt, 当前为true
-            Runtime.getRuntime().addShutdownHook(new Thread() { // NOTE:htt, 添加SIGTERM等监听并进行关闭处理
+        if (addShutdownHook) {
+            Runtime.getRuntime().addShutdownHook(new Thread() { // NOTE:htt, 监听signal term信号,收到信号后，将当前节点关闭，并做清理工作
                 @Override
                 public void run() {
                     try {
-                        IOUtils.close(node, spawner);
+                        IOUtils.close(node, spawner); // NOTE: htt, 注册关闭启动的 controller 进程， 当前收到term信号后进行节点关闭
                         LoggerContext context = (LoggerContext) LogManager.getContext(false);
                         Configurator.shutdown(context);
                     } catch (IOException ex) {
@@ -204,7 +204,7 @@ final class Bootstrap {
         IfConfig.logIfNecessary();
 
         // install SM after natives, shutdown hooks, etc.
-        try {
+        try { // NOTE: htt, local security of permission
             Security.configure(environment, BootstrapSettings.SECURITY_FILTER_BAD_DEFAULTS_SETTING.get(settings));
         } catch (IOException | NoSuchAlgorithmException e) {
             throw new BootstrapException(e);
@@ -220,7 +220,7 @@ final class Bootstrap {
         };
     }
 
-    static SecureSettings loadSecureSettings(Environment initialEnv) throws BootstrapException {
+    static SecureSettings loadSecureSettings(Environment initialEnv) throws BootstrapException { // NOTE: htt, load secure settings
         final KeyStoreWrapper keystore;
         try {
             keystore = KeyStoreWrapper.load(initialEnv.configFile());
@@ -266,7 +266,7 @@ final class Bootstrap {
         keepAliveThread.start();
     }
 
-    static void stop() throws IOException { // NOTE:htt, 监听停止方式，主要给WINDOWS等场景下使用
+    static void stop() throws IOException {
         try {
             IOUtils.close(INSTANCE.node, INSTANCE.spawner);
         } finally {
@@ -288,7 +288,7 @@ final class Bootstrap {
 
         INSTANCE = new Bootstrap();
 
-        final SecureSettings keystore = loadSecureSettings(initialEnv);
+        final SecureSettings keystore = loadSecureSettings(initialEnv); // NOTE: htt, get from config/elasticsearch.keystore
         final Environment environment = createEnvironment(foreground, pidFile, keystore, initialEnv.settings(), initialEnv.configFile());
         try {
             LogConfigurator.configure(environment);
@@ -315,7 +315,7 @@ final class Bootstrap {
             }
 
             // fail if somebody replaced the lucene jars
-            checkLucene();
+            checkLucene(); // TODO: htt, 检查lucene
 
             // install the default uncaught exception handler; must be done before security is
             // initialized as we do not want to grant the runtime permission
@@ -323,7 +323,7 @@ final class Bootstrap {
             Thread.setDefaultUncaughtExceptionHandler(
                 new ElasticsearchUncaughtExceptionHandler(() -> Node.NODE_NAME_SETTING.get(environment.settings())));
 
-            INSTANCE.setup(true, environment);
+            INSTANCE.setup(true, environment); // NOTE: htt, set node，先创建node，并且默认是启动对 signal term信号监听
 
             try {
                 // any secure settings must be read during node construction
@@ -332,7 +332,7 @@ final class Bootstrap {
                 throw new BootstrapException(e);
             }
 
-            INSTANCE.start();
+            INSTANCE.start(); // NOTE: htt, node start，再启动node
 
             if (closeStandardStreams) {
                 closeSysError();

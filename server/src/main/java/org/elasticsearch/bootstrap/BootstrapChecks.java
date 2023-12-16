@@ -52,7 +52,7 @@ import java.util.regex.Pattern;
  * es.enforce.bootstrap.checks} is set to {@true}. In this case we assume the node is running in production and all bootstrap checks must
  * pass.
  */
-final class BootstrapChecks {
+final class BootstrapChecks { // NOTE: htt, inner checks and additional checks
 
     private BootstrapChecks() {
     }
@@ -213,7 +213,7 @@ final class BootstrapChecks {
         return Collections.unmodifiableList(checks);
     }
 
-    static class HeapSizeCheck implements BootstrapCheck {
+    static class HeapSizeCheck implements BootstrapCheck { // NOTE: htt, heap check which init should be equal to max
 
         @Override
         public BootstrapCheckResult check(BootstrapContext context) {
@@ -244,7 +244,7 @@ final class BootstrapChecks {
 
     }
 
-    static class OsXFileDescriptorCheck extends FileDescriptorCheck {
+    static class OsXFileDescriptorCheck extends FileDescriptorCheck { // NOTE: htt, os fd number >= 10240
 
         OsXFileDescriptorCheck() {
             // see constant OPEN_MAX defined in
@@ -256,7 +256,7 @@ final class BootstrapChecks {
 
     }
 
-    static class FileDescriptorCheck implements BootstrapCheck {
+    static class FileDescriptorCheck implements BootstrapCheck { // NOTE: htt, fd number check
 
         private final int limit;
 
@@ -273,7 +273,7 @@ final class BootstrapChecks {
 
         public final BootstrapCheckResult check(BootstrapContext context) {
             final long maxFileDescriptorCount = getMaxFileDescriptorCount();
-            if (maxFileDescriptorCount != -1 && maxFileDescriptorCount < limit) {
+            if (maxFileDescriptorCount != -1 && maxFileDescriptorCount < limit) { // NOTE: htt, fd should >= 65536
                 final String message = String.format(
                         Locale.ROOT,
                         "max file descriptors [%d] for elasticsearch process is too low, increase to at least [%d]",
@@ -292,7 +292,7 @@ final class BootstrapChecks {
 
     }
 
-    static class MlockallCheck implements BootstrapCheck {
+    static class MlockallCheck implements BootstrapCheck { // NOTE: htt, mlock check
 
         @Override
         public BootstrapCheckResult check(BootstrapContext context) {
@@ -310,7 +310,7 @@ final class BootstrapChecks {
 
     }
 
-    static class MaxNumberOfThreadsCheck implements BootstrapCheck {
+    static class MaxNumberOfThreadsCheck implements BootstrapCheck { // NOTE: htt, threads number check which should >= 1<<12
 
         // this should be plenty for machines up to 256 cores
         private static final long MAX_NUMBER_OF_THREADS_THRESHOLD = 1 << 12;
@@ -337,7 +337,7 @@ final class BootstrapChecks {
 
     }
 
-    static class MaxSizeVirtualMemoryCheck implements BootstrapCheck {
+    static class MaxSizeVirtualMemoryCheck implements BootstrapCheck { // NOTE: htt, virtual memory check
 
         @Override
         public BootstrapCheckResult check(BootstrapContext context) {
@@ -368,7 +368,7 @@ final class BootstrapChecks {
     /**
      * Bootstrap check that the maximum file size is unlimited (otherwise Elasticsearch could run in to an I/O exception writing files).
      */
-    static class MaxFileSizeCheck implements BootstrapCheck {
+    static class MaxFileSizeCheck implements BootstrapCheck { // NOTE: htt, file size check
 
         @Override
         public BootstrapCheckResult check(BootstrapContext context) {
@@ -395,7 +395,7 @@ final class BootstrapChecks {
 
     }
 
-    static class MaxMapCountCheck implements BootstrapCheck {
+    static class MaxMapCountCheck implements BootstrapCheck { // NOTE: htt, max map count check which should >= 1<<18, sysctl -w vm.max_map_count=262144
 
         private static final long LIMIT = 1 << 18;
 
@@ -458,7 +458,7 @@ final class BootstrapChecks {
 
     }
 
-    static class ClientJvmCheck implements BootstrapCheck {
+    static class ClientJvmCheck implements BootstrapCheck { // NOTE: htt, jvm check which should be server
 
         @Override
         public BootstrapCheckResult check(BootstrapContext context) {
@@ -484,7 +484,7 @@ final class BootstrapChecks {
      * Checks if the serial collector is in use. This collector is single-threaded and devastating
      * for performance and should not be used for a server application like Elasticsearch.
      */
-    static class UseSerialGCCheck implements BootstrapCheck {
+    static class UseSerialGCCheck implements BootstrapCheck { // NOTE: htt, JVM should not be SerialGC
 
         @Override
         public BootstrapCheckResult check(BootstrapContext context) {
@@ -510,7 +510,7 @@ final class BootstrapChecks {
     /**
      * Bootstrap check that if system call filters are enabled, then system call filters must have installed successfully.
      */
-    static class SystemCallFilterCheck implements BootstrapCheck {
+    static class SystemCallFilterCheck implements BootstrapCheck { // NOTE: htt, system call filter check
 
         @Override
         public BootstrapCheckResult check(BootstrapContext context) {
@@ -530,7 +530,7 @@ final class BootstrapChecks {
 
     }
 
-    abstract static class MightForkCheck implements BootstrapCheck {
+    abstract static class MightForkCheck implements BootstrapCheck { // NOTE: htt, might fork check
 
         @Override
         public BootstrapCheckResult check(BootstrapContext context) {
@@ -558,7 +558,7 @@ final class BootstrapChecks {
 
     }
 
-    static class OnErrorCheck extends MightForkCheck {
+    static class OnErrorCheck extends MightForkCheck { // NOTE: htt, on error check
 
         @Override
         boolean mightFork() {
@@ -583,7 +583,7 @@ final class BootstrapChecks {
 
     }
 
-    static class OnOutOfMemoryErrorCheck extends MightForkCheck {
+    static class OnOutOfMemoryErrorCheck extends MightForkCheck { // NOTE: htt, out of memory check
 
         @Override
         boolean mightFork() {
@@ -610,7 +610,7 @@ final class BootstrapChecks {
     /**
      * Bootstrap check for early-access builds from OpenJDK.
      */
-    static class EarlyAccessCheck implements BootstrapCheck {
+    static class EarlyAccessCheck implements BootstrapCheck { // NOTE: htt, use release build
 
         @Override
         public BootstrapCheckResult check(BootstrapContext context) {
@@ -642,7 +642,7 @@ final class BootstrapChecks {
     static class G1GCCheck implements BootstrapCheck {
 
         @Override
-        public BootstrapCheckResult check(BootstrapContext context) {
+        public BootstrapCheckResult check(BootstrapContext context) { // NOTE: htt, jvm check which >= 8u40 if enable G1GC
             if ("Oracle Corporation".equals(jvmVendor()) && isJava8() && isG1GCEnabled()) {
                 final String jvmVersion = jvmVersion();
                 // HotSpot versions on Java 8 match this regular expression; note that this changes with Java 9 after JEP-223
@@ -688,7 +688,7 @@ final class BootstrapChecks {
 
     }
 
-    static class AllPermissionCheck implements BootstrapCheck {
+    static class AllPermissionCheck implements BootstrapCheck { // NOTE: htt, all permission check which should not have all
 
         @Override
         public final BootstrapCheckResult check(BootstrapContext context) {

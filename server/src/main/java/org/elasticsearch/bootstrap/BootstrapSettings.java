@@ -22,7 +22,7 @@ package org.elasticsearch.bootstrap;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Setting.Property;
 
-public final class BootstrapSettings {
+public final class BootstrapSettings { // NOTE: htt, boot strap settings
 
     private BootstrapSettings() {
     }
@@ -32,7 +32,7 @@ public final class BootstrapSettings {
             Setting.boolSetting("security.manager.filter_bad_defaults", true, Property.NodeScope);
 
     public static final Setting<Boolean> MEMORY_LOCK_SETTING =
-        Setting.boolSetting("bootstrap.memory_lock", false, Property.NodeScope);
+        Setting.boolSetting("bootstrap.memory_lock", false, Property.NodeScope); // NOTE: htt, default not memory lock
     public static final Setting<Boolean> SYSTEM_CALL_FILTER_SETTING =
         Setting.boolSetting("bootstrap.system_call_filter", true, Property.NodeScope);
     public static final Setting<Boolean> CTRLHANDLER_SETTING =

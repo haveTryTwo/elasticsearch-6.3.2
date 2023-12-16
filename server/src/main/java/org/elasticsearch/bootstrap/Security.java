@@ -105,7 +105,7 @@ import static org.elasticsearch.bootstrap.FilePermissionUtils.addSingleFilePath;
  * See <a href="https://docs.oracle.com/javase/7/docs/technotes/guides/security/troubleshooting-security.html">
  * Troubleshooting Security</a> for information.
  */
-final class Security {
+final class Security { // NOTE: htt, security include classpath/es directory/http/tcp security, and plugin/module
     /** no instantiation */
     private Security() {}
 
@@ -162,8 +162,8 @@ final class Security {
     static Map<String,Policy> getPluginPermissions(Environment environment) throws IOException, NoSuchAlgorithmException {
         Map<String,Policy> map = new HashMap<>();
         // collect up set of plugins and modules by listing directories.
-        Set<Path> pluginsAndModules = new LinkedHashSet<>(PluginsService.findPluginDirs(environment.pluginsFile()));
-        pluginsAndModules.addAll(PluginsService.findPluginDirs(environment.modulesFile()));
+        Set<Path> pluginsAndModules = new LinkedHashSet<>(PluginsService.findPluginDirs(environment.pluginsFile())); // NOTE: htt, plugin files
+        pluginsAndModules.addAll(PluginsService.findPluginDirs(environment.modulesFile())); // NOTE: htt, modules files
 
         // now process each one
         for (Path plugin : pluginsAndModules) {
@@ -249,29 +249,29 @@ final class Security {
     /** returns dynamic Permissions to configured paths and bind ports */
     static Permissions createPermissions(Environment environment) throws IOException {
         Permissions policy = new Permissions();
-        addClasspathPermissions(policy);
-        addFilePermissions(policy, environment);
-        addBindPermissions(policy, environment.settings());
+        addClasspathPermissions(policy); // NOTE: htt, add classpath permission
+        addFilePermissions(policy, environment); // NOTE: htt, add file permission
+        addBindPermissions(policy, environment.settings()); // NOTE: htt, add http/tcp port permission
         return policy;
     }
 
     /** Adds access to classpath jars/classes for jar hell scan, etc */
     @SuppressForbidden(reason = "accesses fully qualified URLs to configure security")
-    static void addClasspathPermissions(Permissions policy) throws IOException { // NOTE:htt, 文件加上权限
+    static void addClasspathPermissions(Permissions policy) throws IOException {
         // add permissions to everything in classpath
         // really it should be covered by lib/, but there could be e.g. agents or similar configured)
         for (URL url : JarHell.parseClassPath()) {
             Path path;
             try {
-                path = PathUtils.get(url.toURI()); // NOTE:htt, 文件路径
+                path = PathUtils.get(url.toURI());
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
             }
             // resource itself
             if (Files.isDirectory(path)) {
-                addDirectoryPath(policy, "class.path", path, "read,readlink"); // NOTE:htt, 确认目录存在并且加上权限
+                addDirectoryPath(policy, "class.path", path, "read,readlink");
             } else {
-                addSingleFilePath(policy, path, "read,readlink"); // NOTE:htt, 文件加上权限
+                addSingleFilePath(policy, path, "read,readlink");
             }
         }
     }
@@ -400,16 +400,16 @@ final class Security {
      * Ensures configured directory {@code path} exists.
      * @throws IOException if {@code path} exists, but is not a directory, not accessible, or broken symbolic link.
      */
-    static void ensureDirectoryExists(Path path) throws IOException { // NOTE:htt, 确认文件目录存在，如果没有则创建
+    static void ensureDirectoryExists(Path path) throws IOException {
         // this isn't atomic, but neither is createDirectories.
         if (Files.isDirectory(path)) {
             // verify access, following links (throws exception if something is wrong)
             // we only check READ as a sanity test
-            path.getFileSystem().provider().checkAccess(path.toRealPath(), AccessMode.READ); // NOTE:htt, 确认文件读权限
+            path.getFileSystem().provider().checkAccess(path.toRealPath(), AccessMode.READ);
         } else {
             // doesn't exist, or not a directory
             try {
-                Files.createDirectories(path); // NOTE:htt, 创建目录
+                Files.createDirectories(path);
             } catch (FileAlreadyExistsException e) {
                 // convert optional specific exception so the context is clear
                 IOException e2 = new NotDirectoryException(path.toString());
