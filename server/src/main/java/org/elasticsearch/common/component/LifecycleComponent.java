@@ -21,9 +21,9 @@ package org.elasticsearch.common.component;
 
 import org.elasticsearch.common.lease.Releasable;
 
-public interface LifecycleComponent extends Releasable {
+public interface LifecycleComponent extends Releasable { // NOTE: htt, life cycle of component，在node.start()调用启动
 
-    Lifecycle.State lifecycleState();
+    Lifecycle.State lifecycleState(); // NOTE: htt, state
 
     void addLifecycleListener(LifecycleListener listener);
 

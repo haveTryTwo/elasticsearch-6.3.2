@@ -19,7 +19,7 @@
 
 package org.elasticsearch.common.component;
 
-public abstract class LifecycleListener {
+public abstract class LifecycleListener { // NOTE: htt, life cycle listener, like AOP
 
     public void beforeStart() {
 

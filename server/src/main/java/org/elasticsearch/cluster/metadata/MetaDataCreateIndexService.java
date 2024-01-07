@@ -313,7 +313,7 @@ public class MetaDataCreateIndexService extends AbstractComponent {
                                     MapperService.parseMapping(xContentRegistry, mappingString));
                             } else {
                                 mappings.put(cursor.key,
-                                    MapperService.parseMapping(xContentRegistry, mappingString));
+                                    MapperService.parseMapping(xContentRegistry, mappingString)); // NOTE:htt, 6.3版本直接将mappings中的type信息加载进来，而6.8版本已经做了调整，会将_doc中的mappings复制到第一个type中,再包含_default_ type的时候会放入到该type下导致使用过程中有问题
                             }
                         }
                         // handle custom
