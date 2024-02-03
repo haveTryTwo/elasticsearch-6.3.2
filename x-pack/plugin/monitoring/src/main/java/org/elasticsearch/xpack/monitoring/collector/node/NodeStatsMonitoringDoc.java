@@ -76,6 +76,7 @@ public class NodeStatsMonitoringDoc extends FilteredMonitoringDoc {
         Sets.newHashSet("node_stats.node_id",
                         "node_stats.node_master",
                         "node_stats.mlockall",
+                        "node_stats.attributes.zone",
                         "node_stats.indices.docs.count",
                         "node_stats.indices.fielddata.memory_size_in_bytes",
                         "node_stats.indices.fielddata.evictions",
