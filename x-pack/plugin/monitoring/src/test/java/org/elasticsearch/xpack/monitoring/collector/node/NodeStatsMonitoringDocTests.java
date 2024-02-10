@@ -5,6 +5,8 @@
  */
 package org.elasticsearch.xpack.monitoring.collector.node;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.admin.cluster.node.stats.NodeStats;
 import org.elasticsearch.action.admin.indices.stats.CommonStats;
@@ -122,6 +124,9 @@ public class NodeStatsMonitoringDocTests extends BaseFilteredMonitoringDocTestCa
                        + "\"node_id\":\"_node_id\","
                        + "\"node_master\":true,"
                        + "\"mlockall\":false,"
+                       + "\"attributes\":{"
+                         + "\"zone\":\"beijing_hot\""
+                       + "},"
                        + "\"indices\":{"
                          + "\"docs\":{"
                            + "\"count\":1"
@@ -362,13 +367,15 @@ public class NodeStatsMonitoringDocTests extends BaseFilteredMonitoringDocTestCa
         threadpools.add(new ThreadPoolStats.Stats("write", (int) ++iota, (int) ++iota, (int) no, ++iota, (int) no, no));
         final ThreadPoolStats threadPool = new ThreadPoolStats(threadpools);
 
+        Map<String, String> attributes = new HashMap();
+        attributes.put("zone", "beijing_hot");
         final DiscoveryNode discoveryNode = new DiscoveryNode("_node_name",
                                                                 "_node_id",
                                                                 "_ephemeral_id",
                                                                 "_host_name",
                                                                 "_host_address",
                                                                 new TransportAddress(TransportAddress.META_ADDRESS, 1234),
-                                                                emptyMap(),
+                                                                attributes,
                                                                 emptySet(),
                                                                 Version.V_6_0_0_beta1);
 
