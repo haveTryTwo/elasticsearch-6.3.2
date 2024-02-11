@@ -162,7 +162,7 @@ public abstract class ESSingleNodeTestCase extends ESTestCase {
     }
 
     private Node newNode() {
-        final Path tempDir = createTempDir();
+        final Path tempDir = createTempDir(); // NOTE:htt, 创建临时目录
         Settings settings = Settings.builder()
             .put(ClusterName.CLUSTER_NAME_SETTING.getKey(), InternalTestCluster.clusterName("single-node-cluster", random().nextLong()))
             .put(Environment.PATH_HOME_SETTING.getKey(), tempDir)
