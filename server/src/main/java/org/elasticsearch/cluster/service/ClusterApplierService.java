@@ -66,38 +66,38 @@ import java.util.stream.Stream;
 import static org.elasticsearch.cluster.service.ClusterService.CLUSTER_SERVICE_SLOW_TASK_LOGGING_THRESHOLD_SETTING;
 import static org.elasticsearch.common.util.concurrent.EsExecutors.daemonThreadFactory;
 
-public class ClusterApplierService extends AbstractLifecycleComponent implements ClusterApplier {
+public class ClusterApplierService extends AbstractLifecycleComponent implements ClusterApplier { // NOTE: htt, 应用集群状态, clusterStateChanged applier on cluster of current node
 
     public static final String CLUSTER_UPDATE_THREAD_NAME = "clusterApplierService#updateTask";
 
-    private final ClusterSettings clusterSettings;
+    private final ClusterSettings clusterSettings; // NOTE: htt, 集群配置
     protected final ThreadPool threadPool;
 
     private volatile TimeValue slowTaskLoggingThreshold;
 
-    private volatile PrioritizedEsThreadPoolExecutor threadPoolExecutor;
+    private volatile PrioritizedEsThreadPoolExecutor threadPoolExecutor; // NOTE: htt, threadPool executor，单线程执行，可以保证串行执行
 
     /**
      * Those 3 state listeners are changing infrequently - CopyOnWriteArrayList is just fine
      */
-    private final Collection<ClusterStateApplier> highPriorityStateAppliers = new CopyOnWriteArrayList<>();
-    private final Collection<ClusterStateApplier> normalPriorityStateAppliers = new CopyOnWriteArrayList<>();
-    private final Collection<ClusterStateApplier> lowPriorityStateAppliers = new CopyOnWriteArrayList<>();
+    private final Collection<ClusterStateApplier> highPriorityStateAppliers = new CopyOnWriteArrayList<>(); // NOTE: htt, high priority state appliers，目前为 IndicesClusterStateService
+    private final Collection<ClusterStateApplier> normalPriorityStateAppliers = new CopyOnWriteArrayList<>(); // NOTE: htt, normal priority state appliers
+    private final Collection<ClusterStateApplier> lowPriorityStateAppliers = new CopyOnWriteArrayList<>(); // NOTE: htt, htt priority state appliers
     private final Iterable<ClusterStateApplier> clusterStateAppliers = Iterables.concat(highPriorityStateAppliers,
-        normalPriorityStateAppliers, lowPriorityStateAppliers);
+        normalPriorityStateAppliers, lowPriorityStateAppliers); // NOTE:htt, 集群状态变化后，会按高、normal、低优先级 applier执行集群状态
 
-    private final Collection<ClusterStateListener> clusterStateListeners = new CopyOnWriteArrayList<>();
+    private final Collection<ClusterStateListener> clusterStateListeners = new CopyOnWriteArrayList<>(); // NOTE: htt, clusterState listener
     private final Collection<TimeoutClusterStateListener> timeoutClusterStateListeners =
-        Collections.newSetFromMap(new ConcurrentHashMap<TimeoutClusterStateListener, Boolean>());
+        Collections.newSetFromMap(new ConcurrentHashMap<TimeoutClusterStateListener, Boolean>()); // NOTE: htt, timeout cluster state listener
 
     private final LocalNodeMasterListeners localNodeMasterListeners;
 
-    private final Queue<NotifyTimeout> onGoingTimeouts = ConcurrentCollections.newQueue();
+    private final Queue<NotifyTimeout> onGoingTimeouts = ConcurrentCollections.newQueue(); // NOTE: htt, including TimeoutClusterStateListener and timeout
 
-    private final AtomicReference<ClusterState> state; // last applied state
+    private final AtomicReference<ClusterState> state; // last applied state // NOTE: htt, 最后应用的cluster state
 
-    private NodeConnectionsService nodeConnectionsService;
-    private Supplier<ClusterState.Builder> stateBuilderSupplier;
+    private NodeConnectionsService nodeConnectionsService; // NOTE: htt, node connection service
+    private Supplier<ClusterState.Builder> stateBuilderSupplier; // NOTE: htt, state builder
 
     public ClusterApplierService(Settings settings, ClusterSettings clusterSettings, ThreadPool threadPool, Supplier<ClusterState
         .Builder> stateBuilderSupplier) {
@@ -129,18 +129,18 @@ public class ClusterApplierService extends AbstractLifecycleComponent implements
     }
 
     @Override
-    protected synchronized void doStart() {
+    protected synchronized void doStart() { // NOTE: emep, start which add listener and create threadPool
         Objects.requireNonNull(nodeConnectionsService, "please set the node connection service before starting");
         Objects.requireNonNull(state.get(), "please set initial state before starting");
         addListener(localNodeMasterListeners);
-        threadPoolExecutor = EsExecutors.newSinglePrioritizing(
+        threadPoolExecutor = EsExecutors.newSinglePrioritizing( // NOTE: htt, create priority queue thread pool，单线程优先级高处理
                 nodeName() + "/" + CLUSTER_UPDATE_THREAD_NAME,
                 daemonThreadFactory(settings, CLUSTER_UPDATE_THREAD_NAME),
                 threadPool.getThreadContext(),
                 threadPool.scheduler());
     }
 
-    class UpdateTask extends SourcePrioritizedRunnable implements Function<ClusterState, ClusterState> {
+    class UpdateTask extends SourcePrioritizedRunnable implements Function<ClusterState, ClusterState> { // NOTE: htt, update task which apply oldClusterState to newClusterState
         final ClusterStateTaskListener listener;
         final Function<ClusterState, ClusterState> updateFunction;
 
@@ -153,17 +153,17 @@ public class ClusterApplierService extends AbstractLifecycleComponent implements
 
         @Override
         public ClusterState apply(ClusterState clusterState) {
-            return updateFunction.apply(clusterState);
+            return updateFunction.apply(clusterState); // NOTE: htt, apply clusterState
         }
 
         @Override
         public void run() {
-            runTask(this);
+            runTask(this); // NOTE: htt, runTask
         }
     }
 
     @Override
-    protected synchronized void doStop() {
+    protected synchronized void doStop() { // NOTE: htt, stop service
         for (NotifyTimeout onGoingTimeout : onGoingTimeouts) {
             onGoingTimeout.cancel();
             try {
@@ -173,7 +173,7 @@ public class ClusterApplierService extends AbstractLifecycleComponent implements
                 logger.debug("failed to notify listeners on shutdown", ex);
             }
         }
-        ThreadPool.terminate(threadPoolExecutor, 10, TimeUnit.SECONDS);
+        ThreadPool.terminate(threadPoolExecutor, 10, TimeUnit.SECONDS); // NOTE: htt, terminate threadPoolExecutor and wait 10 seconds
         // close timeout listeners that did not have an ongoing timeout
         timeoutClusterStateListeners.forEach(TimeoutClusterStateListener::onClose);
         removeListener(localNodeMasterListeners);
@@ -198,7 +198,7 @@ public class ClusterApplierService extends AbstractLifecycleComponent implements
      * Adds a high priority applier of updated cluster states.
      */
     public void addHighPriorityApplier(ClusterStateApplier applier) {
-        highPriorityStateAppliers.add(applier);
+        highPriorityStateAppliers.add(applier); // NOTE:htt, 添加高优先级applier(IndicesClusterStateService)，在集群状态变化后执行
     }
 
     /**
@@ -243,7 +243,7 @@ public class ClusterApplierService extends AbstractLifecycleComponent implements
      */
     public void removeTimeoutListener(TimeoutClusterStateListener listener) {
         timeoutClusterStateListeners.remove(listener);
-        for (Iterator<NotifyTimeout> it = onGoingTimeouts.iterator(); it.hasNext(); ) {
+        for (Iterator<NotifyTimeout> it = onGoingTimeouts.iterator(); it.hasNext(); ) { // NOTE: htt, remove listener in onGogingTimeouts
             NotifyTimeout timeout = it.next();
             if (timeout.listener.equals(listener)) {
                 timeout.cancel();
@@ -279,15 +279,15 @@ public class ClusterApplierService extends AbstractLifecycleComponent implements
         }
         // call the post added notification on the same event thread
         try {
-            threadPoolExecutor.execute(new SourcePrioritizedRunnable(Priority.HIGH, "_add_listener_") {
+            threadPoolExecutor.execute(new SourcePrioritizedRunnable(Priority.HIGH, "_add_listener_") { // NOTE: htt, 添加指定时间后超时的处理任务
                 @Override
                 public void run() {
                     if (timeout != null) {
                         NotifyTimeout notifyTimeout = new NotifyTimeout(listener, timeout);
-                        notifyTimeout.future = threadPool.schedule(timeout, ThreadPool.Names.GENERIC, notifyTimeout);
+                        notifyTimeout.future = threadPool.schedule(timeout, ThreadPool.Names.GENERIC, notifyTimeout); // NOTE: htt, 指定timeout时间后执行
                         onGoingTimeouts.add(notifyTimeout);
                     }
-                    timeoutClusterStateListeners.add(listener);
+                    timeoutClusterStateListeners.add(listener); // NOTE: htt, add listener to timeoutClusterState
                     listener.postAdded();
                 }
             });
@@ -312,12 +312,12 @@ public class ClusterApplierService extends AbstractLifecycleComponent implements
 
     public void runOnApplierThread(final String source, Consumer<ClusterState> clusterStateConsumer,
                                    final ClusterStateTaskListener listener) {
-        runOnApplierThread(source, clusterStateConsumer, listener, Priority.HIGH);
+        runOnApplierThread(source, clusterStateConsumer, listener, Priority.HIGH); // NOTE: htt, priority is High for clusterStateChanged
     }
 
     @Override
     public void onNewClusterState(final String source, final Supplier<ClusterState> clusterStateSupplier,
-                                  final ClusterStateTaskListener listener) {
+                                  final ClusterStateTaskListener listener) { // NOTE: htt, new clusterState then update
         Function<ClusterState, ClusterState> applyFunction = currentState -> {
             ClusterState nextState = clusterStateSupplier.get();
             if (nextState != null) {
@@ -338,7 +338,7 @@ public class ClusterApplierService extends AbstractLifecycleComponent implements
         try {
             UpdateTask updateTask = new UpdateTask(config.priority(), source, new SafeClusterStateTaskListener(listener, logger), executor);
             if (config.timeout() != null) {
-                threadPoolExecutor.execute(updateTask, config.timeout(),
+                threadPoolExecutor.execute(updateTask, config.timeout(), // NOTE: htt, excute with timeout
                     () -> threadPool.generic().execute(
                         () -> listener.onFailure(source, new ProcessClusterEventTimeoutException(config.timeout(), source))));
             } else {
@@ -385,7 +385,7 @@ public class ClusterApplierService extends AbstractLifecycleComponent implements
         return true;
     }
 
-    protected void runTask(UpdateTask task) {
+    protected void runTask(UpdateTask task) { // NOTE: htt, run task of clusterStateChanged，执行集群状态变化的
         if (!lifecycle.started()) {
             logger.debug("processing [{}]: ignoring, cluster applier service not started", task.source);
             return;
@@ -428,7 +428,7 @@ public class ClusterApplierService extends AbstractLifecycleComponent implements
                 logger.debug("cluster state updated, version [{}], source [{}]", newClusterState.version(), task.source);
             }
             try {
-                applyChanges(task, previousClusterState, newClusterState);
+                applyChanges(task, previousClusterState, newClusterState); // NOTE: htt, 应用集群状态
                 TimeValue executionTime = TimeValue.timeValueMillis(Math.max(0, TimeValue.nsecToMSec(currentTimeInNanos() - startTimeNS)));
                 logger.debug("processing [{}]: took [{}] done applying updated cluster state (version: {}, uuid: {})", task.source,
                     executionTime, newClusterState.version(),
@@ -452,7 +452,7 @@ public class ClusterApplierService extends AbstractLifecycleComponent implements
         }
     }
 
-    private void applyChanges(UpdateTask task, ClusterState previousClusterState, ClusterState newClusterState) {
+    private void applyChanges(UpdateTask task, ClusterState previousClusterState, ClusterState newClusterState) { // NOTE: htt, apply clusterState change on current node
         ClusterChangedEvent clusterChangedEvent = new ClusterChangedEvent(task.source, newClusterState, previousClusterState);
         // new cluster state, notify all listeners
         final DiscoveryNodes.Delta nodesDelta = clusterChangedEvent.nodesDelta();
@@ -463,37 +463,37 @@ public class ClusterApplierService extends AbstractLifecycleComponent implements
             }
         }
 
-        nodeConnectionsService.connectToNodes(newClusterState.nodes());
+        nodeConnectionsService.connectToNodes(newClusterState.nodes()); // NOTE: htt, 在收到集群新的状态后就会重新建立连接, 连接到新节点， connect to nodes of new clusterState
 
         logger.debug("applying cluster state version {}", newClusterState.version());
         try {
             // nothing to do until we actually recover from the gateway or any other block indicates we need to disable persistency
             if (clusterChangedEvent.state().blocks().disableStatePersistence() == false && clusterChangedEvent.metaDataChanged()) {
                 final Settings incomingSettings = clusterChangedEvent.state().metaData().settings();
-                clusterSettings.applySettings(incomingSettings);
+                clusterSettings.applySettings(incomingSettings); // NOTE: htt, 应用集群配置
             }
         } catch (Exception ex) {
             logger.warn("failed to apply cluster settings", ex);
         }
 
         logger.debug("apply cluster state with version {}", newClusterState.version());
-        callClusterStateAppliers(clusterChangedEvent);
+        callClusterStateAppliers(clusterChangedEvent); // NOTE: htt, 应用集群状态，包括 IndicesClusterStateService，更新集群索引
 
-        nodeConnectionsService.disconnectFromNodesExcept(newClusterState.nodes());
+        nodeConnectionsService.disconnectFromNodesExcept(newClusterState.nodes()); // NOTE: htt, 断开老节点, disconnect from nodes which are not in newClusterState.nodes
 
         logger.debug("set locally applied cluster state to version {}", newClusterState.version());
-        state.set(newClusterState);
+        state.set(newClusterState); // NOTE: htt, update local clusterState
 
         callClusterStateListeners(clusterChangedEvent);
 
-        task.listener.clusterStateProcessed(task.source, previousClusterState, newClusterState);
+        task.listener.clusterStateProcessed(task.source, previousClusterState, newClusterState); // NOTE: htt, task listener process clusterState changed
     }
 
-    private void callClusterStateAppliers(ClusterChangedEvent clusterChangedEvent) {
+    private void callClusterStateAppliers(ClusterChangedEvent clusterChangedEvent) { // NOTE:htt, 应用集群状态
         clusterStateAppliers.forEach(applier -> {
             try {
                 logger.trace("calling [{}] with change to version [{}]", applier, clusterChangedEvent.state().version());
-                applier.applyClusterState(clusterChangedEvent);
+                applier.applyClusterState(clusterChangedEvent); // NOTE: htt, apply new cluster state changed
             } catch (Exception ex) {
                 logger.warn("failed to notify ClusterStateApplier", ex);
             }
@@ -511,7 +511,7 @@ public class ClusterApplierService extends AbstractLifecycleComponent implements
         });
     }
 
-    private static class SafeClusterStateTaskListener implements ClusterStateTaskListener {
+    private static class SafeClusterStateTaskListener implements ClusterStateTaskListener { // NOTE: htt, safe cluster state task listener
         private final ClusterStateTaskListener listener;
         private final Logger logger;
 
@@ -551,10 +551,10 @@ public class ClusterApplierService extends AbstractLifecycleComponent implements
         }
     }
 
-    class NotifyTimeout implements Runnable {
-        final TimeoutClusterStateListener listener;
+    class NotifyTimeout implements Runnable { // NOTE: htt, notifyTimeout runnable
+        final TimeoutClusterStateListener listener; // NOTE: htt, ObserverClusterStateListener which observer cluster state
         final TimeValue timeout;
-        volatile ScheduledFuture future;
+        volatile ScheduledFuture future; // NOTE: htt, 调度任务
 
         NotifyTimeout(TimeoutClusterStateListener listener, TimeValue timeout) {
             this.listener = listener;
@@ -573,15 +573,15 @@ public class ClusterApplierService extends AbstractLifecycleComponent implements
             if (lifecycle.stoppedOrClosed()) {
                 listener.onClose();
             } else {
-                listener.onTimeout(this.timeout);
+                listener.onTimeout(this.timeout); // NOTE: htt, ObserverClusterStateListener.onTimeout()，超时情况
             }
             // note, we rely on the listener to remove itself in case of timeout if needed
         }
     }
 
-    private static class LocalNodeMasterListeners implements ClusterStateListener {
+    private static class LocalNodeMasterListeners implements ClusterStateListener { // NOTE: htt, localNode on master listeners : when is onMaster/offMaster to executor listener
 
-        private final List<LocalNodeMasterListener> listeners = new CopyOnWriteArrayList<>();
+        private final List<LocalNodeMasterListener> listeners = new CopyOnWriteArrayList<>(); // NOTE: htt, localNodeMasterListener
         private final ThreadPool threadPool;
         private volatile boolean master = false;
 
@@ -622,7 +622,7 @@ public class ClusterApplierService extends AbstractLifecycleComponent implements
         }
     }
 
-    private static class OnMasterRunnable implements Runnable {
+    private static class OnMasterRunnable implements Runnable { // NOTE: htt, onMaster runnable
 
         private final LocalNodeMasterListener listener;
 
@@ -636,7 +636,7 @@ public class ClusterApplierService extends AbstractLifecycleComponent implements
         }
     }
 
-    private static class OffMasterRunnable implements Runnable {
+    private static class OffMasterRunnable implements Runnable { // NOTE: htt, offMaster runnable
 
         private final LocalNodeMasterListener listener;
 

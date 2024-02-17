@@ -41,12 +41,12 @@ import java.util.stream.Collectors;
  * Batching support for {@link PrioritizedEsThreadPoolExecutor}
  * Tasks that share the same batching key are batched (see {@link BatchedTask#batchingKey})
  */
-public abstract class TaskBatcher {
+public abstract class TaskBatcher { // NOTE: htt, taskBatcher including batch tasks and submit
 
     private final Logger logger;
     private final PrioritizedEsThreadPoolExecutor threadExecutor;
     // package visible for tests
-    final Map<Object, LinkedHashSet<BatchedTask>> tasksPerBatchingKey = new HashMap<>();
+    final Map<Object, LinkedHashSet<BatchedTask>> tasksPerBatchingKey = new HashMap<>(); // NOTE: htt, tasks for batchingKey
 
     public TaskBatcher(Logger logger, PrioritizedEsThreadPoolExecutor threadExecutor) {
         this.logger = logger;
@@ -57,7 +57,7 @@ public abstract class TaskBatcher {
         if (tasks.isEmpty()) {
             return;
         }
-        final BatchedTask firstTask = tasks.get(0);
+        final BatchedTask firstTask = tasks.get(0); // NOTE: htt, 取第一个任务
         assert tasks.stream().allMatch(t -> t.batchingKey == firstTask.batchingKey) :
             "tasks submitted in a batch should share the same batching key: " + tasks;
         // convert to an identity map to check for dups based on task identity
@@ -81,10 +81,10 @@ public abstract class TaskBatcher {
             existingTasks.addAll(tasks);
         }
 
-        if (timeout != null) {
+        if (timeout != null) { // NOTE: htt, execute task
             threadExecutor.execute(firstTask, timeout, () -> onTimeoutInternal(tasks, timeout));
         } else {
-            threadExecutor.execute(firstTask);
+            threadExecutor.execute(firstTask); // NOTE: htt, here only firstTask, firstTask->run()->runIfNotProcessed(firstTask)->run(batchTask)
         }
     }
 
@@ -126,8 +126,8 @@ public abstract class TaskBatcher {
         if (updateTask.processed.get() == false) {
             final List<BatchedTask> toExecute = new ArrayList<>();
             final Map<String, List<BatchedTask>> processTasksBySource = new HashMap<>();
-            synchronized (tasksPerBatchingKey) {
-                LinkedHashSet<BatchedTask> pending = tasksPerBatchingKey.remove(updateTask.batchingKey);
+            synchronized (tasksPerBatchingKey) {  // NOTE: htt, get updateTask from tasksPerBatchingKey toExecute
+                LinkedHashSet<BatchedTask> pending = tasksPerBatchingKey.remove(updateTask.batchingKey); // NOTE: htt, here would get BatchedTask which are pushed when submitTasks()
                 if (pending != null) {
                     for (BatchedTask task : pending) {
                         if (task.processed.getAndSet(true) == false) {
@@ -147,7 +147,7 @@ public abstract class TaskBatcher {
                     return tasks.isEmpty() ? entry.getKey() : entry.getKey() + "[" + tasks + "]";
                 }).reduce((s1, s2) -> s1 + ", " + s2).orElse("");
 
-                run(updateTask.batchingKey, toExecute, tasksSummary);
+                run(updateTask.batchingKey, toExecute, tasksSummary); /** NOTE:htt, 执行任务 {#link MasterService#run} */
             }
         }
     }
@@ -162,20 +162,20 @@ public abstract class TaskBatcher {
      * Represents a runnable task that supports batching.
      * Implementors of TaskBatcher can subclass this to add a payload to the task.
      */
-    protected abstract class BatchedTask extends SourcePrioritizedRunnable {
+    protected abstract class BatchedTask extends SourcePrioritizedRunnable { // NOTE: htt, batchedTask with batchingKey
         /**
          * whether the task has been processed already
          */
-        protected final AtomicBoolean processed = new AtomicBoolean();
+        protected final AtomicBoolean processed = new AtomicBoolean(); // NOTE:htt, 是否已处理
 
         /**
          * the object that is used as batching key
          */
-        protected final Object batchingKey;
+        protected final Object batchingKey; // NOTE:htt, 待执行的任务
         /**
          * the task object that is wrapped
          */
-        protected final Object task;
+        protected final Object task; // NOTE:htt, 执行任务
 
         protected BatchedTask(Priority priority, String source, Object batchingKey, Object task) {
             super(priority, source);

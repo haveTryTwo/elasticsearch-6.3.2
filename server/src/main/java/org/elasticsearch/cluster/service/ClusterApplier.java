@@ -24,7 +24,7 @@ import org.elasticsearch.cluster.ClusterStateTaskListener;
 
 import java.util.function.Supplier;
 
-public interface ClusterApplier {
+public interface ClusterApplier { // NOTE: htt, cluster applier clusterState
     /**
      * Sets the initial state for this applier. Should only be called once.
      * @param initialState the initial state to set

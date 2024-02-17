@@ -44,21 +44,21 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class ClusterService extends AbstractLifecycleComponent {
+public class ClusterService extends AbstractLifecycleComponent { // NOTE: htt, clusterService including masterService(publish clusterState) and clusterApplierService(update local clusterState)
 
-    private final MasterService masterService;
+    private final MasterService masterService; // NOTE: htt, masterService execute batch tasks and updateClusterState is has been changed
 
-    private final ClusterApplierService clusterApplierService;
+    private final ClusterApplierService clusterApplierService; // NOTE: htt, clusterState apply on current node
 
     public static final Setting<TimeValue> CLUSTER_SERVICE_SLOW_TASK_LOGGING_THRESHOLD_SETTING =
             Setting.positiveTimeSetting("cluster.service.slow_task_logging_threshold", TimeValue.timeValueSeconds(30),
                     Property.Dynamic, Property.NodeScope);
 
-    private final ClusterName clusterName;
+    private final ClusterName clusterName; // NOTE: htt, clusterName
 
-    private final OperationRouting operationRouting;
+    private final OperationRouting operationRouting; // NOTE: htt, operation to get shardId according to routing, and shardRoutings of search operation
 
-    private final ClusterSettings clusterSettings;
+    private final ClusterSettings clusterSettings; // NOTE: htt,集群配置, cluster settings
     private final Map<String, Supplier<ClusterState.Custom>> initialClusterStateCustoms;
 
     public ClusterService(Settings settings, ClusterSettings clusterSettings, ThreadPool threadPool,
@@ -95,7 +95,7 @@ public class ClusterService extends AbstractLifecycleComponent {
     }
 
     @Override
-    protected synchronized void doStart() {
+    protected synchronized void doStart() { // NOTE: htt, start clusterApplierService and masterService
         clusterApplierService.start();
         masterService.start();
     }
@@ -138,7 +138,7 @@ public class ClusterService extends AbstractLifecycleComponent {
     /**
      * Adds a high priority applier of updated cluster states.
      */
-    public void addHighPriorityApplier(ClusterStateApplier applier) {
+    public void addHighPriorityApplier(ClusterStateApplier applier) { // NOTE:htt, 添加高优先级applier，在集群状态变化后会执行
         clusterApplierService.addHighPriorityApplier(applier);
     }
 

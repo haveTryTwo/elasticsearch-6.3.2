@@ -65,11 +65,11 @@ import java.util.stream.Collectors;
 import static org.elasticsearch.cluster.service.ClusterService.CLUSTER_SERVICE_SLOW_TASK_LOGGING_THRESHOLD_SETTING;
 import static org.elasticsearch.common.util.concurrent.EsExecutors.daemonThreadFactory;
 
-public class MasterService extends AbstractLifecycleComponent {
+public class MasterService extends AbstractLifecycleComponent { // NOTE: htt, masterService execute batch tasks and updateClusterState is has been changed
 
     public static final String MASTER_UPDATE_THREAD_NAME = "masterService#updateTask";
 
-    private BiConsumer<ClusterChangedEvent, Discovery.AckListener> clusterStatePublisher;
+    private BiConsumer<ClusterChangedEvent, Discovery.AckListener> clusterStatePublisher; // NOTE:htt, ZenDiscovery::publish
 
     private java.util.function.Supplier<ClusterState> clusterStateSupplier;
 
@@ -77,7 +77,7 @@ public class MasterService extends AbstractLifecycleComponent {
 
     protected final ThreadPool threadPool;
 
-    private volatile PrioritizedEsThreadPoolExecutor threadPoolExecutor;
+    private volatile PrioritizedEsThreadPoolExecutor threadPoolExecutor; // NOTE: htt, 单线程
     private volatile Batcher taskBatcher;
 
     public MasterService(Settings settings, ThreadPool threadPool) {
@@ -100,10 +100,10 @@ public class MasterService extends AbstractLifecycleComponent {
     }
 
     @Override
-    protected synchronized void doStart() {
+    protected synchronized void doStart() { // NOTE: htt, doStart
         Objects.requireNonNull(clusterStatePublisher, "please set a cluster state publisher before starting");
         Objects.requireNonNull(clusterStateSupplier, "please set a cluster state supplier before starting");
-        threadPoolExecutor = EsExecutors.newSinglePrioritizing(
+        threadPoolExecutor = EsExecutors.newSinglePrioritizing( // NOTE: htt, 单线程, create prioritizing threadPool
                 nodeName() + "/" + MASTER_UPDATE_THREAD_NAME,
                 daemonThreadFactory(settings, MASTER_UPDATE_THREAD_NAME),
                 threadPool.getThreadContext(),
@@ -111,7 +111,7 @@ public class MasterService extends AbstractLifecycleComponent {
         taskBatcher = new Batcher(logger, threadPoolExecutor);
     }
 
-    class Batcher extends TaskBatcher {
+    class Batcher extends TaskBatcher { // NOTE:  htt, batcher to run tasks
 
         Batcher(Logger logger, PrioritizedEsThreadPoolExecutor threadExecutor) {
             super(logger, threadExecutor);
@@ -132,7 +132,7 @@ public class MasterService extends AbstractLifecycleComponent {
             runTasks(new TaskInputs(taskExecutor, updateTasks, tasksSummary));
         }
 
-        class UpdateTask extends BatchedTask {
+        class UpdateTask extends BatchedTask { // NOTE: htt, updateTask
             final ClusterStateTaskListener listener;
 
             UpdateTask(Priority priority, String source, Object task, ClusterStateTaskListener listener,
@@ -177,7 +177,7 @@ public class MasterService extends AbstractLifecycleComponent {
         return true;
     }
 
-    protected void runTasks(TaskInputs taskInputs) {
+    protected void runTasks(TaskInputs taskInputs) { // NOTE: htt, runTasks and publish clusterState if has been changed
         final String summary = taskInputs.summary;
         if (!lifecycle.started()) {
             logger.debug("processing [{}]: ignoring, master service not started", summary);
@@ -187,22 +187,22 @@ public class MasterService extends AbstractLifecycleComponent {
         logger.debug("processing [{}]: execute", summary);
         final ClusterState previousClusterState = state();
 
-        if (!previousClusterState.nodes().isLocalNodeElectedMaster() && taskInputs.runOnlyWhenMaster()) {
+        if (!previousClusterState.nodes().isLocalNodeElectedMaster() && taskInputs.runOnlyWhenMaster()) { // NOTE: htt, 当前节点不是master，但是需要在master上执行则按master异常处理
             logger.debug("failing [{}]: local node is no longer master", summary);
-            taskInputs.onNoLongerMaster();
+            taskInputs.onNoLongerMaster(); // NOTE:htt, 当前不在是master
             return;
         }
 
         long startTimeNS = currentTimeInNanos();
-        TaskOutputs taskOutputs = calculateTaskOutputs(taskInputs, previousClusterState, startTimeNS);
+        TaskOutputs taskOutputs = calculateTaskOutputs(taskInputs, previousClusterState, startTimeNS); // NOTE: htt, 1. first run tasks
         taskOutputs.notifyFailedTasks();
 
         if (taskOutputs.clusterStateUnchanged()) {
-            taskOutputs.notifySuccessfulTasksOnUnchangedClusterState();
+            taskOutputs.notifySuccessfulTasksOnUnchangedClusterState(); // NOTE: htt, clusterState not changed
             TimeValue executionTime = TimeValue.timeValueMillis(Math.max(0, TimeValue.nsecToMSec(currentTimeInNanos() - startTimeNS)));
             logger.debug("processing [{}]: took [{}] no change in cluster state", summary, executionTime);
             warnAboutSlowTaskIfNeeded(executionTime, summary);
-        } else {
+        } else { // NOTE: htt, update cluster state if has been changed，状态有更新，则更新集群状态
             ClusterState newClusterState = taskOutputs.newClusterState;
             if (logger.isTraceEnabled()) {
                 logger.trace("cluster state updated, source [{}]\n{}", summary, newClusterState);
@@ -212,16 +212,16 @@ public class MasterService extends AbstractLifecycleComponent {
             try {
                 ClusterChangedEvent clusterChangedEvent = new ClusterChangedEvent(summary, newClusterState, previousClusterState);
                 // new cluster state, notify all listeners
-                final DiscoveryNodes.Delta nodesDelta = clusterChangedEvent.nodesDelta();
+                final DiscoveryNodes.Delta nodesDelta = clusterChangedEvent.nodesDelta(); // NOTE: htt, get node change
                 if (nodesDelta.hasChanges() && logger.isInfoEnabled()) {
                     String nodeSummary = nodesDelta.shortSummary();
                     if (nodeSummary.length() > 0) {
-                        logger.info("{}, reason: {}", summary, nodeSummary);
+                        logger.info("{}, reason: {}", summary, nodeSummary); // NOTE: htt, get node changed
                     }
                 }
 
                 logger.debug("publishing cluster state version [{}]", newClusterState.version());
-                try {
+                try { // NOTE:htt, ZenDiscovery::publish， 将请求分发给集群节点，并等待结束？
                     clusterStatePublisher.accept(clusterChangedEvent, taskOutputs.createAckListener(threadPool, newClusterState));
                 } catch (Discovery.FailedToCommitClusterStateException t) {
                     final long version = newClusterState.version();
@@ -231,10 +231,10 @@ public class MasterService extends AbstractLifecycleComponent {
                     return;
                 }
 
-                taskOutputs.processedDifferentClusterState(previousClusterState, newClusterState);
+                taskOutputs.processedDifferentClusterState(previousClusterState, newClusterState); // NOTE: htt, 集群状态处理完毕后，执行listener的完成监听
 
                 try {
-                    taskOutputs.clusterStatePublished(clusterChangedEvent);
+                    taskOutputs.clusterStatePublished(clusterChangedEvent); // NOTE: htt, clusterState published
                 } catch (Exception e) {
                     logger.error(() -> new ParameterizedMessage(
                             "exception thrown while notifying executor of new cluster state publication [{}]",
@@ -265,23 +265,23 @@ public class MasterService extends AbstractLifecycleComponent {
 
     public TaskOutputs calculateTaskOutputs(TaskInputs taskInputs, ClusterState previousClusterState, long startTimeNS) {
         ClusterTasksResult<Object> clusterTasksResult = executeTasks(taskInputs, startTimeNS, previousClusterState);
-        ClusterState newClusterState = patchVersions(previousClusterState, clusterTasksResult);
+        ClusterState newClusterState = patchVersions(previousClusterState, clusterTasksResult); // NOTE:htt, 更新多个信息的版本
         return new TaskOutputs(taskInputs, previousClusterState, newClusterState, getNonFailedTasks(taskInputs, clusterTasksResult),
             clusterTasksResult.executionResults);
     }
 
-    private ClusterState patchVersions(ClusterState previousClusterState, ClusterTasksResult<?> executionResult) {
+    private ClusterState patchVersions(ClusterState previousClusterState, ClusterTasksResult<?> executionResult) { // NOTE:htt, 更新多个信息的版本
         ClusterState newClusterState = executionResult.resultingState;
 
         if (previousClusterState != newClusterState) {
             // only the master controls the version numbers
-            Builder builder = ClusterState.builder(newClusterState).incrementVersion();
-            if (previousClusterState.routingTable() != newClusterState.routingTable()) {
+            Builder builder = ClusterState.builder(newClusterState).incrementVersion(); // NOTE: htt, 增加集群状态的版本号
+            if (previousClusterState.routingTable() != newClusterState.routingTable()) { // NOTE;htt, 路由表如果不一致，则更新路由表版本
                 builder.routingTable(RoutingTable.builder(newClusterState.routingTable())
-                    .version(newClusterState.routingTable().version() + 1).build());
+                    .version(newClusterState.routingTable().version() + 1).build()); // NOTE: htt, update routingTable and include version if need
             }
-            if (previousClusterState.metaData() != newClusterState.metaData()) {
-                builder.metaData(MetaData.builder(newClusterState.metaData()).version(newClusterState.metaData().version() + 1));
+            if (previousClusterState.metaData() != newClusterState.metaData()) { // NOTE:htt, 元数据如果不一致，则更新元数据版本
+                builder.metaData(MetaData.builder(newClusterState.metaData()).version(newClusterState.metaData().version() + 1)); // NOTE: htt, update metaData and increament version if need
             }
 
             newClusterState = builder.build();
@@ -334,10 +334,10 @@ public class MasterService extends AbstractLifecycleComponent {
     /**
      * Output created by executing a set of tasks provided as TaskInputs
      */
-    class TaskOutputs {
+    class TaskOutputs { // NOTE: htt, taskOutPuts with taskInputs and clusterState and nonFailedTasks
         public final TaskInputs taskInputs;
-        public final ClusterState previousClusterState;
-        public final ClusterState newClusterState;
+        public final ClusterState previousClusterState; // NOTE: htt, 原有集群状态
+        public final ClusterState newClusterState; // NOTE: htt, 新的集群状态
         public final List<Batcher.UpdateTask> nonFailedTasks;
         public final Map<Object, ClusterStateTaskExecutor.TaskResult> executionResults;
 
@@ -352,12 +352,12 @@ public class MasterService extends AbstractLifecycleComponent {
             this.executionResults = executionResults;
         }
 
-        public void publishingFailed(Discovery.FailedToCommitClusterStateException t) {
+        public void publishingFailed(Discovery.FailedToCommitClusterStateException t) { // NOTE: htt, 回滚，如果整个集群执行失败，那么nonFailedTasks就需要回滚
             nonFailedTasks.forEach(task -> task.listener.onFailure(task.source(), t));
         }
 
-        public void processedDifferentClusterState(ClusterState previousClusterState, ClusterState newClusterState) {
-            nonFailedTasks.forEach(task -> task.listener.clusterStateProcessed(task.source(), previousClusterState, newClusterState));
+        public void processedDifferentClusterState(ClusterState previousClusterState, ClusterState newClusterState) { // NOTE: htt, nonFaieldTasks需要执行集群状态变化
+            nonFailedTasks.forEach(task -> task.listener.clusterStateProcessed(task.source(), previousClusterState, newClusterState)); // NOTE:htt, 执行集群状态变化完成处理
         }
 
         public void clusterStatePublished(ClusterChangedEvent clusterChangedEvent) {
@@ -389,11 +389,11 @@ public class MasterService extends AbstractLifecycleComponent {
             return new DelegetingAckListener(ackListeners);
         }
 
-        public boolean clusterStateUnchanged() {
+        public boolean clusterStateUnchanged() { // NOTE:htt, 新老集群状态一致
             return previousClusterState == newClusterState;
         }
 
-        public void notifyFailedTasks() {
+        public void notifyFailedTasks() { // NOTE: htt, notifyFailedTasks
             // fail all tasks that have failed
             for (Batcher.UpdateTask updateTask : taskInputs.updateTasks) {
                 assert executionResults.containsKey(updateTask.task) : "missing " + updateTask;
@@ -410,7 +410,7 @@ public class MasterService extends AbstractLifecycleComponent {
                     //no need to wait for ack if nothing changed, the update can be counted as acknowledged
                     ((AckedClusterStateTaskListener) task.listener).onAllNodesAcked(null);
                 }
-                task.listener.clusterStateProcessed(task.source(), newClusterState, newClusterState);
+                task.listener.clusterStateProcessed(task.source(), newClusterState, newClusterState); // NOTE:htt, 没有集群状态变更，则按集群状态成功处理
             });
         }
     }
@@ -418,7 +418,7 @@ public class MasterService extends AbstractLifecycleComponent {
     /**
      * Returns the tasks that are pending.
      */
-    public List<PendingClusterTask> pendingTasks() {
+    public List<PendingClusterTask> pendingTasks() { // NOTE: htt, pendingTasks
         return Arrays.stream(threadPoolExecutor.getPending()).map(pending -> {
             assert pending.task instanceof SourcePrioritizedRunnable :
                 "thread pool executor should only use SourcePrioritizedRunnable instances but found: " + pending.task.getClass().getName();
@@ -432,7 +432,7 @@ public class MasterService extends AbstractLifecycleComponent {
      * Returns the number of currently pending tasks.
      */
     public int numberOfPendingTasks() {
-        return threadPoolExecutor.getNumberOfPendingTasks();
+        return threadPoolExecutor.getNumberOfPendingTasks(); // NOTE: htt, number of pendingTasks
     }
 
     /**
@@ -452,8 +452,8 @@ public class MasterService extends AbstractLifecycleComponent {
         }
     }
 
-    private static class SafeClusterStateTaskListener implements ClusterStateTaskListener {
-        private final ClusterStateTaskListener listener;
+    private static class SafeClusterStateTaskListener implements ClusterStateTaskListener { // NOTE: htt, clusterStateTaskListener with logger
+        private final ClusterStateTaskListener listener; // NOTE:htt, 集群状态任务监听
         private final Logger logger;
 
         SafeClusterStateTaskListener(ClusterStateTaskListener listener, Logger logger) {
@@ -483,7 +483,7 @@ public class MasterService extends AbstractLifecycleComponent {
         }
 
         @Override
-        public void clusterStateProcessed(String source, ClusterState oldState, ClusterState newState) {
+        public void clusterStateProcessed(String source, ClusterState oldState, ClusterState newState) { // NOTE:htt, 集群状态变化
             try {
                 listener.clusterStateProcessed(source, oldState, newState);
             } catch (Exception e) {
@@ -494,7 +494,7 @@ public class MasterService extends AbstractLifecycleComponent {
         }
     }
 
-    private static class SafeAckedClusterStateTaskListener extends SafeClusterStateTaskListener implements AckedClusterStateTaskListener {
+    private static class SafeAckedClusterStateTaskListener extends SafeClusterStateTaskListener implements AckedClusterStateTaskListener { // NOTE: htt, safeAckedClusterStateTaskListener with logger
         private final AckedClusterStateTaskListener listener;
         private final Logger logger;
 
@@ -541,9 +541,9 @@ public class MasterService extends AbstractLifecycleComponent {
         }
     }
 
-    private static class DelegetingAckListener implements Discovery.AckListener {
+    private static class DelegetingAckListener implements Discovery.AckListener { // NOTE: htt, AckListener代理
 
-        private final List<Discovery.AckListener> listeners;
+        private final List<Discovery.AckListener> listeners; // NOTE:htt, 一批AckListener
 
         private DelegetingAckListener(List<Discovery.AckListener> listeners) {
             this.listeners = listeners;
@@ -562,7 +562,7 @@ public class MasterService extends AbstractLifecycleComponent {
         }
     }
 
-    private static class AckCountDownListener implements Discovery.AckListener {
+    private static class AckCountDownListener implements Discovery.AckListener { // NOTE: htt, ackCountDownListener waiting mustAck nodes
 
         private static final Logger logger = Loggers.getLogger(AckCountDownListener.class);
 
@@ -607,10 +607,10 @@ public class MasterService extends AbstractLifecycleComponent {
                         "ack received from node [{}], cluster_state update (version: {})", node, clusterStateVersion), e);
             }
 
-            if (countDown.countDown()) {
+            if (countDown.countDown()) { // NOTE: htt, has reached 0
                 logger.trace("all expected nodes acknowledged cluster_state update (version: {})", clusterStateVersion);
                 FutureUtils.cancel(ackTimeoutCallback);
-                ackedTaskListener.onAllNodesAcked(lastFailure);
+                ackedTaskListener.onAllNodesAcked(lastFailure); // NOTE:htt, 执行所有节点完成ack后的处理
             }
         }
 
@@ -627,10 +627,10 @@ public class MasterService extends AbstractLifecycleComponent {
         ClusterTasksResult<Object> clusterTasksResult;
         try {
             List<Object> inputs = taskInputs.updateTasks.stream().map(tUpdateTask -> tUpdateTask.task).collect(Collectors.toList());
-            clusterTasksResult = taskInputs.executor.execute(previousClusterState, inputs);
+            clusterTasksResult = taskInputs.executor.execute(previousClusterState, inputs); // NOTE: htt, 执行对应的任务，如果出现异常则更新任务状态为失败
             if (previousClusterState != clusterTasksResult.resultingState &&
                 previousClusterState.nodes().isLocalNodeElectedMaster() &&
-                (clusterTasksResult.resultingState.nodes().isLocalNodeElectedMaster() == false)) {
+                (clusterTasksResult.resultingState.nodes().isLocalNodeElectedMaster() == false)) { // NOTE:htt, 如果新的状态将本地节点设置为非master，则抛出异常
                 throw new AssertionError("update task submitted to MasterService cannot remove master");
             }
         } catch (Exception e) {
@@ -650,7 +650,7 @@ public class MasterService extends AbstractLifecycleComponent {
             warnAboutSlowTaskIfNeeded(executionTime, taskInputs.summary);
             clusterTasksResult = ClusterTasksResult.builder()
                 .failures(taskInputs.updateTasks.stream().map(updateTask -> updateTask.task)::iterator, e)
-                .build(previousClusterState);
+                .build(previousClusterState); // NOTE: htt, 任务执行异常，则失败的任务执行结果
         }
 
         assert clusterTasksResult.executionResults != null;
@@ -669,22 +669,22 @@ public class MasterService extends AbstractLifecycleComponent {
     }
 
     public List<Batcher.UpdateTask> getNonFailedTasks(TaskInputs taskInputs,
-                                                      ClusterTasksResult<Object> clusterTasksResult) {
+                                                      ClusterTasksResult<Object> clusterTasksResult) { // NOTE:htt, 获取成功的任务
         return taskInputs.updateTasks.stream().filter(updateTask -> {
             assert clusterTasksResult.executionResults.containsKey(updateTask.task) : "missing " + updateTask;
             final ClusterStateTaskExecutor.TaskResult taskResult =
                 clusterTasksResult.executionResults.get(updateTask.task);
-            return taskResult.isSuccess();
+            return taskResult.isSuccess(); // NOTE:htt, 执行成功的任务
         }).collect(Collectors.toList());
     }
 
     /**
      * Represents a set of tasks to be processed together with their executor
      */
-    protected class TaskInputs {
+    protected class TaskInputs { // NOTE: htt, represent a set of tasks with executor
         public final String summary;
-        public final List<Batcher.UpdateTask> updateTasks;
-        public final ClusterStateTaskExecutor<Object> executor;
+        public final List<Batcher.UpdateTask> updateTasks; // NOTE:htt, 批量更新任务
+        public final ClusterStateTaskExecutor<Object> executor; // NOTE:htt, 待执行的任务
 
         TaskInputs(ClusterStateTaskExecutor<Object> executor, List<Batcher.UpdateTask> updateTasks, String summary) {
             this.summary = summary;
@@ -724,7 +724,7 @@ public class MasterService extends AbstractLifecycleComponent {
             List<Batcher.UpdateTask> safeTasks = tasks.entrySet().stream()
                 .map(e -> taskBatcher.new UpdateTask(config.priority(), source, e.getKey(), safe(e.getValue()), executor))
                 .collect(Collectors.toList());
-            taskBatcher.submitTasks(safeTasks, config.timeout());
+            taskBatcher.submitTasks(safeTasks, config.timeout()); // NOTE: htt, submit stateUpdateTasks, threadExecutor.executor() -> updateTask.run() -> runIfNotProcessed(updateTask) -> run(batchTasks) -> runTasks()
         } catch (EsRejectedExecutionException e) {
             // ignore cases where we are shutting down..., there is really nothing interesting
             // to be done here...

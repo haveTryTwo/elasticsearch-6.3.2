@@ -28,7 +28,7 @@ import org.elasticsearch.common.unit.TimeValue;
 
 import java.io.IOException;
 
-public class PendingClusterTask implements Streamable {
+public class PendingClusterTask implements Streamable { // NOTE: htt, pending clusterTask with priority/source/timeInQueue/executing/insertOrder
 
     private long insertOrder;
     private Priority priority;
