@@ -24,7 +24,7 @@ import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
 
-public class VersionConflictEngineException extends EngineException {
+public class VersionConflictEngineException extends EngineException { // NOTE: htt, 版本冲突异常, version confilict engine exception
 
     public VersionConflictEngineException(ShardId shardId, Engine.Operation op, long currentVersion, boolean deleted) {
         this(shardId, op.type(), op.id(), op.versionType().explainConflictForWrites(currentVersion, op.version(), deleted));
@@ -44,7 +44,7 @@ public class VersionConflictEngineException extends EngineException {
 
     @Override
     public RestStatus status() {
-        return RestStatus.CONFLICT;
+        return RestStatus.CONFLICT; // NOTE: htt, 409
     }
 
     public VersionConflictEngineException(StreamInput in) throws IOException {

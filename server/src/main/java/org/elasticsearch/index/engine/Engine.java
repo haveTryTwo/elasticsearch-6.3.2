@@ -93,23 +93,23 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
-public abstract class Engine implements Closeable {
+public abstract class Engine implements Closeable { // NOTE: htt, 包括translog处理以及段文件处理，并包含Index/delete/get/search等操作和操作结果
 
-    public static final String SYNC_COMMIT_ID = "sync_id";
+    public static final String SYNC_COMMIT_ID = "sync_id"; // NOTE: htt, sync id, 即执行synced flush 会生成一个syncId,有相同syncId则代表有相同的lucene索引，主要用于冷索引，即长时间没有写入；目的是快速恢复冷数据；热分片快速恢复可以用global_checkPoint比对校验
     public static final String HISTORY_UUID_KEY = "history_uuid";
 
     protected final ShardId shardId;
     protected final String allocationId;
     protected final Logger logger;
-    protected final EngineConfig engineConfig;
-    protected final Store store;
-    protected final AtomicBoolean isClosed = new AtomicBoolean(false);
-    private final CountDownLatch closedLatch = new CountDownLatch(1);
-    protected final EventListener eventListener;
+    protected final EngineConfig engineConfig; // NOTE: htt, 引擎配置
+    protected final Store store; // NOTE: htt, 用于访问shard，每个shard有对应实例，用于获取shard下的段文件的元信息，以及各个段文件的checksum等，并对段文件等进行校验
+    protected final AtomicBoolean isClosed = new AtomicBoolean(false); // NOTE: htt, close 等待锁
+    private final CountDownLatch closedLatch = new CountDownLatch(1); // NOTE: htt, close latch
+    protected final EventListener eventListener; // NOTE: htt, onFailed operation
     protected final ReentrantLock failEngineLock = new ReentrantLock();
-    protected final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
-    protected final ReleasableLock readLock = new ReleasableLock(rwl.readLock());
-    protected final ReleasableLock writeLock = new ReleasableLock(rwl.writeLock());
+    protected final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock(); // NOTE: htt, 读写锁
+    protected final ReleasableLock readLock = new ReleasableLock(rwl.readLock()); // NOTE: htt, 读锁
+    protected final ReleasableLock writeLock = new ReleasableLock(rwl.writeLock()); // NOTE: htt, 写锁
     protected final SetOnce<Exception> failedEngine = new SetOnce<>();
     /*
      * on <tt>lastWriteNanos</tt> we use System.nanoTime() to initialize this since:
@@ -147,7 +147,7 @@ public abstract class Engine implements Closeable {
     /**
      * Returns whether a leaf reader comes from a merge (versus flush or addIndexes).
      */
-    protected static boolean isMergedSegment(LeafReader reader) {
+    protected static boolean isMergedSegment(LeafReader reader) { // NOTE: htt, 判断段是否有merge产生
         // We expect leaves to be segment readers
         final Map<String, String> diagnostics = Lucene.segmentReader(reader).getSegmentInfo().info.getDiagnostics();
         final String source = diagnostics.get(IndexWriter.SOURCE);
@@ -163,7 +163,7 @@ public abstract class Engine implements Closeable {
     protected abstract SegmentInfos getLastCommittedSegmentInfos();
 
     public MergeStats getMergeStats() {
-        return new MergeStats();
+        return new MergeStats(); // NOTE: htt, 需要被覆盖，否则每次都生成空的 merge统计 信息
     }
 
     /** returns the history uuid for the engine */
@@ -177,7 +177,7 @@ public abstract class Engine implements Closeable {
      * {@code acquireThrottle} method to block on a lock when throttling
      * is enabled
      */
-    protected static final class IndexThrottle {
+    protected static final class IndexThrottle { // NOTE: htt, 索引限流判断，其中如果激活则采用真实锁
         private final CounterMetric throttleTimeMillisMetric = new CounterMetric();
         private volatile long startOfThrottleNS;
         private static final ReleasableLock NOOP_LOCK = new ReleasableLock(new NoOpLock());
@@ -189,14 +189,14 @@ public abstract class Engine implements Closeable {
         }
 
         /** Activate throttling, which switches the lock to be a real lock */
-        public void activate() {
+        public void activate() { // NOTE: htt, 激活限流，则将lock替换为 真实锁
             assert lock == NOOP_LOCK : "throttling activated while already active";
             startOfThrottleNS = System.nanoTime();
             lock = lockReference;
         }
 
         /** Deactivate throttling, which switches the lock to be an always-acquirable NoOpLock */
-        public void deactivate() {
+        public void deactivate() { // NOTE: htt, 关闭限流，则将lock替换为 noOpLock
             assert lock != NOOP_LOCK : "throttling deactivated but not active";
             lock = NOOP_LOCK;
 
@@ -237,7 +237,7 @@ public abstract class Engine implements Closeable {
     public abstract boolean isThrottled();
 
     /** A Lock implementation that always allows the lock to be acquired */
-    protected static final class NoOpLock implements Lock {
+    protected static final class NoOpLock implements Lock { // NOTE: htt, no lock
 
         @Override
         public void lock() {
@@ -294,16 +294,16 @@ public abstract class Engine implements Closeable {
      * Holds result meta data (e.g. translog location, updated version)
      * for an executed write {@link Operation}
      **/
-    public abstract static class Result {
-        private final Operation.TYPE operationType;
-        private final Result.Type resultType;
+    public abstract static class Result { // NOTE: htt, base result for index/delete operation
+        private final Operation.TYPE operationType; // NOTE: htt, 操作类型
+        private final Result.Type resultType; // NOTE: htt, 结果类型，是否需要更新mapping，如果需要，则先更新mapping
         private final long version;
-        private final long seqNo;
-        private final Exception failure;
+        private final long seqNo; // NOTE: htt, seqNo
+        private final Exception failure; // NOTE: htt, 执行一次
         private final SetOnce<Boolean> freeze = new SetOnce<>();
-        private final Mapping requiredMappingUpdate;
-        private Translog.Location translogLocation;
-        private long took;
+        private final Mapping requiredMappingUpdate; // NOTE: htt, index mapping
+        private Translog.Location translogLocation; // NOTE: htt, 写入后对应的translog的位置
+        private long took; // NOTE: htt, 操作花费的时间
 
         protected Result(Operation.TYPE operationType, Exception failure, long version, long seqNo) {
             this.operationType = operationType;
@@ -371,7 +371,7 @@ public abstract class Engine implements Closeable {
 
         /** get total time in nanoseconds */
         public long getTook() {
-            return took;
+            return took; // NOTE: htt, 数据写入花费的时间
         }
 
         public Operation.TYPE getOperationType() {
@@ -398,16 +398,16 @@ public abstract class Engine implements Closeable {
             freeze.set(true);
         }
 
-        public enum Type {
+        public enum Type { // NOTE: htt, result type
             SUCCESS,
             FAILURE,
-            MAPPING_UPDATE_REQUIRED
+            MAPPING_UPDATE_REQUIRED // NOTE: htt, mapping更新请求
         }
     }
 
-    public static class IndexResult extends Result {
+    public static class IndexResult extends Result { // NOTE: htt, index operation result including created type
 
-        private final boolean created;
+        private final boolean created; // NOTE: htt, 是否创建成功
 
         public IndexResult(long version, long seqNo, boolean created) {
             super(Operation.TYPE.INDEX, version, seqNo);
@@ -437,9 +437,9 @@ public abstract class Engine implements Closeable {
 
     }
 
-    public static class DeleteResult extends Result {
+    public static class DeleteResult extends Result { // NOTE: htt, delete result including whether found
 
-        private final boolean found;
+        private final boolean found; // NOTE: htt, 是否找到
 
         public DeleteResult(long version, long seqNo, boolean found) {
             super(Operation.TYPE.DELETE, version, seqNo);
@@ -469,7 +469,7 @@ public abstract class Engine implements Closeable {
 
     }
 
-    public static class NoOpResult extends Result {
+    public static class NoOpResult extends Result { // NOTE: htt, no op result
 
         NoOpResult(long seqNo) {
             super(Operation.TYPE.NO_OP, 0, seqNo);
@@ -491,14 +491,14 @@ public abstract class Engine implements Closeable {
      */
     public abstract SyncedFlushResult syncFlush(String syncId, CommitId expectedCommitId) throws EngineException;
 
-    public enum SyncedFlushResult {
+    public enum SyncedFlushResult { // NOTE: htt, syncedFlush 结果
         SUCCESS,
         COMMIT_MISMATCH,
         PENDING_OPERATIONS
     }
 
     protected final GetResult getFromSearcher(Get get, BiFunction<String, SearcherScope, Searcher> searcherFactory,
-                                              SearcherScope scope) throws EngineException {
+                                              SearcherScope scope) throws EngineException { // NOTE: htt, 从searcher获取结果
         final Searcher searcher = searcherFactory.apply("get", scope);
         final DocIdAndVersion docIdAndVersion;
         try {
@@ -510,7 +510,7 @@ public abstract class Engine implements Closeable {
         }
 
         if (docIdAndVersion != null) {
-            if (get.versionType().isVersionConflictForReads(docIdAndVersion.version, get.version())) {
+            if (get.versionType().isVersionConflictForReads(docIdAndVersion.version, get.version())) { // NOTE: htt, 如果version出现冲突则关闭
                 Releasables.close(searcher);
                 throw new VersionConflictEngineException(shardId, get.type(), get.id(),
                         get.versionType().explainConflictForReads(docIdAndVersion.version, get.version()));
@@ -555,7 +555,7 @@ public abstract class Engine implements Closeable {
      */
     public abstract Searcher acquireSearcher(String source, SearcherScope scope) throws EngineException;
 
-    public enum SearcherScope {
+    public enum SearcherScope { // NOTE: htt, 内部和外部
         EXTERNAL, INTERNAL
     }
 
@@ -599,7 +599,7 @@ public abstract class Engine implements Closeable {
     }
 
     public TranslogStats getTranslogStats() {
-        return getTranslog().stats();
+        return getTranslog().stats();  // NOTE: htt, translog统计信息
     }
 
     /**
@@ -633,19 +633,19 @@ public abstract class Engine implements Closeable {
      *
      * @return the sequence number service
      */
-    public abstract LocalCheckpointTracker getLocalCheckpointTracker();
+    public abstract LocalCheckpointTracker getLocalCheckpointTracker(); // NOTE: htt, 获得本地 checkPoint 类
 
     /**
      * Returns the latest global checkpoint value that has been persisted in the underlying storage (i.e. translog's checkpoint)
      */
     public long getLastSyncedGlobalCheckpoint() {
-        return getTranslog().getLastSyncedGlobalCheckpoint();
+        return getTranslog().getLastSyncedGlobalCheckpoint(); // NOTE: htt, 获取当前最新持久化的global checkpoint
     }
 
     /**
      * Global stats on segments.
      */
-    public final SegmentsStats segmentsStats(boolean includeSegmentFileSizes) {
+    public final SegmentsStats segmentsStats(boolean includeSegmentFileSizes) { // NOTE: htt, 获取段内全局统计信息
         ensureOpen();
         Set<String> segmentName = new HashSet<>();
         SegmentsStats stats = new SegmentsStats();
@@ -660,7 +660,7 @@ public abstract class Engine implements Closeable {
         try (Searcher searcher = acquireSearcher("segments_stats", SearcherScope.EXTERNAL)) {
             for (LeafReaderContext ctx : searcher.reader().getContext().leaves()) {
                 SegmentReader segmentReader = Lucene.segmentReader(ctx.reader());
-                if (segmentName.contains(segmentReader.getSegmentName()) == false) {
+                if (segmentName.contains(segmentReader.getSegmentName()) == false) { // NOTE: htt, 如果当前段不包含该文件
                     fillSegmentStats(segmentReader, includeSegmentFileSizes, stats);
                 }
             }
@@ -684,7 +684,7 @@ public abstract class Engine implements Closeable {
         }
     }
 
-    private ImmutableOpenMap<String, Long> getSegmentFileSizes(SegmentReader segmentReader) {
+    private ImmutableOpenMap<String, Long> getSegmentFileSizes(SegmentReader segmentReader) { // NOTE: htt, 获取段内每种文件的长度
         Directory directory = null;
         SegmentCommitInfo segmentCommitInfo = segmentReader.getSegmentInfo();
         boolean useCompoundFile = segmentCommitInfo.info.getUseCompoundFile();
@@ -713,7 +713,7 @@ public abstract class Engine implements Closeable {
             }
         } else {
             try {
-                files = segmentReader.getSegmentInfo().files().toArray(new String[]{});
+                files = segmentReader.getSegmentInfo().files().toArray(new String[]{}); // NOTE: htt, 获取所有段下文件
             } catch (IOException e) {
                 logger.warn(() -> new ParameterizedMessage("Couldn't list Directory from SegmentReader [{}] and SegmentInfo [{}]", segmentReader, segmentReader.getSegmentInfo()), e);
                 return ImmutableOpenMap.of();
@@ -736,7 +736,7 @@ public abstract class Engine implements Closeable {
             if (length == 0L) {
                 continue;
             }
-            map.put(extension, length);
+            map.put(extension, length); // NOTE: 每种后缀文件的长度， 如 .dvd -> 100B
         }
 
         if (useCompoundFile && directory != null) {
@@ -760,7 +760,7 @@ public abstract class Engine implements Closeable {
     /** How much heap is used that would be freed by a refresh.  Note that this may throw {@link AlreadyClosedException}. */
     public abstract long getIndexBufferRAMBytesUsed();
 
-    protected Segment[] getSegmentInfo(SegmentInfos lastCommittedSegmentInfos, boolean verbose) {
+    protected Segment[] getSegmentInfo(SegmentInfos lastCommittedSegmentInfos, boolean verbose) { // NOTE: htt, 获取各个段信息
         ensureOpen();
         Map<String, Segment> segments = new HashMap<>();
         // first, go over and compute the search ones...
@@ -773,7 +773,7 @@ public abstract class Engine implements Closeable {
         try (Searcher searcher = acquireSearcher("segments", SearcherScope.INTERNAL)){
             for (LeafReaderContext ctx : searcher.reader().getContext().leaves()) {
                 SegmentReader segmentReader = Lucene.segmentReader(ctx.reader());
-                if (segments.containsKey(segmentReader.getSegmentName()) == false) {
+                if (segments.containsKey(segmentReader.getSegmentName()) == false) { // NOTE: htt, 当前未包含
                     fillSegmentInfo(segmentReader, verbose, false, segments);
                 }
             }
@@ -805,7 +805,7 @@ public abstract class Engine implements Closeable {
         }
 
         Segment[] segmentsArr = segments.values().toArray(new Segment[segments.values().size()]);
-        Arrays.sort(segmentsArr, Comparator.comparingLong(Segment::getGeneration));
+        Arrays.sort(segmentsArr, Comparator.comparingLong(Segment::getGeneration)); // NOTE: htt，按段的 generation进行排序
         return segmentsArr;
     }
 
@@ -865,7 +865,7 @@ public abstract class Engine implements Closeable {
      * changes.
      */
     @Nullable
-    public abstract void refresh(String source) throws EngineException;
+    public abstract void refresh(String source) throws EngineException; // NOTE: htt, refresh shard文件，将对应段刷入到高缓，但不保证一定刷盘，此时可以进行读取并进行search
 
     /**
      * Called when our engine is using too much heap and should move buffered indexed/deleted documents to disk.
@@ -887,7 +887,7 @@ public abstract class Engine implements Closeable {
      *                      Otherwise this call will return without blocking.
      * @return the commit Id for the resulting commit
      */
-    public abstract CommitId flush(boolean force, boolean waitIfOngoing) throws EngineException;
+    public abstract CommitId flush(boolean force, boolean waitIfOngoing) throws EngineException; // NOTE: htt, flush 会将数据刷盘
 
     /**
      * Flushes the state of the engine including the transaction log, clearing memory and persisting
@@ -897,7 +897,7 @@ public abstract class Engine implements Closeable {
      *
      * @return the commit Id for the resulting commit
      */
-    public abstract CommitId flush() throws EngineException;
+    public abstract CommitId flush() throws EngineException; // NOTE: htt, 强制刷盘，包括translog
 
 
     /**
@@ -912,7 +912,7 @@ public abstract class Engine implements Closeable {
      *
      * @return {@code true} if the current generation should be rolled to a new generation
      */
-    public boolean shouldRollTranslogGeneration() {
+    public boolean shouldRollTranslogGeneration() { // NOTE: 判断生成新的translog文件
         return getTranslog().shouldRollGeneration();
     }
 
@@ -924,7 +924,7 @@ public abstract class Engine implements Closeable {
     /**
      * Force merges to 1 segment
      */
-    public void forceMerge(boolean flush) throws IOException {
+    public void forceMerge(boolean flush) throws IOException { // NOTE: htt, merge段文件，并且制定是否强制刷盘
         forceMerge(flush, 1, false, false, false);
     }
 
@@ -971,7 +971,7 @@ public abstract class Engine implements Closeable {
      * fail engine due to some error. the engine will also be closed.
      * The underlying store is marked corrupted iff failure is caused by index corruption
      */
-    public void failEngine(String reason, @Nullable Exception failure) {
+    public void failEngine(String reason, @Nullable Exception failure) { // NOTE: htt, 引擎执行失败
         if (failure != null) {
             maybeDie(reason, failure);
         }
@@ -987,7 +987,7 @@ public abstract class Engine implements Closeable {
                 failedEngine.set((failure != null) ? failure : new IllegalStateException(reason));
                 try {
                     // we just go and close this engine - no way to recover
-                    closeNoLock("engine failed on: [" + reason + "]", closedLatch);
+                    closeNoLock("engine failed on: [" + reason + "]", closedLatch); // NOTE: htt, 关闭index shard索引
                 } finally {
                     logger.warn(() -> new ParameterizedMessage("failed engine [{}]", reason), failure);
                     // we must set a failure exception, generate one if not supplied
@@ -996,7 +996,7 @@ public abstract class Engine implements Closeable {
                     // on the same node that we don't see the corrupted marker file when
                     // the shard is initializing
                     if (Lucene.isCorruptionException(failure)) {
-                        try {
+                        try {  // NOTE: htt, 生成 corrupted文件，记录当前的exception信息
                             store.markStoreCorrupted(new IOException("failed engine (reason: [" + reason + "])", ExceptionsHelper.unwrapCorruption(failure)));
                         } catch (IOException e) {
                             logger.warn("Couldn't mark store corrupted", e);
@@ -1018,7 +1018,7 @@ public abstract class Engine implements Closeable {
 
     /** Check whether the engine should be failed */
     protected boolean maybeFailEngine(String source, Exception e) {
-        if (Lucene.isCorruptionException(e)) {
+        if (Lucene.isCorruptionException(e)) { // NOTE: htt, 判断是否corrupted异常
             failEngine("corrupt file (source: [" + source + "])", e);
             return true;
         }
@@ -1026,7 +1026,7 @@ public abstract class Engine implements Closeable {
     }
 
 
-    public interface EventListener {
+    public interface EventListener { // NOTE: htt, onFailed operation
         /**
          * Called when a fatal exception occurred
          */
@@ -1034,10 +1034,10 @@ public abstract class Engine implements Closeable {
         }
     }
 
-    public static class Searcher implements Releasable {
+    public static class Searcher implements Releasable { // NOTE: htt, searcher which get indexReader
 
-        private final String source;
-        private final IndexSearcher searcher;
+        private final String source; // NOTE: htt, 搜索的source源数据
+        private final IndexSearcher searcher; // TODO: htt, indexSearcher
 
         public Searcher(String source, IndexSearcher searcher) {
             this.source = source;
@@ -1072,10 +1072,10 @@ public abstract class Engine implements Closeable {
         }
     }
 
-    public abstract static class Operation {
+    public abstract static class Operation { // NOTE: htt, operation including index/delete
 
         /** type of operation (index, delete), subclasses use static types */
-        public enum TYPE {
+        public enum TYPE { // NOTE: htt, 操作类型
             INDEX, DELETE, NO_OP;
 
             private final String lowercase;
@@ -1089,12 +1089,12 @@ public abstract class Engine implements Closeable {
             }
         }
 
-        private final Term uid;
-        private final long version;
-        private final long seqNo;
-        private final long primaryTerm;
-        private final VersionType versionType;
-        private final Origin origin;
+        private final Term uid; // NOTE: htt, 存储的_id的值， {_id, Uid.encodeId(doc.id()) }
+        private final long version; // NOTE: htt, 版本号
+        private final long seqNo; // NOTE: htt, seq no， 每个文档
+        private final long primaryTerm; // NOTE: htt, primary term，当前shard共用，新选shard时会变化
+        private final VersionType versionType; // NOTE: htt, 版本判断类型
+        private final Origin origin; // NOTE:htt, 操作来源
         private final long startTime;
 
         public Operation(Term uid, long seqNo, long primaryTerm, long version, VersionType versionType, Origin origin, long startTime) {
@@ -1107,11 +1107,11 @@ public abstract class Engine implements Closeable {
             this.startTime = startTime;
         }
 
-        public enum Origin {
-            PRIMARY,
-            REPLICA,
+        public enum Origin { // NOTE: htt, Origin
+            PRIMARY, // NOTE:htt, 写主
+            REPLICA, // NOTE: htt, 副本请求
             PEER_RECOVERY,
-            LOCAL_TRANSLOG_RECOVERY;
+            LOCAL_TRANSLOG_RECOVERY; // NOTE: htt, 本地translog恢复，此时在数据写入lucene后不用再记录translog
 
             public boolean isRecovery() {
                 return this == PEER_RECOVERY || this == LOCAL_TRANSLOG_RECOVERY;
@@ -1158,9 +1158,9 @@ public abstract class Engine implements Closeable {
         public abstract TYPE operationType();
     }
 
-    public static class Index extends Operation {
+    public static class Index extends Operation { // NOTE: htt, index operation，写入操作
 
-        private final ParsedDocument doc;
+        private final ParsedDocument doc; // NOTE: htt, 解析文档，这里是从source中解析出来
         private final long autoGeneratedIdTimestamp;
         private final boolean isRetry;
 
@@ -1217,7 +1217,7 @@ public abstract class Engine implements Closeable {
         }
 
         @Override
-        public int estimatedSizeInBytes() {
+        public int estimatedSizeInBytes() { // NOTE: htt, 评估记录大小
             return (id().length() + type().length()) * 2 + source().length() + 12;
         }
 
@@ -1240,10 +1240,10 @@ public abstract class Engine implements Closeable {
 
     }
 
-    public static class Delete extends Operation {
+    public static class Delete extends Operation { // NOTE: htt, delete operation include type and id
 
-        private final String type;
-        private final String id;
+        private final String type; // NOTE: htt, _doc
+        private final String id; // NOTE: htt, id
 
         public Delete(String type, String id, Term uid, long seqNo, long primaryTerm, long version, VersionType versionType,
                       Origin origin, long startTime) {
@@ -1283,7 +1283,7 @@ public abstract class Engine implements Closeable {
 
     }
 
-    public static class NoOp extends Operation {
+    public static class NoOp extends Operation { // NOTE: htt, no operation
 
         private final String reason;
 
@@ -1333,11 +1333,11 @@ public abstract class Engine implements Closeable {
 
     }
 
-    public static class Get {
-        private final boolean realtime;
-        private final Term uid;
-        private final String type, id;
-        private final boolean readFromTranslog;
+    public static class Get { // NOTE; htt, get operation include uid/type
+        private final boolean realtime; // NOTE: htt, 默认为实时
+        private final Term uid; // NOTE: htt, id
+        private final String type, id; // NOTE: htt, type 和 文档id
+        private final boolean readFromTranslog; // NOTE: htt, 是否从 translog读取
         private long version = Versions.MATCH_ANY;
         private VersionType versionType = VersionType.INTERNAL;
 
@@ -1388,11 +1388,11 @@ public abstract class Engine implements Closeable {
         }
     }
 
-    public static class GetResult implements Releasable {
-        private final boolean exists;
-        private final long version;
-        private final DocIdAndVersion docIdAndVersion;
-        private final Searcher searcher;
+    public static class GetResult implements Releasable { // NOTE: htt, get结果，包括docId/version，以及搜索结果
+        private final boolean exists; // NOTE: htt, 是否存在
+        private final long version; // NOTE: htt, 文档 version
+        private final DocIdAndVersion docIdAndVersion;  // NOTE: htt, lucene docId and 文档version
+        private final Searcher searcher; // NOTE: htt,
 
         public static final GetResult NOT_EXISTS = new GetResult(false, Versions.NOT_FOUND, null, null);
 
@@ -1447,10 +1447,10 @@ public abstract class Engine implements Closeable {
      * Flush the engine (committing segments to disk and truncating the
      * translog) and close it.
      */
-    public void flushAndClose() throws IOException {
+    public void flushAndClose() throws IOException { // NOTE: htt, 关闭 searchManager, translog, indexWriter, store
         if (isClosed.get() == false) {
             logger.trace("flushAndClose now acquire writeLock");
-            try (ReleasableLock lock = writeLock.acquire()) {
+            try (ReleasableLock lock = writeLock.acquire()) { // NOTE: htt, writeLock的锁在try之后会自动处理
                 logger.trace("flushAndClose now acquired writeLock");
                 try {
                     logger.debug("flushing shard on close - this might take some time to sync files to disk");
@@ -1473,7 +1473,7 @@ public abstract class Engine implements Closeable {
             logger.debug("close now acquiring writeLock");
             try (ReleasableLock lock = writeLock.acquire()) {
                 logger.debug("close acquired writeLock");
-                closeNoLock("api", closedLatch);
+                closeNoLock("api", closedLatch); // NOTE: htt, 关闭translog、indexWriter等
             }
         }
         awaitPendingClose();
@@ -1487,7 +1487,7 @@ public abstract class Engine implements Closeable {
         }
     }
 
-    public static class CommitId implements Writeable {
+    public static class CommitId implements Writeable { // NOTE: htt, 提交的id
 
         private final byte[] id;
 
@@ -1542,10 +1542,10 @@ public abstract class Engine implements Closeable {
         }
     }
 
-    public static class IndexCommitRef implements Closeable {
+    public static class IndexCommitRef implements Closeable { // NOTE: htt, 提供close()接口以带 onClose.run()
         private final AtomicBoolean closed = new AtomicBoolean();
-        private final CheckedRunnable<IOException> onClose;
-        private final IndexCommit indexCommit;
+        private final CheckedRunnable<IOException> onClose; // NOTE: htt, close操作
+        private final IndexCommit indexCommit; // NOTE: htt, commit info of an index
 
         IndexCommitRef(IndexCommit indexCommit, CheckedRunnable<IOException> onClose) {
             this.indexCommit = indexCommit;
@@ -1584,7 +1584,7 @@ public abstract class Engine implements Closeable {
      *
      * @see EngineConfig#getWarmer()
      */
-    public interface Warmer {
+    public interface Warmer { // NOTE: htt, get new searcher to warm new segments
         /**
          * Called once a new Searcher is opened on the top-level searcher.
          */
@@ -1607,7 +1607,7 @@ public abstract class Engine implements Closeable {
      *
      * @throws IOException if an I/O exception occurred reading the translog
      */
-    public abstract void restoreLocalCheckpointFromTranslog() throws IOException;
+    public abstract void restoreLocalCheckpointFromTranslog() throws IOException; // NOTE: htt, 从translog中恢复 local checkPoint
 
     /**
      * Fills up the local checkpoints history with no-ops until the local checkpoint
@@ -1621,7 +1621,7 @@ public abstract class Engine implements Closeable {
      * Performs recovery from the transaction log.
      * This operation will close the engine if the recovery fails.
      */
-    public abstract Engine recoverFromTranslog() throws IOException;
+    public abstract Engine recoverFromTranslog() throws IOException; // NOTE: htt, 从translog中恢复数据
 
     /**
      * Do not replay translog operations, but make the engine be ready.
@@ -1631,7 +1631,7 @@ public abstract class Engine implements Closeable {
     /**
      * Returns <code>true</code> iff this engine is currently recovering from translog.
      */
-    public boolean isRecovering() {
+    public boolean isRecovering() { // NOTE: htt, 是否从 translog中恢复
         return false;
     }
 

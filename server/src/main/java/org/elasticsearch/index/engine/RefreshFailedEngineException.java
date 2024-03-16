@@ -24,7 +24,7 @@ import org.elasticsearch.index.shard.ShardId;
 
 import java.io.IOException;
 
-public class RefreshFailedEngineException extends EngineException {
+public class RefreshFailedEngineException extends EngineException { // NOTE: htt, refresh failed engine exception
 
     public RefreshFailedEngineException(ShardId shardId, Throwable t) {
         super(shardId, "Refresh failed", t);

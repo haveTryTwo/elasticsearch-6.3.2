@@ -19,7 +19,7 @@
 
 package org.elasticsearch.index.engine;
 
-public class InternalEngineFactory implements EngineFactory {
+public class InternalEngineFactory implements EngineFactory { // NOTE: htt, 生成内部的 engine
     @Override
     public Engine newReadWriteEngine(EngineConfig config) {
         return new InternalEngine(config);

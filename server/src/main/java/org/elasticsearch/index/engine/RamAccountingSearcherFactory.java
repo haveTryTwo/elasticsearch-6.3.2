@@ -38,9 +38,9 @@ import java.util.Set;
  * Searcher factory extending {@link EngineSearcherFactory} that tracks the
  * amount of memory used by segments in the accounting circuit breaker.
  */
-final class RamAccountingSearcherFactory extends SearcherFactory {
+final class RamAccountingSearcherFactory extends SearcherFactory { // NOTE: htt, 创建index搜索时，增加了对当前查询数据 熔断监控
 
-    private final CircuitBreakerService breakerService;
+    private final CircuitBreakerService breakerService; // NOTE: htt, 断路器服务
 
     RamAccountingSearcherFactory(CircuitBreakerService breakerService) {
         this.breakerService = breakerService;
@@ -73,10 +73,10 @@ final class RamAccountingSearcherFactory extends SearcherFactory {
             if (prevReaders.contains(segmentReader.getCoreCacheHelper().getKey()) == false) {
                 final long ramBytesUsed = segmentReader.ramBytesUsed();
                 // add the segment memory to the breaker (non-breaking)
-                breaker.addWithoutBreaking(ramBytesUsed);
+                breaker.addWithoutBreaking(ramBytesUsed); // NOTE: htt, 增加限流监控
                 // and register a listener for when the segment is closed to decrement the
                 // breaker accounting
-                segmentReader.getCoreCacheHelper().addClosedListener(k -> breaker.addWithoutBreaking(-ramBytesUsed));
+                segmentReader.getCoreCacheHelper().addClosedListener(k -> breaker.addWithoutBreaking(-ramBytesUsed)); // NOTE: htt，调整监控数据
             }
         }
         return super.newSearcher(reader, previousReader);

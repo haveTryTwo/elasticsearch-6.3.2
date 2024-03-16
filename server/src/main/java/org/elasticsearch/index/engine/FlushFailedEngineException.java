@@ -24,7 +24,7 @@ import org.elasticsearch.index.shard.ShardId;
 
 import java.io.IOException;
 
-public class FlushFailedEngineException extends EngineException {
+public class FlushFailedEngineException extends EngineException { // NOTE: htt, flush failed engine exception
 
     public FlushFailedEngineException(ShardId shardId, Throwable t) {
         super(shardId, "Flush failed", t);

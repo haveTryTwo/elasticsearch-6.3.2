@@ -29,9 +29,9 @@ import java.io.IOException;
  * Basic Searcher factory that allows returning an {@link IndexSearcher}
  * given an {@link IndexReader}
  */
-public class EngineSearcherFactory extends SearcherFactory {
+public class EngineSearcherFactory extends SearcherFactory { // NOTE: htt, 搜索引擎
 
-    private final EngineConfig engineConfig;
+    private final EngineConfig engineConfig; // NOTE: htt, 引擎配置
 
     public EngineSearcherFactory(EngineConfig engineConfig) {
         this.engineConfig = engineConfig;
@@ -40,9 +40,9 @@ public class EngineSearcherFactory extends SearcherFactory {
     @Override
     public IndexSearcher newSearcher(IndexReader reader, IndexReader previousReader) throws IOException {
         IndexSearcher searcher = super.newSearcher(reader, previousReader);
-        searcher.setQueryCache(engineConfig.getQueryCache());
-        searcher.setQueryCachingPolicy(engineConfig.getQueryCachingPolicy());
-        searcher.setSimilarity(engineConfig.getSimilarity());
+        searcher.setQueryCache(engineConfig.getQueryCache()); // NOTE: htt, 设置查询缓存
+        searcher.setQueryCachingPolicy(engineConfig.getQueryCachingPolicy()); // NOTE: htt, 设置查询缓存策略
+        searcher.setSimilarity(engineConfig.getSimilarity()); // NOTE: htt, 相似度
         return searcher;
     }
 }

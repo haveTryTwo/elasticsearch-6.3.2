@@ -25,7 +25,7 @@ import org.elasticsearch.index.shard.ShardId;
 
 import java.io.IOException;
 
-public class RecoveryEngineException extends EngineException {
+public class RecoveryEngineException extends EngineException { // NOTE: htt, recovery engine exception in phase
 
     private final int phase;
 

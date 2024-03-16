@@ -43,13 +43,13 @@ import java.util.function.LongSupplier;
  * In particular, this policy will delete index commits whose max sequence number is at most
  * the current global checkpoint except the index commit which has the highest max sequence number among those.
  */
-public final class CombinedDeletionPolicy extends IndexDeletionPolicy {
+public final class CombinedDeletionPolicy extends IndexDeletionPolicy { // NOTE: htt, 删除lucene的安全点以下的segments_xx，这里保留 safeCommit 以及 lastCommit，同时会更新translog记录的safeCommit以及 lastCommit信息
     private final Logger logger;
-    private final TranslogDeletionPolicy translogDeletionPolicy;
+    private final TranslogDeletionPolicy translogDeletionPolicy; // NOTE: htt, translog 删除策略，一个按时间(保留一段时间，然后保留这段时间内translog)，一个按大小(保留总大小范围内的最大数据范围)
     private final LongSupplier globalCheckpointSupplier;
     private final ObjectIntHashMap<IndexCommit> snapshottedCommits; // Number of snapshots held against each commit point.
-    private volatile IndexCommit safeCommit; // the most recent safe commit point - its max_seqno at most the persisted global checkpoint.
-    private volatile IndexCommit lastCommit; // the most recent commit point
+    private volatile IndexCommit safeCommit; // the most recent safe commit point - its max_seqno at most the persisted global checkpoint. // NOTE: htt, 安全提交的 segments_xx，即比 globalCheckpoint小
+    private volatile IndexCommit lastCommit; // the most recent commit point // NOTE: htt, 最新提交segments_xx
 
     CombinedDeletionPolicy(Logger logger, TranslogDeletionPolicy translogDeletionPolicy, LongSupplier globalCheckpointSupplier) {
         this.logger = logger;
@@ -72,25 +72,25 @@ public final class CombinedDeletionPolicy extends IndexDeletionPolicy {
 
     @Override
     public synchronized void onCommit(List<? extends IndexCommit> commits) throws IOException {
-        final int keptPosition = indexOfKeptCommits(commits, globalCheckpointSupplier.getAsLong());
+        final int keptPosition = indexOfKeptCommits(commits, globalCheckpointSupplier.getAsLong()); // NOTE: htt, 获取比globalCheckpoint小的indexCommit（其中记录seqNo）
         lastCommit = commits.get(commits.size() - 1);
-        safeCommit = commits.get(keptPosition);
+        safeCommit = commits.get(keptPosition); // NOTE: htt, 获取安全提交点对应的commit信息
         for (int i = 0; i < keptPosition; i++) {
-            if (snapshottedCommits.containsKey(commits.get(i)) == false) {
-                deleteCommit(commits.get(i));
+            if (snapshottedCommits.containsKey(commits.get(i)) == false) { // NOTE: htt, 删除没有引用的indexCommit
+                deleteCommit(commits.get(i)); // NOTE: htt, 删除小于安全点的 segments_XX
             }
         }
-        updateTranslogDeletionPolicy();
+        updateTranslogDeletionPolicy(); // NOTE: htt, 更新translog的commit信息
     }
 
-    private void deleteCommit(IndexCommit commit) throws IOException {
+    private void deleteCommit(IndexCommit commit) throws IOException { // NOTE: htt, 删除对应 segments_XX 文件
         assert commit.isDeleted() == false : "Index commit [" + commitDescription(commit) + "] is deleted twice";
         logger.debug("Delete index commit [{}]", commitDescription(commit));
         commit.delete();
         assert commit.isDeleted() : "Deletion commit [" + commitDescription(commit) + "] was suppressed";
     }
 
-    private void updateTranslogDeletionPolicy() throws IOException {
+    private void updateTranslogDeletionPolicy() throws IOException { // NOTE: htt, 更新translog下的 last以及recovery的commit信息
         assert Thread.holdsLock(this);
         logger.debug("Safe commit [{}], last commit [{}]", commitDescription(safeCommit), commitDescription(lastCommit));
         assert safeCommit.isDeleted() == false : "The safe commit must not be deleted";
@@ -132,7 +132,7 @@ public final class CombinedDeletionPolicy extends IndexDeletionPolicy {
             snapshottedCommits.remove(releasingCommit);
         }
         // The commit can be clean up only if no pending snapshot and it is neither the safe commit nor last commit.
-        return refCount == 0 && releasingCommit.equals(safeCommit) == false && releasingCommit.equals(lastCommit) == false;
+        return refCount == 0 && releasingCommit.equals(safeCommit) == false && releasingCommit.equals(lastCommit) == false; // NOTE: htt, 没有引用，并且不是 safeCommit以及lastCommit
     }
 
     /**
@@ -156,7 +156,7 @@ public final class CombinedDeletionPolicy extends IndexDeletionPolicy {
      * Find the highest index position of a safe index commit whose max sequence number is not greater than the global checkpoint.
      * Index commits with different translog UUID will be filtered out as they don't belong to this engine.
      */
-    private static int indexOfKeptCommits(List<? extends IndexCommit> commits, long globalCheckpoint) throws IOException {
+    private static int indexOfKeptCommits(List<? extends IndexCommit> commits, long globalCheckpoint) throws IOException { // NOTE: htt, 获取写入提交的最大安全的index值
         final String expectedTranslogUUID = commits.get(commits.size() - 1).getUserData().get(Translog.TRANSLOG_UUID_KEY);
 
         // Commits are sorted by age (the 0th one is the oldest commit).
@@ -181,7 +181,7 @@ public final class CombinedDeletionPolicy extends IndexDeletionPolicy {
             if (maxSeqNoFromCommit == SequenceNumbers.NO_OPS_PERFORMED) {
                 return i;
             }
-            if (maxSeqNoFromCommit <= globalCheckpoint) {
+            if (maxSeqNoFromCommit <= globalCheckpoint) { // NOTE: htt, 小于等于 globalCheckPoint的最大安全点
                 return i;
             }
         }
@@ -204,7 +204,7 @@ public final class CombinedDeletionPolicy extends IndexDeletionPolicy {
             if (lastCommit.getUserData().containsKey(SequenceNumbers.MAX_SEQ_NO)) {
                 final long maxSeqNoFromLastCommit = Long.parseLong(lastCommit.getUserData().get(SequenceNumbers.MAX_SEQ_NO));
                 // We can clean up the current safe commit if the last commit is safe
-                return globalCheckpointSupplier.getAsLong() >= maxSeqNoFromLastCommit;
+                return globalCheckpointSupplier.getAsLong() >= maxSeqNoFromLastCommit; // NOTE: htt，全局检查点比seqNo大
             }
         }
         return false;
@@ -220,7 +220,7 @@ public final class CombinedDeletionPolicy extends IndexDeletionPolicy {
     /**
      * A wrapper of an index commit that prevents it from being deleted.
      */
-    private static class SnapshotIndexCommit extends IndexCommit {
+    private static class SnapshotIndexCommit extends IndexCommit { // NOTE: htt, index commit 代理
         private final IndexCommit delegate;
 
         SnapshotIndexCommit(IndexCommit delegate) {

@@ -34,18 +34,18 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 /** Maps _uid value to its version information. */
-final class LiveVersionMap implements ReferenceManager.RefreshListener, Accountable {
+final class LiveVersionMap implements ReferenceManager.RefreshListener, Accountable { // NOTE: htt, 映射uid和version版本号，同时对于自增id的新增记录可以不用校验版本号，并记录删除记录的uid和version；
 
-    private final KeyedLock<BytesRef> keyedLock = new KeyedLock<>();
+    private final KeyedLock<BytesRef> keyedLock = new KeyedLock<>(); // NOTE: htt, 记录的 id 进行加锁
 
-    private static final class VersionLookup {
+    private static final class VersionLookup { // NOTE: htt, 查看uid与具体的version
 
         /** Tracks bytes used by current map, i.e. what is freed on refresh. For deletes, which are also added to tombstones, we only account
          *  for the CHM entry here, and account for BytesRef/VersionValue against the tombstones, since refresh would not clear this RAM. */
-        final AtomicLong ramBytesUsed = new AtomicLong();
+        final AtomicLong ramBytesUsed = new AtomicLong(); // NOTE: htt, 当前uid占用内存统计，refresh后会释放
 
         private static final VersionLookup EMPTY = new VersionLookup(Collections.emptyMap());
-        private final Map<BytesRef, VersionValue> map;
+        private final Map<BytesRef, VersionValue> map; // NOTE: htt, uid -> version
 
         // each version map has a notion of safe / unsafe which allows us to apply certain optimization in the auto-generated ID usecase
         // where we know that documents can't have any duplicates so we can skip the version map entirely. This reduces
@@ -57,7 +57,7 @@ final class LiveVersionMap implements ReferenceManager.RefreshListener, Accounta
         // NOTE: these values can both be non-volatile since it's ok to read a stale value per doc ID. We serialize changes in the engine
         // that will prevent concurrent updates to the same document ID and therefore we can rely on the happens-before guanratee of the
         // map reference itself.
-        private boolean unsafe;
+        private boolean unsafe; // NOTE: htt, 自增id情况下由于新增文档不可能有重复则可以跳过version判断
 
         // minimum timestamp of delete operations that were made while this map was active. this is used to make sure they are kept in
         // the tombstone
@@ -95,14 +95,14 @@ final class LiveVersionMap implements ReferenceManager.RefreshListener, Accounta
             return map.remove(uid);
         }
 
-        public void updateMinDeletedTimestamp(DeleteVersionValue delete) {
+        public void updateMinDeletedTimestamp(DeleteVersionValue delete) { // NOTE:htt, 设置最小记录更新时间
             long time = delete.time;
             minDeleteTimestamp.updateAndGet(prev -> Math.min(time, prev));
         }
 
     }
 
-    private static final class Maps {
+    private static final class Maps { // NOTE: htt, 当前current 和 old 的 VersionLookup查询uid对应 version
 
         // All writes (adds and deletes) go into here:
         final VersionLookup current;
@@ -140,7 +140,7 @@ final class LiveVersionMap implements ReferenceManager.RefreshListener, Accounta
         /**
          * Builds a new map for the refresh transition this should be called in beforeRefresh()
          */
-        Maps buildTransitionMap() {
+        Maps buildTransitionMap() { // NOTE:htt, 数据刷盘时，构建新的map，将current放入到old中，以便删除后删除
             return new Maps(new VersionLookup(ConcurrentCollections.newConcurrentMapWithAggressiveConcurrency(current.size())), current,
                 shouldInheritSafeAccess());
         }
@@ -148,13 +148,13 @@ final class LiveVersionMap implements ReferenceManager.RefreshListener, Accounta
         /**
          * builds a new map that invalidates the old map but maintains the current. This should be called in afterRefresh()
          */
-        Maps invalidateOldMap() {
+        Maps invalidateOldMap() { // NOTE:htt, 刷盘后，将old的内容清理掉
             return new Maps(current, VersionLookup.EMPTY, previousMapsNeededSafeAccess);
         }
 
         void put(BytesRef uid, VersionValue version) {
             long uidRAMBytesUsed = BASE_BYTES_PER_BYTESREF + uid.bytes.length;
-            long ramAccounting = BASE_BYTES_PER_CHM_ENTRY + version.ramBytesUsed() + uidRAMBytesUsed;
+            long ramAccounting = BASE_BYTES_PER_CHM_ENTRY + version.ramBytesUsed() + uidRAMBytesUsed; // NOTE: htt, uid占用内存
             VersionValue previousValue = current.put(uid, version);
             ramAccounting += previousValue == null ? 0 : -(BASE_BYTES_PER_CHM_ENTRY + previousValue.ramBytesUsed() + uidRAMBytesUsed);
             adjustRam(ramAccounting);
@@ -189,7 +189,7 @@ final class LiveVersionMap implements ReferenceManager.RefreshListener, Accounta
     // All deletes also go here, and delete "tombstones" are retained after refresh:
     private final Map<BytesRef, DeleteVersionValue> tombstones = ConcurrentCollections.newConcurrentMapWithAggressiveConcurrency();
 
-    private volatile Maps maps = new Maps();
+    private volatile Maps maps = new Maps(); // NOTE:htt, 缓存当前未刷盘的uid的信息，以便快速找到对应uid -> version
     // we maintain a second map that only receives the updates that we skip on the actual map (unsafe ops)
     // this map is only maintained if assertions are enabled
     private volatile Maps unsafeKeysMap = new Maps();
@@ -202,7 +202,7 @@ final class LiveVersionMap implements ReferenceManager.RefreshListener, Accounta
      * length of the byte[] (assuming it is not shared between multiple
      * instances).
      */
-    private static final long BASE_BYTES_PER_BYTESREF =
+    private static final long BASE_BYTES_PER_BYTESREF = // NOTE: htt, UID占用的字节，包括数组头部
         // shallow memory usage of the BytesRef object
         RamUsageEstimator.shallowSizeOfInstance(BytesRef.class) +
             // header of the byte[] array
@@ -235,12 +235,12 @@ final class LiveVersionMap implements ReferenceManager.RefreshListener, Accounta
     final AtomicLong ramBytesUsedTombstones = new AtomicLong();
 
     @Override
-    public void beforeRefresh() throws IOException {
+    public void beforeRefresh() throws IOException { // NOTE:htt, 开始刷盘前的操作
         // Start sending all updates after this point to the new
         // map.  While reopen is running, any lookup will first
         // try this new map, then fallback to old, then to the
         // current searcher:
-        maps = maps.buildTransitionMap();
+        maps = maps.buildTransitionMap(); // NOTE:htt, 数据刷盘时，构建新的map，将current放入到old中，以便删除后删除
         assert (unsafeKeysMap = unsafeKeysMap.buildTransitionMap()) != null;
         // This is not 100% correct, since concurrent indexing ops can change these counters in between our execution of the previous
         // line and this one, but that should be minor, and the error won't accumulate over time:
@@ -270,7 +270,7 @@ final class LiveVersionMap implements ReferenceManager.RefreshListener, Accounta
     private VersionValue getUnderLock(final BytesRef uid, Maps currentMaps) {
         assert assertKeyedLockHeldByCurrentThread(uid);
         // First try to get the "live" value:
-        VersionValue value = currentMaps.current.get(uid);
+        VersionValue value = currentMaps.current.get(uid); // NOTE: htt, get version of current id from memory
         if (value != null) {
             return value;
         }
@@ -360,7 +360,7 @@ final class LiveVersionMap implements ReferenceManager.RefreshListener, Accounta
     /**
      * Removes this uid from the pending deletes map.
      */
-    void removeTombstoneUnderLock(BytesRef uid) {
+    void removeTombstoneUnderLock(BytesRef uid) { // NOTE:htt, 清理删除的指定id的数据
         assert assertKeyedLockHeldByCurrentThread(uid);
         long uidRAMBytesUsed = BASE_BYTES_PER_BYTESREF + uid.bytes.length;
         final VersionValue prev = tombstones.remove(uid);
@@ -371,7 +371,7 @@ final class LiveVersionMap implements ReferenceManager.RefreshListener, Accounta
         }
     }
 
-    private boolean canRemoveTombstone(long maxTimestampToPrune, long maxSeqNoToPrune, DeleteVersionValue versionValue) {
+    private boolean canRemoveTombstone(long maxTimestampToPrune, long maxSeqNoToPrune, DeleteVersionValue versionValue) { // NOTE:htt, 是否可以清理已经删除数据
         // check if the value is old enough and safe to be removed
         final boolean isTooOld = versionValue.time < maxTimestampToPrune;
         final boolean isSafeToPrune = versionValue.seqNo <= maxSeqNoToPrune;
@@ -389,7 +389,7 @@ final class LiveVersionMap implements ReferenceManager.RefreshListener, Accounta
             // we do check before we actually lock the key - this way we don't need to acquire the lock for tombstones that are not
             // prune-able. If the tombstone changes concurrently we will re-read and step out below since if we can't collect it now w
             // we won't collect the tombstone below since it must be newer than this one.
-            if (canRemoveTombstone(maxTimestampToPrune, maxSeqNoToPrune, entry.getValue())) {
+            if (canRemoveTombstone(maxTimestampToPrune, maxSeqNoToPrune, entry.getValue())) { // NOTE:htt, 是否可以清理删除数据
                 final BytesRef uid = entry.getKey();
                 try (Releasable lock = keyedLock.tryAcquire(uid)) {
                     // we use tryAcquire here since this is a best effort and we try to be least disruptive

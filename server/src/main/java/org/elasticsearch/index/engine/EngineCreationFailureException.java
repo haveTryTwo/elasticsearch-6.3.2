@@ -29,7 +29,7 @@ import java.io.IOException;
  *
  *
  */
-public class EngineCreationFailureException extends EngineException {
+public class EngineCreationFailureException extends EngineException { // NOTE: htt, engine create failed exception
 
     public EngineCreationFailureException(ShardId shardId, String msg, Throwable cause) {
         super(shardId, msg, cause);

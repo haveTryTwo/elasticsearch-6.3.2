@@ -48,7 +48,7 @@ import java.util.Set;
  * An extension to the {@link ConcurrentMergeScheduler} that provides tracking on merge times, total
  * and current merges.
  */
-class ElasticsearchConcurrentMergeScheduler extends ConcurrentMergeScheduler {
+class ElasticsearchConcurrentMergeScheduler extends ConcurrentMergeScheduler { // NOTE: htt, es并发merge，记录每个merge的数据信息
 
     protected final Logger logger;
     private final Settings indexSettings;
@@ -80,11 +80,11 @@ class ElasticsearchConcurrentMergeScheduler extends ConcurrentMergeScheduler {
     }
 
     @Override
-    protected void doMerge(IndexWriter writer, MergePolicy.OneMerge merge) throws IOException {
+    protected void doMerge(IndexWriter writer, MergePolicy.OneMerge merge) throws IOException { // NOTE: htt, 重写 doMerge() 重点记录merge信息
         int totalNumDocs = merge.totalNumDocs();
         long totalSizeInBytes = merge.totalBytesSize();
         long timeNS = System.nanoTime();
-        currentMerges.inc();
+        currentMerges.inc(); // NOTE: htt, 增加merge个数
         currentMergesNumDocs.inc(totalNumDocs);
         currentMergesSizeInBytes.inc(totalSizeInBytes);
 
@@ -103,7 +103,7 @@ class ElasticsearchConcurrentMergeScheduler extends ConcurrentMergeScheduler {
             onGoingMerges.remove(onGoingMerge);
             afterMerge(onGoingMerge);
 
-            currentMerges.dec();
+            currentMerges.dec(); // NOTE: htt, merge完成后，减少merge个数
             currentMergesNumDocs.dec(totalNumDocs);
             currentMergesSizeInBytes.dec(totalSizeInBytes);
 
@@ -168,10 +168,10 @@ class ElasticsearchConcurrentMergeScheduler extends ConcurrentMergeScheduler {
     protected MergeThread getMergeThread(IndexWriter writer, MergePolicy.OneMerge merge) throws IOException {
         MergeThread thread = super.getMergeThread(writer, merge);
         thread.setName(EsExecutors.threadName(indexSettings, "[" + shardId.getIndexName() + "][" + shardId.id() + "]: " + thread.getName()));
-        return thread;
+        return thread; // NOTE: htt, 获取mergeThread
     }
 
-    MergeStats stats() {
+    MergeStats stats() { // NOTE: htt, 生成merge的统计信息，每次都创建新的 MergeStats并进行赋值
         final MergeStats mergeStats = new MergeStats();
         mergeStats.add(totalMerges.count(), totalMerges.sum(), totalMergesNumDocs.count(), totalMergesSizeInBytes.count(),
                 currentMerges.count(), currentMergesNumDocs.count(), currentMergesSizeInBytes.count(),
@@ -183,7 +183,7 @@ class ElasticsearchConcurrentMergeScheduler extends ConcurrentMergeScheduler {
 
     void refreshConfig() {
         if (this.getMaxMergeCount() != config.getMaxMergeCount() || this.getMaxThreadCount() != config.getMaxThreadCount()) {
-            this.setMaxMergesAndThreads(config.getMaxMergeCount(), config.getMaxThreadCount());
+            this.setMaxMergesAndThreads(config.getMaxMergeCount(), config.getMaxThreadCount()); // NOTE: htt, 更新merge本身最大个数以及merge线程数
         }
         boolean isEnabled = getIORateLimitMBPerSec() != Double.POSITIVE_INFINITY;
         if (config.isAutoThrottle() && isEnabled == false) {

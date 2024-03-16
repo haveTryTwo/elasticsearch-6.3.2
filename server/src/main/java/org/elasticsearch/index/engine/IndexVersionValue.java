@@ -24,7 +24,7 @@ import org.elasticsearch.index.translog.Translog;
 
 import java.util.Objects;
 
-final class IndexVersionValue extends VersionValue {
+final class IndexVersionValue extends VersionValue { // NOTE: htt, 写入version，带上translog.location信息
 
     private static final long RAM_BYTES_USED = RamUsageEstimator.shallowSizeOfInstance(IndexVersionValue.class);
 

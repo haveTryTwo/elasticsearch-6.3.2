@@ -53,21 +53,21 @@ import java.util.Collections;
 /**
  * Internal class that mocks a single doc read from the transaction log as a leaf reader.
  */
-final class TranslogLeafReader extends LeafReader {
+final class TranslogLeafReader extends LeafReader { // NOTE: htt, translog读取，获取
 
     private final Translog.Index operation;
     private static final FieldInfo FAKE_SOURCE_FIELD
         = new FieldInfo(SourceFieldMapper.NAME, 1, false, false, false, IndexOptions.NONE, DocValuesType.NONE, -1, Collections.emptyMap(),
-        0,0);
+        0,0); // NOTE: htt, source字段
     private static final FieldInfo FAKE_ROUTING_FIELD
         = new FieldInfo(RoutingFieldMapper.NAME, 2, false, false, false, IndexOptions.NONE, DocValuesType.NONE, -1, Collections.emptyMap(),
-        0,0);
+        0,0); // NOTE: htt, _routing字段
     private static final FieldInfo FAKE_ID_FIELD
         = new FieldInfo(IdFieldMapper.NAME, 3, false, false, false, IndexOptions.NONE, DocValuesType.NONE, -1, Collections.emptyMap(),
-        0,0);
+        0,0); // NOTE: htt, _id 字段
     private static final FieldInfo FAKE_UID_FIELD
         = new FieldInfo(UidFieldMapper.NAME, 4, false, false, false, IndexOptions.NONE, DocValuesType.NONE, -1, Collections.emptyMap(),
-        0,0);
+        0,0); // NOTE: _uid字段
     private final Version indexVersionCreated;
 
     TranslogLeafReader(Translog.Index operation, Version indexVersionCreated) {
@@ -197,7 +197,7 @@ final class TranslogLeafReader extends LeafReader {
     }
 
     @Override
-    public void document(int docID, StoredFieldVisitor visitor) throws IOException {
+    public void document(int docID, StoredFieldVisitor visitor) throws IOException { // NOTE: htt, 获取相关原始信息
         if (docID != 0) {
             throw new IllegalArgumentException("no such doc ID " + docID);
         }

@@ -41,22 +41,22 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class Segment implements Streamable {
+public class Segment implements Streamable { // NOTE: htt, 段的相关信息
 
-    private String name;
-    private long generation;
+    private String name;  // NOTE: htt, 段名
+    private long generation; // NOTE: htt, 段的 generation
     public boolean committed;
     public boolean search;
     public long sizeInBytes = -1;
-    public int docCount = -1;
-    public int delDocCount = -1;
+    public int docCount = -1;  // NOTE: htt, 文档数
+    public int delDocCount = -1; // NOTE: htt, 删除文档数
     public org.apache.lucene.util.Version version = null;
-    public Boolean compound = null;
-    public String mergeId;
+    public Boolean compound = null; // NOTE: htt, 是否组合
+    public String mergeId; // NOTE: htt, merge的id信息
     public long memoryInBytes;
-    public Sort segmentSort;
+    public Sort segmentSort; // NOTE: htt, 段排序
     public Accountable ramTree = null;
-    public Map<String, String> attributes;
+    public Map<String, String> attributes; // NOTE: htt, 段的属性信息
 
     Segment() {
     }

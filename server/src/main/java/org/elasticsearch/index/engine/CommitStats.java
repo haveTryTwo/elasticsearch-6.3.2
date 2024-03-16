@@ -32,12 +32,12 @@ import java.util.Base64;
 import java.util.Map;
 
 /** a class the returns dynamic information with respect to the last commit point of this shard */
-public final class CommitStats implements Streamable, ToXContentFragment {
+public final class CommitStats implements Streamable, ToXContentFragment { // NOTE: htt, commit的统计信息
 
-    private Map<String, String> userData;
-    private long generation;
+    private Map<String, String> userData; // NOTE: htt, 包括local_checkpoint/translog_uuid等
+    private long generation; // NOTE: htt, generation
     private String id; // lucene commit id in base 64;
-    private int numDocs;
+    private int numDocs; // NOTE: htt, number of document which are not deleted
 
     public CommitStats(SegmentInfos segmentInfos) {
         // clone the map to protect against concurrent changes
@@ -114,7 +114,7 @@ public final class CommitStats implements Streamable, ToXContentFragment {
         out.writeInt(numDocs);
     }
 
-    static final class Fields {
+    static final class Fields { // NOTE: htt, commit stats fields
         static final String GENERATION = "generation";
         static final String USER_DATA = "user_data";
         static final String ID = "id";

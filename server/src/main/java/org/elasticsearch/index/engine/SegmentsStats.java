@@ -33,21 +33,21 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import java.io.IOException;
 import java.util.Iterator;
 
-public class SegmentsStats implements Streamable, ToXContentFragment {
+public class SegmentsStats implements Streamable, ToXContentFragment { // NOTE: htt, 段中各文件在内存的总的大小
 
-    private long count;
-    private long memoryInBytes;
-    private long termsMemoryInBytes;
-    private long storedFieldsMemoryInBytes;
-    private long termVectorsMemoryInBytes;
+    private long count; // NOTE: htt, 总段文件数
+    private long memoryInBytes; // NOTE: htt, 总记录大小
+    private long termsMemoryInBytes; // NOTE: htt, 词项占用内存，即为FST，这里占大头，约占60%
+    private long storedFieldsMemoryInBytes; // NOTE: htt, store 存储大小
+    private long termVectorsMemoryInBytes; // NOTE: htt, 词向量内存大小
     private long normsMemoryInBytes;
     private long pointsMemoryInBytes;
-    private long docValuesMemoryInBytes;
-    private long indexWriterMemoryInBytes;
+    private long docValuesMemoryInBytes; // NOTE: htt, doc values 大小
+    private long indexWriterMemoryInBytes; // NOTE: htt, index 写内存大小
     private long versionMapMemoryInBytes;
     private long maxUnsafeAutoIdTimestamp = Long.MIN_VALUE;
-    private long bitsetMemoryInBytes;
-    private ImmutableOpenMap<String, Long> fileSizes = ImmutableOpenMap.of();
+    private long bitsetMemoryInBytes; // NOTE: htt, bitset的内存大小
+    private ImmutableOpenMap<String, Long> fileSizes = ImmutableOpenMap.of();  // NOTE: htt, 段内各种文件大小， dvd -> 101B , dvd -> 50B
 
     /*
      * A map to provide a best-effort approach describing Lucene index files.
@@ -57,10 +57,10 @@ public class SegmentsStats implements Streamable, ToXContentFragment {
      */
     private static ImmutableOpenMap<String, String> fileDescriptions = ImmutableOpenMap.<String, String>builder()
             .fPut("si", "Segment Info")
-            .fPut("fnm", "Fields")
-            .fPut("fdx", "Field Index")
+            .fPut("fnm", "Fields")  // NOTE: htt, fields info
+            .fPut("fdx", "Field Index") // NOTE: htt, store data
             .fPut("fdt", "Field Data")
-            .fPut("tim", "Term Dictionary")
+            .fPut("tim", "Term Dictionary") // NOTE: htt, index file
             .fPut("tip", "Term Index")
             .fPut("doc", "Frequencies")
             .fPut("pos", "Positions")
@@ -69,7 +69,7 @@ public class SegmentsStats implements Streamable, ToXContentFragment {
             .fPut("nvm", "Norms")
             .fPut("dii", "Points")
             .fPut("dim", "Points")
-            .fPut("dvd", "DocValues")
+            .fPut("dvd", "DocValues") // NOTE: htt, doc values
             .fPut("dvm", "DocValues")
             .fPut("tvx", "Term Vector Index")
             .fPut("tvd", "Term Vector Documents")
@@ -315,7 +315,7 @@ public class SegmentsStats implements Streamable, ToXContentFragment {
         return builder;
     }
 
-    static final class Fields {
+    static final class Fields { // NOTE: htt, 段统计涉及的字段
         static final String SEGMENTS = "segments";
         static final String COUNT = "count";
         static final String MEMORY = "memory";

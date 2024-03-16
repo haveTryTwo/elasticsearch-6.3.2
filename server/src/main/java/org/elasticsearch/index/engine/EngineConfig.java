@@ -52,35 +52,35 @@ import java.util.function.LongSupplier;
  * Once {@link Engine} has been created with this object, changes to this
  * object will affect the {@link Engine} instance.
  */
-public final class EngineConfig {
-    private final ShardId shardId;
+public final class EngineConfig { // NOTE: htt, shardId级别的引擎的配置信息，包括shardId, indexSettings，threadPool, merge策略， codec配置， queryCached， indexSort，熔断器配置等
+    private final ShardId shardId; // NOTE: htt, shardId
     private final String allocationId;
-    private final IndexSettings indexSettings;
+    private final IndexSettings indexSettings; // NOTE: htt, 索引配置 including 索引元信息，scopedSettings/indexMetaDataSettings、merge策略、index sort字段等
     private final ByteSizeValue indexingBufferSize;
-    private volatile boolean enableGcDeletes = true;
-    private final TimeValue flushMergesAfter;
+    private volatile boolean enableGcDeletes = true; // NOTE: htt, 删除导致GC是否启动
+    private final TimeValue flushMergesAfter; // NOTE: htt, flush merge after time
     private final String codecName;
     private final ThreadPool threadPool;
-    private final Engine.Warmer warmer;
-    private final Store store;
-    private final MergePolicy mergePolicy;
-    private final Analyzer analyzer;
-    private final Similarity similarity;
-    private final CodecService codecService;
+    private final Engine.Warmer warmer;  // NOTE: htt, get new searcher to warm new segments
+    private final Store store; // NOTE: htt, store信息
+    private final MergePolicy mergePolicy;  // NOTE: htt, merge policy which has findMerges/findForcedMerges or findForcedDeletesMerges() to create MergeSpecification
+    private final Analyzer analyzer; // TODO: analyzer
+    private final Similarity similarity; // TODO: similarity
+    private final CodecService codecService; // NOTE: htt, lucene文件编解码
     private final Engine.EventListener eventListener;
-    private final QueryCache queryCache;
-    private final QueryCachingPolicy queryCachingPolicy;
+    private final QueryCache queryCache; // NOTE: htt, cache for query
+    private final QueryCachingPolicy queryCachingPolicy; // NOTE: htt, query cache策略 
     @Nullable
-    private final List<ReferenceManager.RefreshListener> externalRefreshListener;
+    private final List<ReferenceManager.RefreshListener> externalRefreshListener; // NOTE: htt, 查询前后的策略
     @Nullable
     private final List<ReferenceManager.RefreshListener> internalRefreshListener;
     @Nullable
-    private final Sort indexSort;
-    private final TranslogRecoveryRunner translogRecoveryRunner;
+    private final Sort indexSort; // NOTE: htt, index sort字段
+    private final TranslogRecoveryRunner translogRecoveryRunner; // NOTE: htt, translog recovery 策略，对应 IndexShard.runTranslogRecovery()
     @Nullable
-    private final CircuitBreakerService circuitBreakerService;
-    private final LongSupplier globalCheckpointSupplier;
-    private final LongSupplier primaryTermSupplier;
+    private final CircuitBreakerService circuitBreakerService; // NOTE: htt, CircuitBreaker Service including register breaker
+    private final LongSupplier globalCheckpointSupplier; // NOTE: htt, 全局检测点
+    private final LongSupplier primaryTermSupplier; // NOTE: htt, primary term
 
     /**
      * Index setting to change the low level lucene codec used for writing new segments.
@@ -111,9 +111,9 @@ public final class EngineConfig {
      * The default is <code>true</code>
      */
     public static final Setting<Boolean> INDEX_OPTIMIZE_AUTO_GENERATED_IDS = Setting.boolSetting("index.optimize_auto_generated_id", true,
-        Property.IndexScope, Property.Dynamic);
+        Property.IndexScope, Property.Dynamic); // NOTE: htt, 自动产生id，默认true
 
-    private final TranslogConfig translogConfig;
+    private final TranslogConfig translogConfig; // NOTE: htt, translog config including indexSettings/shardId/translogPath
 
     /**
      * Creates a new {@link org.elasticsearch.index.engine.EngineConfig}
@@ -321,7 +321,7 @@ public final class EngineConfig {
     public TimeValue getFlushMergesAfter() { return flushMergesAfter; }
 
     @FunctionalInterface
-    public interface TranslogRecoveryRunner {
+    public interface TranslogRecoveryRunner { // NOTE: htt, translog recovery策略
         int run(Engine engine, Translog.Snapshot snapshot) throws IOException;
     }
 

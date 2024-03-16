@@ -27,17 +27,17 @@ import org.elasticsearch.index.translog.Translog;
 import java.util.Collection;
 import java.util.Collections;
 
-abstract class VersionValue implements Accountable {
+abstract class VersionValue implements Accountable { // NOTE: htt, version value type include version ,seqNo and term
 
     private static final long BASE_RAM_BYTES_USED = RamUsageEstimator.shallowSizeOfInstance(VersionValue.class);
 
     /** the version of the document. used for versioned indexed operations and as a BWC layer, where no seq# are set yet */
-    final long version;
+    final long version; // NOTE: htt, 当前的版版本号
 
     /** the seq number of the operation that last changed the associated uuid */
-    final long seqNo;
+    final long seqNo; // NOTE: htt, 当前seqNo
     /** the term of the operation that last changed the associated uuid */
-    final long term;
+    final long term; // NOTE: htt, 当前的term
 
     VersionValue(long version, long seqNo, long term) {
         this.version = version;

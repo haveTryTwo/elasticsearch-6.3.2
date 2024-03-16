@@ -32,7 +32,7 @@ import java.util.Objects;
  * 5.x nodes
  */
 @Deprecated
-public class IndexFailedEngineException extends EngineException {
+public class IndexFailedEngineException extends EngineException { // NOTE: htt, deprecated
 
     private final String type;
 

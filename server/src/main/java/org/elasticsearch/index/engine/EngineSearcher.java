@@ -33,11 +33,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Searcher for an Engine
  */
-final class EngineSearcher extends Engine.Searcher {
+final class EngineSearcher extends Engine.Searcher { // NOTE: htt, 提供关闭查询的功能
     private final AtomicBoolean released = new AtomicBoolean(false);
-    private final Store store;
+    private final Store store; // NOTE: htt, 当前的shard
     private final Logger logger;
-    private final ReferenceManager<IndexSearcher> referenceManager;
+    private final ReferenceManager<IndexSearcher> referenceManager; // NOTE: htt, indexSearcher搜索
 
     EngineSearcher(String source, ReferenceManager<IndexSearcher> searcherReferenceManager, Store store, Logger logger) throws IOException {
         super(source, searcherReferenceManager.acquire());

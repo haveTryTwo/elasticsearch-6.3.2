@@ -30,7 +30,7 @@ import java.io.IOException;
  * 5.x nodes
  */
 @Deprecated
-public class DeleteFailedEngineException extends EngineException {
+public class DeleteFailedEngineException extends EngineException { // NOTE: htt, deprecated
     public DeleteFailedEngineException(StreamInput in) throws IOException{
         super(in);
     }
