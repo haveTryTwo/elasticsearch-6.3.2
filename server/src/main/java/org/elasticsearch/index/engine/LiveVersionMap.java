@@ -384,7 +384,7 @@ final class LiveVersionMap implements ReferenceManager.RefreshListener, Accounta
     /**
      * Try to prune tombstones whose timestamp is less than maxTimestampToPrune and seqno at most the maxSeqNoToPrune.
      */
-    void pruneTombstones(long maxTimestampToPrune, long maxSeqNoToPrune) {
+    void pruneTombstones(long maxTimestampToPrune, long maxSeqNoToPrune) { // NOTE:htt, 可以清理删除数据
         for (Map.Entry<BytesRef, DeleteVersionValue> entry : tombstones.entrySet()) {
             // we do check before we actually lock the key - this way we don't need to acquire the lock for tombstones that are not
             // prune-able. If the tombstone changes concurrently we will re-read and step out below since if we can't collect it now w

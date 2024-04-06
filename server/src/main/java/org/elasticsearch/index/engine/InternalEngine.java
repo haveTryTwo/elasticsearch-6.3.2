@@ -537,7 +537,7 @@ public class InternalEngine extends Engine { // NOTE: htt, 内部引擎处理，
                     // we need to lock here to access the version map to do this truly in RT
                     versionValue = getVersionFromMap(get.uid().bytes()); // NOTE: htt, 加锁获取 version
                 }
-                if (versionValue != null) {
+                if (versionValue != null) { // NOTE:htt, 针对新写入的数据（未刷盘）的数据，查询时进行刷盘处理
                     if (versionValue.isDelete()) {
                         return GetResult.NOT_EXISTS;
                     }
@@ -1198,7 +1198,7 @@ public class InternalEngine extends Engine { // NOTE: htt, 内部引擎处理，
             }
             throw e;
         }
-        maybePruneDeletes();
+        maybePruneDeletes(); // NOTE:htt, 清理删除的数据
         return deleteResult;
     }
 
@@ -1682,7 +1682,7 @@ public class InternalEngine extends Engine { // NOTE: htt, 内部引擎处理，
          * However, the version map may consume less memory if we deploy two different trimming strategies for primary and replicas.
          */
         final long timeMSec = engineConfig.getThreadPool().relativeTimeInMillis();
-        final long maxTimestampToPrune = timeMSec - engineConfig.getIndexSettings().getGcDeletesInMillis();
+        final long maxTimestampToPrune = timeMSec - engineConfig.getIndexSettings().getGcDeletesInMillis(); // NOTE:htt, 可以清理删除数据的最大时间
         versionMap.pruneTombstones(maxTimestampToPrune, localCheckpointTracker.getCheckpoint()); // NOTE: htt, 裁剪删除的记录信息
         lastDeleteVersionPruneTimeMSec = timeMSec; // NOTE: htt, 更新上一次删除裁剪时间
     }
