@@ -45,7 +45,7 @@ import static org.elasticsearch.gateway.GatewayService.STATE_NOT_RECOVERED_BLOCK
 /**
  * A discovery implementation where the only member of the cluster is the local node.
  */
-public class SingleNodeDiscovery extends AbstractLifecycleComponent implements Discovery {
+public class SingleNodeDiscovery extends AbstractLifecycleComponent implements Discovery { // NOTE: htt, single node discovery only including local node as dataNode and masterNode
 
     protected final TransportService transportService;
     private final ClusterApplier clusterApplier;
@@ -119,7 +119,7 @@ public class SingleNodeDiscovery extends AbstractLifecycleComponent implements D
                 .masterNodeId(localNode.getId())
                 .build())
             .blocks(ClusterBlocks.builder()
-                .addGlobalBlock(STATE_NOT_RECOVERED_BLOCK))
+                .addGlobalBlock(STATE_NOT_RECOVERED_BLOCK)) // NOTE: htt, add STATE_NOT_RECOVERD_BLOCK
             .build();
     }
 

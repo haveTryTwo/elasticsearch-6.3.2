@@ -25,7 +25,7 @@ import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
 
-public class MasterNotDiscoveredException extends ElasticsearchException {
+public class MasterNotDiscoveredException extends ElasticsearchException { // NOTE: htt, master not discovered
 
     public MasterNotDiscoveredException() {
         super("");
@@ -41,7 +41,7 @@ public class MasterNotDiscoveredException extends ElasticsearchException {
 
     @Override
     public RestStatus status() {
-        return RestStatus.SERVICE_UNAVAILABLE;
+        return RestStatus.SERVICE_UNAVAILABLE; // NOTE: htt, 503，服务不可达
     }
 
     public MasterNotDiscoveredException(StreamInput in) throws IOException {

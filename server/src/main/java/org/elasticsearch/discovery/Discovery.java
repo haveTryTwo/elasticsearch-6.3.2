@@ -33,7 +33,7 @@ import java.io.IOException;
  * state to all nodes, electing a master of the cluster that raises cluster state change
  * events.
  */
-public interface Discovery extends LifecycleComponent {
+public interface Discovery extends LifecycleComponent { // NOTE: htt, discovery publish changes of cluster from master
 
     /**
      * Publish all the changes to the cluster from the master (can be called just by the master). The publish
@@ -47,12 +47,12 @@ public interface Discovery extends LifecycleComponent {
      */
     void publish(ClusterChangedEvent clusterChangedEvent, AckListener ackListener);
 
-    interface AckListener {
+    interface AckListener { // NOTE: htt, ack listener including ack and timeout()
         void onNodeAck(DiscoveryNode node, @Nullable Exception e);
         void onTimeout();
     }
 
-    class FailedToCommitClusterStateException extends ElasticsearchException {
+    class FailedToCommitClusterStateException extends ElasticsearchException { // NOTE: htt, commit cluster state exception
 
         public FailedToCommitClusterStateException(StreamInput in) throws IOException {
             super(in);
@@ -70,7 +70,7 @@ public interface Discovery extends LifecycleComponent {
     /**
      * @return stats about the discovery
      */
-    DiscoveryStats stats();
+    DiscoveryStats stats(); // NOTE: htt, discovery stats including pending and publishCluster state stats
 
     /**
      * Triggers the first join cycle

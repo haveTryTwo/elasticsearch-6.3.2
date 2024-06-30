@@ -38,31 +38,31 @@ import static org.elasticsearch.common.unit.TimeValue.timeValueSeconds;
  * A base class for {@link MasterFaultDetection} &amp; {@link NodesFaultDetection},
  * making sure both use the same setting.
  */
-public abstract class FaultDetection extends AbstractComponent implements Closeable {
+public abstract class FaultDetection extends AbstractComponent implements Closeable { // NOTE: htt, fault delection of ping info including interval/timeout/retryCount
 
     public static final Setting<Boolean> CONNECT_ON_NETWORK_DISCONNECT_SETTING =
         Setting.boolSetting("discovery.zen.fd.connect_on_network_disconnect", false, Property.NodeScope);
     public static final Setting<TimeValue> PING_INTERVAL_SETTING =
-        Setting.positiveTimeSetting("discovery.zen.fd.ping_interval", timeValueSeconds(1), Property.NodeScope);
+        Setting.positiveTimeSetting("discovery.zen.fd.ping_interval", timeValueSeconds(1), Property.NodeScope); // NOTE: htt, 每1s进行心跳探测
     public static final Setting<TimeValue> PING_TIMEOUT_SETTING =
-        Setting.timeSetting("discovery.zen.fd.ping_timeout", timeValueSeconds(30), Property.NodeScope);
+        Setting.timeSetting("discovery.zen.fd.ping_timeout", timeValueSeconds(30), Property.NodeScope); // NOTE: htt, ping的超时时间为30s，非动态配置需要重启es节点
     public static final Setting<Integer> PING_RETRIES_SETTING =
-        Setting.intSetting("discovery.zen.fd.ping_retries", 3, Property.NodeScope);
+        Setting.intSetting("discovery.zen.fd.ping_retries", 3, Property.NodeScope); // NOTE: htt, retry 发送3次心跳探测
     public static final Setting<Boolean> REGISTER_CONNECTION_LISTENER_SETTING =
         Setting.boolSetting("discovery.zen.fd.register_connection_listener", true, Property.NodeScope);
 
     protected final ThreadPool threadPool;
     protected final ClusterName clusterName;
-    protected final TransportService transportService;
+    protected final TransportService transportService; // NOTE: htt, 建立tcp连接并发送请求到对应节点
 
     // used mainly for testing, should always be true
     protected final boolean registerConnectionListener;
     protected final FDConnectionListener connectionListener;
-    protected final boolean connectOnNetworkDisconnect;
+    protected final boolean connectOnNetworkDisconnect; // NOTE: htt, 连接断开时重新连接，默认为false which default is false
 
-    protected final TimeValue pingInterval;
-    protected final TimeValue pingRetryTimeout;
-    protected final int pingRetryCount;
+    protected final TimeValue pingInterval; // NOTE: htt, 每1s进行心跳探测
+    protected final TimeValue pingRetryTimeout; // NOTE: htt, ping的超时时间为30s
+    protected final int pingRetryCount; // NOTE: htt, retry 发送3次心跳探测，默认为3次
 
     public FaultDetection(Settings settings, ThreadPool threadPool, TransportService transportService, ClusterName clusterName) {
         super(settings);
@@ -70,21 +70,21 @@ public abstract class FaultDetection extends AbstractComponent implements Closea
         this.transportService = transportService;
         this.clusterName = clusterName;
 
-        this.connectOnNetworkDisconnect = CONNECT_ON_NETWORK_DISCONNECT_SETTING.get(settings);
-        this.pingInterval = PING_INTERVAL_SETTING.get(settings);
-        this.pingRetryTimeout = PING_TIMEOUT_SETTING.get(settings);
-        this.pingRetryCount = PING_RETRIES_SETTING.get(settings);
-        this.registerConnectionListener = REGISTER_CONNECTION_LISTENER_SETTING.get(settings);
+        this.connectOnNetworkDisconnect = CONNECT_ON_NETWORK_DISCONNECT_SETTING.get(settings); // NOTE: htt, 连接断开时重新连接，默认为false which default is false
+        this.pingInterval = PING_INTERVAL_SETTING.get(settings); // NOTE: htt, 1 second心跳探测
+        this.pingRetryTimeout = PING_TIMEOUT_SETTING.get(settings); // NOTE: htt, 30s心跳超时
+        this.pingRetryCount = PING_RETRIES_SETTING.get(settings);  // NOTE: htt, 心跳探测重试3次
+        this.registerConnectionListener = REGISTER_CONNECTION_LISTENER_SETTING.get(settings); // NOTE: htt, register connection listener
 
         this.connectionListener = new FDConnectionListener();
         if (registerConnectionListener) {
-            transportService.addConnectionListener(connectionListener);
+            transportService.addConnectionListener(connectionListener); // NOTE:htt, 添加fd操作监听
         }
     }
 
     @Override
     public void close() {
-        transportService.removeConnectionListener(connectionListener);
+        transportService.removeConnectionListener(connectionListener); // NOTE:htt, 移除fd操作监听
     }
 
     /**
@@ -92,14 +92,14 @@ public abstract class FaultDetection extends AbstractComponent implements Closea
      */
     abstract void handleTransportDisconnect(DiscoveryNode node);
 
-    private class FDConnectionListener implements TransportConnectionListener {
+    private class FDConnectionListener implements TransportConnectionListener { // NOTE: htt, 监听连接断开后执行相应处理
         @Override
         public void onNodeConnected(DiscoveryNode node) {
         }
 
         @Override
-        public void onNodeDisconnected(DiscoveryNode node) {
-            handleTransportDisconnect(node);
+        public void onNodeDisconnected(DiscoveryNode node) { // NOTE:htt, 当连接断开后执行相应处理
+            handleTransportDisconnect(node); // NOTE: htt, hanlde transport disconnect
         }
     }
 

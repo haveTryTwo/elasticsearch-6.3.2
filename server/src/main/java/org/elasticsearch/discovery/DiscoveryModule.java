@@ -58,9 +58,9 @@ public class DiscoveryModule { // NOTE: htt, module to register zenDiscovery/sin
     public static final Setting<String> DISCOVERY_TYPE_SETTING =
         new Setting<>("discovery.type", "zen", Function.identity(), Property.NodeScope); // NOTE: htt, discovery type is zen
     public static final Setting<Optional<String>> DISCOVERY_HOSTS_PROVIDER_SETTING =
-        new Setting<>("discovery.zen.hosts_provider", (String)null, Optional::ofNullable, Property.NodeScope);
+        new Setting<>("discovery.zen.hosts_provider", (String)null, Optional::ofNullable, Property.NodeScope); // NOTE:htt, hosts provider 配置
 
-    private final Discovery discovery; // NOTE: htt, register discovery including zenDiscovry and singleNodeDiscovry
+    private final Discovery discovery; // NOTE: htt, register discovery，默认为 zenDiscovry
 
     public DiscoveryModule(Settings settings, ThreadPool threadPool, TransportService transportService,
                            NamedWriteableRegistry namedWriteableRegistry, NetworkService networkService, MasterService masterService,
@@ -96,21 +96,21 @@ public class DiscoveryModule { // NOTE: htt, module to register zenDiscovery/sin
             () -> new ZenDiscovery(settings, threadPool, transportService, namedWriteableRegistry, masterService, clusterApplier,
                 clusterSettings, hostsProvider, allocationService, Collections.unmodifiableCollection(joinValidators)));
         discoveryTypes.put("single-node", () -> new SingleNodeDiscovery(settings, transportService, masterService, clusterApplier)); // NOTE: htt, put singleNodeDiscovery
-        for (DiscoveryPlugin plugin : plugins) {
+        for (DiscoveryPlugin plugin : plugins) { // NOTE:htt, 添加插件中支持的 Discovery 发现机制
             plugin.getDiscoveryTypes(threadPool, transportService, namedWriteableRegistry,
                 masterService, clusterApplier, clusterSettings, hostsProvider, allocationService).entrySet().forEach(entry -> {
-                if (discoveryTypes.put(entry.getKey(), entry.getValue()) != null) {
+                if (discoveryTypes.put(entry.getKey(), entry.getValue()) != null) { // NOTE:htt, 不允许重复添加
                     throw new IllegalArgumentException("Cannot register discovery type [" + entry.getKey() + "] twice");
                 }
             });
         }
-        String discoveryType = DISCOVERY_TYPE_SETTING.get(settings);
+        String discoveryType = DISCOVERY_TYPE_SETTING.get(settings); // NOTE:htt, 当前配置的discovery类型，这个为当前进程使用，其他则为添加支持的
         Supplier<Discovery> discoverySupplier = discoveryTypes.get(discoveryType); // NOTE: htt, second get current discovery
-        if (discoverySupplier == null) {
+        if (discoverySupplier == null) { // NOTE:htt, 默认的discovery必须存在
             throw new IllegalArgumentException("Unknown discovery type [" + discoveryType + "]");
         }
         Loggers.getLogger(getClass(), settings).info("using discovery type [{}]", discoveryType);
-        discovery = Objects.requireNonNull(discoverySupplier.get());
+        discovery = Objects.requireNonNull(discoverySupplier.get()); // NOTE:htt, 获取节点本次启动使用到discovery
     }
 
     public Discovery getDiscovery() {

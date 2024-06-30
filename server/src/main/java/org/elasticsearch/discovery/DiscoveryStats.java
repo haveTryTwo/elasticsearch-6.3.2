@@ -31,10 +31,10 @@ import org.elasticsearch.discovery.zen.PublishClusterStateStats;
 
 import java.io.IOException;
 
-public class DiscoveryStats implements Writeable, ToXContentFragment {
+public class DiscoveryStats implements Writeable, ToXContentFragment { // NOTE: htt, discovery stats including pending and publishCluster state stats
 
-    private final PendingClusterStateStats queueStats;
-    private final PublishClusterStateStats publishStats;
+    private final PendingClusterStateStats queueStats; // NOTE: htt, pending tusks stats
+    private final PublishClusterStateStats publishStats; // NOTE: htt, publish stats，节点收到master集群状态一致性统计
 
     public DiscoveryStats(PendingClusterStateStats queueStats, PublishClusterStateStats publishStats) {
         this.queueStats = queueStats;
@@ -73,7 +73,7 @@ public class DiscoveryStats implements Writeable, ToXContentFragment {
         return builder;
     }
 
-    static final class Fields {
+    static final class Fields { // NOTE: htt, fileds名称
         static final String DISCOVERY = "discovery";
     }
 

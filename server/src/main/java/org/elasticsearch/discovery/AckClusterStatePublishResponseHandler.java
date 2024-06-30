@@ -30,11 +30,11 @@ import java.util.Set;
  * and notifies the {@link org.elasticsearch.discovery.Discovery.AckListener}
  * so that the cluster state update can be acknowledged
  */
-public class AckClusterStatePublishResponseHandler extends BlockingClusterStatePublishResponseHandler {
+public class AckClusterStatePublishResponseHandler extends BlockingClusterStatePublishResponseHandler { //  htt, 等待publish 列表节点回包，并对每个节点回包执行listener监听处理
 
     private static final Logger logger = ESLoggerFactory.getLogger(AckClusterStatePublishResponseHandler.class.getName());
 
-    private final Discovery.AckListener ackListener;
+    private final Discovery.AckListener ackListener; // NOTE: htt, ack listener to deal with response of all nodes of publish
 
     /**
      * Creates a new AckClusterStatePublishResponseHandler
@@ -66,7 +66,7 @@ public class AckClusterStatePublishResponseHandler extends BlockingClusterStateP
 
     private void onNodeAck(final Discovery.AckListener ackListener, DiscoveryNode node, Exception e) {
         try {
-            ackListener.onNodeAck(node, e);
+            ackListener.onNodeAck(node, e); // NOTE:htt, 节点Ack后的处理
         } catch (Exception inner) {
             inner.addSuppressed(e);
             logger.debug(() -> new ParameterizedMessage("error while processing ack for node [{}]", node), inner);
