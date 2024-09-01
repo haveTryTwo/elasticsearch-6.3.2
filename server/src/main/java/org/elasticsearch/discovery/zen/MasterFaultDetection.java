@@ -50,32 +50,32 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * A fault detection that pings the master periodically to see if its alive.
+ * A fault detection that pings the master periodically to see if its alive. NOTE: htt, data节点启动，1是定期检查master，超时时间30s
  */
-public class MasterFaultDetection extends FaultDetection {
+public class MasterFaultDetection extends FaultDetection { // NOTE; htt, 数据节点上执行master节点的存活探测,如果成功则1s后继续探测, 否则等待30s并重试3次，如果3次依旧失败 exectue onMasterFailuer(MasterNodeFailureListener) 会重新选主（如果是断开连接则立即重新选主，并不重试）
 
-    public static final String MASTER_PING_ACTION_NAME = "internal:discovery/zen/fd/master_ping";
+    public static final String MASTER_PING_ACTION_NAME = "internal:discovery/zen/fd/master_ping"; // NOTE:htt, 探测master节点请求
 
-    public interface Listener {
+    public interface Listener { // NOTE: htt fault detection
 
         /** called when pinging the master failed, like a timeout, transport disconnects etc */
         void onMasterFailure(DiscoveryNode masterNode, Throwable cause, String reason);
 
     }
 
-    private final MasterService masterService;
-    private final java.util.function.Supplier<ClusterState> clusterStateSupplier;
+    private final MasterService masterService; // NOTE: htt, masterService execute batch tasks and updateClusterState is has been changed
+    private final java.util.function.Supplier<ClusterState> clusterStateSupplier; // NOTE:htt, 获取集群状态
     private final CopyOnWriteArrayList<Listener> listeners = new CopyOnWriteArrayList<>();
 
-    private volatile MasterPinger masterPinger;
+    private volatile MasterPinger masterPinger;  // NOTE: htt, 执行具体的 ping master，如果超时异常，则重试（共最多3次，每次30s超时时间），如果其他异常，则执行 notify master exception 并重新选主
 
-    private final Object masterNodeMutex = new Object();
+    private final Object masterNodeMutex = new Object(); // NOTE:htt, master节点锁
 
-    private volatile DiscoveryNode masterNode;
+    private volatile DiscoveryNode masterNode; // NOTE: htt, 待心跳探测的master node
 
-    private volatile int retryCount;
+    private volatile int retryCount; // NOTE: htt, current retry count
 
-    private final AtomicBoolean notifiedMasterFailure = new AtomicBoolean();
+    private final AtomicBoolean notifiedMasterFailure = new AtomicBoolean(); // NOTE: htt, notify when master failure
 
     public MasterFaultDetection(Settings settings, ThreadPool threadPool, TransportService transportService,
                                 java.util.function.Supplier<ClusterState> clusterStateSupplier, MasterService masterService,
@@ -87,7 +87,7 @@ public class MasterFaultDetection extends FaultDetection {
         logger.debug("[master] uses ping_interval [{}], ping_timeout [{}], ping_retries [{}]", pingInterval, pingRetryTimeout,
             pingRetryCount);
 
-        transportService.registerRequestHandler(
+        transportService.registerRequestHandler( // NOTE: htt, 注册非master节点的探测master请求，并且注册 MasterPingRequestHandler 用于在master节点上处理 非master节点的探测请求
             MASTER_PING_ACTION_NAME, MasterPingRequest::new, ThreadPool.Names.SAME, false, false, new MasterPingRequestHandler());
     }
 
@@ -103,7 +103,7 @@ public class MasterFaultDetection extends FaultDetection {
         listeners.remove(listener);
     }
 
-    public void restart(DiscoveryNode masterNode, String reason) {
+    public void restart(DiscoveryNode masterNode, String reason) { // NOTE:htt, 重新和master节点建立连接
         synchronized (masterNodeMutex) {
             if (logger.isDebugEnabled()) {
                 logger.debug("[master] restarting fault detection against master [{}], reason [{}]", masterNode, reason);
@@ -113,20 +113,20 @@ public class MasterFaultDetection extends FaultDetection {
         }
     }
 
-    private void innerStart(final DiscoveryNode masterNode) {
+    private void innerStart(final DiscoveryNode masterNode) { // NOTE:htt, 内部重启
         this.masterNode = masterNode;
-        this.retryCount = 0;
+        this.retryCount = 0; // NOTE: htt, init retry count to 0
         this.notifiedMasterFailure.set(false);
         if (masterPinger != null) {
-            masterPinger.stop();
+            masterPinger.stop(); // NOTE: htt, old masterPinger stop
         }
-        this.masterPinger = new MasterPinger();
+        this.masterPinger = new MasterPinger(); // NOTE: htt, new master pinger, and old masterPinger will be drop without no reference
 
         // we start pinging slightly later to allow the chosen master to complete it's own master election
-        threadPool.schedule(pingInterval, ThreadPool.Names.SAME, masterPinger);
+        threadPool.schedule(pingInterval, ThreadPool.Names.SAME, masterPinger); // NOTE: htt, 1 seconds 后启用心跳，探测master存活 start masterPinger
     }
 
-    public void stop(String reason) {
+    public void stop(String reason) { // NOTE:htt, 停止
         synchronized (masterNodeMutex) {
             if (masterNode != null) {
                 if (logger.isDebugEnabled()) {
@@ -137,11 +137,11 @@ public class MasterFaultDetection extends FaultDetection {
         }
     }
 
-    private void innerStop() {
+    private void innerStop() { // NOTE:htt, 停止
         // also will stop the next ping schedule
-        this.retryCount = 0;
+        this.retryCount = 0; // NOTE: htt, 重试次数设置为0, retry count clear
         if (masterPinger != null) {
-            masterPinger.stop();
+            masterPinger.stop(); // NOTE: htt, ping stop
             masterPinger = null;
         }
         this.masterNode = null;
@@ -155,48 +155,48 @@ public class MasterFaultDetection extends FaultDetection {
     }
 
     @Override
-    protected void handleTransportDisconnect(DiscoveryNode node) {
+    protected void handleTransportDisconnect(DiscoveryNode node) { // NOTE:htt, 节点断开后处理
         synchronized (masterNodeMutex) {
             if (!node.equals(this.masterNode)) {
                 return;
             }
-            if (connectOnNetworkDisconnect) {
+            if (connectOnNetworkDisconnect) { // NOTE: htt, 在断开连接时尝试连接master节点，默认为false
                 try {
-                    transportService.connectToNode(node);
+                    transportService.connectToNode(node); // NOTE:htt, 尝试连接节点
                     // if all is well, make sure we restart the pinger
                     if (masterPinger != null) {
                         masterPinger.stop();
                     }
-                    this.masterPinger = new MasterPinger();
+                    this.masterPinger = new MasterPinger(); // NOTE:htt, 重新启动master ping
                     // we use schedule with a 0 time value to run the pinger on the pool as it will run on later
-                    threadPool.schedule(TimeValue.timeValueMillis(0), ThreadPool.Names.SAME, masterPinger);
+                    threadPool.schedule(TimeValue.timeValueMillis(0), ThreadPool.Names.SAME, masterPinger); // NOTE:htt, 立即发送心跳
                 } catch (Exception e) {
                     logger.trace("[master] [{}] transport disconnected (with verified connect)", masterNode);
                     notifyMasterFailure(masterNode, null, "transport disconnected (with verified connect)");
                 }
             } else {
                 logger.trace("[master] [{}] transport disconnected", node);
-                notifyMasterFailure(node, null, "transport disconnected");
+                notifyMasterFailure(node, null, "transport disconnected"); // NOTE:htt, 通知master失败
             }
         }
     }
 
-    private void notifyMasterFailure(final DiscoveryNode masterNode, final Throwable cause, final String reason) {
+    private void notifyMasterFailure(final DiscoveryNode masterNode, final Throwable cause, final String reason) { // NOTE:htt, 集群通知master失败
         if (notifiedMasterFailure.compareAndSet(false, true)) {
             try {
                 threadPool.generic().execute(() -> {
                     for (Listener listener : listeners) {
-                        listener.onMasterFailure(masterNode, cause, reason);
+                        listener.onMasterFailure(masterNode, cause, reason); // NOTE: htt, do batch listener when master failed, 这里应该包括将 global block of no master，这样节点就不会在继续写，以及 MasterNodeFailureListener 会重新选主
                     }
                 });
             } catch (EsRejectedExecutionException e) {
                 logger.error("master failure notification was rejected, it's highly likely the node is shutting down", e);
             }
-            stop("master failure, " + reason);
+            stop("master failure, " + reason); // NOTE: htt, stop ping master of fault detection
         }
     }
 
-    private class MasterPinger implements Runnable {
+    private class MasterPinger implements Runnable {  // NOTE: htt, 执行具体的 ping master，如果超时异常，则重试（共最多3次，每次30s超时时间），如果其他异常，则执行 notify master exception 并重新选主
 
         private volatile boolean running = true;
 
@@ -206,21 +206,21 @@ public class MasterFaultDetection extends FaultDetection {
 
         @Override
         public void run() {
-            if (!running) {
+            if (!running) { // NOTE:htt, 探测master节点存活，如果设置为stop则不在继续探测
                 // return and don't spawn...
                 return;
             }
             final DiscoveryNode masterToPing = masterNode;
             if (masterToPing == null) {
                 // master is null, should not happen, but we are still running, so reschedule
-                threadPool.schedule(pingInterval, ThreadPool.Names.SAME, MasterPinger.this);
+                threadPool.schedule(pingInterval, ThreadPool.Names.SAME, MasterPinger.this); // NOTE:htt, 1s后重新探测
                 return;
             }
 
             final MasterPingRequest request = new MasterPingRequest(
                 clusterStateSupplier.get().nodes().getLocalNode(), masterToPing, clusterName);
             final TransportRequestOptions options = TransportRequestOptions.builder().withType(TransportRequestOptions.Type.PING)
-                .withTimeout(pingRetryTimeout).build();
+                .withTimeout(pingRetryTimeout).build();  // NOTE: htt, 探测master节点心跳请求，并且超时时间为30s
             transportService.sendRequest(masterToPing, MASTER_PING_ACTION_NAME, request, options,
                 new TransportResponseHandler<MasterPingResponseResponse>() {
                         @Override
@@ -229,29 +229,29 @@ public class MasterFaultDetection extends FaultDetection {
                         }
 
                         @Override
-                        public void handleResponse(MasterPingResponseResponse response) {
+                        public void handleResponse(MasterPingResponseResponse response) { // NOTE: htt, 心跳探测成功
                             if (!running) {
                                 return;
                             }
                             // reset the counter, we got a good result
-                            MasterFaultDetection.this.retryCount = 0;
+                            MasterFaultDetection.this.retryCount = 0; // NOTE:htt, 心跳探测重试设置为0，3次超时探测中，只要有1次探测成功则重置探测次数
                             // check if the master node did not get switched on us..., if it did, we simply return with no reschedule
-                            if (masterToPing.equals(MasterFaultDetection.this.masterNode())) {
+                            if (masterToPing.equals(MasterFaultDetection.this.masterNode())) { // NOTE:htt, 对应master节点依然是master节点
                                 // we don't stop on disconnection from master, we keep pinging it
-                                threadPool.schedule(pingInterval, ThreadPool.Names.SAME, MasterPinger.this);
+                                threadPool.schedule(pingInterval, ThreadPool.Names.SAME, MasterPinger.this); // NOTE: htt, 启动下一次心跳探测，时间间隔为1s
                             }
                         }
 
                         @Override
-                        public void handleException(TransportException exp) {
+                        public void handleException(TransportException exp) { // NOTE: htt, 探测master节点异常或超时
                             if (!running) {
                                 return;
                             }
                             synchronized (masterNodeMutex) {
                                 // check if the master node did not get switched on us...
-                                if (masterToPing.equals(MasterFaultDetection.this.masterNode())) {
+                                if (masterToPing.equals(MasterFaultDetection.this.masterNode())) { // NOTE:htt, 如果是当前master节点
                                     if (exp instanceof ConnectTransportException || exp.getCause() instanceof ConnectTransportException) {
-                                        handleTransportDisconnect(masterToPing);
+                                        handleTransportDisconnect(masterToPing); // NOTE: htt, 连接出错
                                         return;
                                     } else if (exp.getCause() instanceof NotMasterException) {
                                         logger.debug("[master] pinging a master {} that is no longer a master", masterNode);
@@ -267,12 +267,12 @@ public class MasterFaultDetection extends FaultDetection {
                                         notifyMasterFailure(masterToPing, exp,"do not exists on master, act as master failure");
                                         return;
                                     }
-
-                                    int retryCount = ++MasterFaultDetection.this.retryCount;
+                                    // NOTE: htt, 超时情况下，就继续重试，总共最多3次，每次30s，共90s时间，然后确认master是否已经不在
+                                    int retryCount = ++MasterFaultDetection.this.retryCount; // NOTE: htt, 增加重试的次数，每次超时时间30s add retry count of fault detection to ping master with 30 second timeout
                                     logger.trace(() -> new ParameterizedMessage(
                                             "[master] failed to ping [{}], retry [{}] out of [{}]",
                                             masterNode, retryCount, pingRetryCount), exp);
-                                    if (retryCount >= pingRetryCount) {
+                                    if (retryCount >= pingRetryCount) { // NOTE: htt, 连续超过3次，每次30s，共90s，则通知master失败，
                                         logger.debug("[master] failed to ping [{}], tried [{}] times, each with maximum [{}] timeout",
                                             masterNode, pingRetryCount, pingRetryTimeout);
                                         // not good, failure
@@ -280,7 +280,7 @@ public class MasterFaultDetection extends FaultDetection {
                                             + "] times, each with  maximum [" + pingRetryTimeout + "] timeout");
                                     } else {
                                         // resend the request, not reschedule, rely on send timeout
-                                        transportService.sendRequest(masterToPing, MASTER_PING_ACTION_NAME, request, options, this);
+                                        transportService.sendRequest(masterToPing, MASTER_PING_ACTION_NAME, request, options, this); // NOTE: htt, 当未到达3次，则立即继续发送心跳，retry ping master of fault detection when not arrive 3 times
                                     }
                                 }
                             }
@@ -288,7 +288,7 @@ public class MasterFaultDetection extends FaultDetection {
 
                         @Override
                         public String executor() {
-                            return ThreadPool.Names.SAME;
+                            return ThreadPool.Names.SAME; // NOTE: htt, direct thread pool
                         }
                     }
             );
@@ -296,7 +296,7 @@ public class MasterFaultDetection extends FaultDetection {
     }
 
     /** Thrown when a ping reaches the wrong node */
-    static class ThisIsNotTheMasterYouAreLookingForException extends IllegalStateException {
+    static class ThisIsNotTheMasterYouAreLookingForException extends IllegalStateException { // NOTE: htt, 不应该到达的状态
 
         ThisIsNotTheMasterYouAreLookingForException(String msg) {
             super(msg);
@@ -311,26 +311,26 @@ public class MasterFaultDetection extends FaultDetection {
         }
     }
 
-    static class NodeDoesNotExistOnMasterException extends IllegalStateException {
+    static class NodeDoesNotExistOnMasterException extends IllegalStateException { // NOTE: htt, no master exist exception
         @Override
         public Throwable fillInStackTrace() {
             return null;
         }
     }
 
-    private class MasterPingRequestHandler implements TransportRequestHandler<MasterPingRequest> {
+    private class MasterPingRequestHandler implements TransportRequestHandler<MasterPingRequest> { // NOTE: htt, 处理 非master节点心跳探测，这里的操作是在 master节点上执行
 
         @Override
         public void messageReceived(final MasterPingRequest request, final TransportChannel channel) throws Exception {
             final DiscoveryNodes nodes = clusterStateSupplier.get().nodes();
             // check if we are really the same master as the one we seemed to be think we are
             // this can happen if the master got "kill -9" and then another node started using the same port
-            if (!request.masterNode.equals(nodes.getLocalNode())) {
+            if (!request.masterNode.equals(nodes.getLocalNode())) { // NOTE:htt, 如果请求master节点不是当前节点，返回错误给原有节点
                 throw new ThisIsNotTheMasterYouAreLookingForException();
             }
 
             // ping from nodes of version < 1.4.0 will have the clustername set to null
-            if (request.clusterName != null && !request.clusterName.equals(clusterName)) {
+            if (request.clusterName != null && !request.clusterName.equals(clusterName)) { // NOTE: htt, 集群名不一样，则返回出错
                 logger.trace("master fault detection ping request is targeted for a different [{}] cluster then us [{}]",
                     request.clusterName, clusterName);
                 throw new ThisIsNotTheMasterYouAreLookingForException("master fault detection ping request is targeted for a different ["
@@ -345,22 +345,22 @@ public class MasterFaultDetection extends FaultDetection {
             // all processing is finished.
             //
 
-            if (!nodes.isLocalNodeElectedMaster() || !nodes.nodeExists(request.sourceNode)) {
+            if (!nodes.isLocalNodeElectedMaster() || !nodes.nodeExists(request.sourceNode)) { // NOTE: htt, 如果当前节点不是master节点,或请求节点在集群不存在
                 logger.trace("checking ping from {} under a cluster state thread", request.sourceNode);
                 masterService.submitStateUpdateTask("master ping (from: " + request.sourceNode + ")", new ClusterStateUpdateTask() {
 
                     @Override
-                    public ClusterState execute(ClusterState currentState) throws Exception {
+                    public ClusterState execute(ClusterState currentState) throws Exception { // NOTE:htt, masterService先执行任务，在根据处理结果onFailure()或clusterStateProcessed(), 如果请求节点已不在集群中，则抛出异常，并发送到整个集群
                         // if we are no longer master, fail...
                         DiscoveryNodes nodes = currentState.nodes();
-                        if (!nodes.nodeExists(request.sourceNode)) {
+                        if (!nodes.nodeExists(request.sourceNode)) { // NOTE;htt, 如果当前集群状态不包含请求节点，则抛出异常处理，然后将信息发送到集群中
                             throw new NodeDoesNotExistOnMasterException();
                         }
                         return currentState;
                     }
 
                     @Override
-                    public void onNoLongerMaster(String source) {
+                    public void onNoLongerMaster(String source) { // NOTE: htt, 当前节点如果不是master，则回异常包
                         onFailure(source, new NotMasterException("local node is not master"));
                     }
 
@@ -370,7 +370,7 @@ public class MasterFaultDetection extends FaultDetection {
                             e = new ElasticsearchException("unknown error while processing ping");
                         }
                         try {
-                            channel.sendResponse(e);
+                            channel.sendResponse(e); // NOTE:htt, 发送当前节点不是master
                         } catch (IOException inner) {
                             inner.addSuppressed(e);
                             logger.warn("error while sending ping response", inner);
@@ -378,9 +378,9 @@ public class MasterFaultDetection extends FaultDetection {
                     }
 
                     @Override
-                    public void clusterStateProcessed(String source, ClusterState oldState, ClusterState newState) {
+                    public void clusterStateProcessed(String source, ClusterState oldState, ClusterState newState) { // NOTE:htt, 集群状态处理完成，则回包给请求节点
                         try {
-                            channel.sendResponse(new MasterPingResponseResponse());
+                            channel.sendResponse(new MasterPingResponseResponse()); // NOTE:htt, 集群状态处理完毕后，回包master心跳请求
                         } catch (IOException e) {
                             logger.warn("error while sending ping response", e);
                         }
@@ -388,18 +388,18 @@ public class MasterFaultDetection extends FaultDetection {
                 });
             } else {
                 // send a response, and note if we are connected to the master or not
-                channel.sendResponse(new MasterPingResponseResponse());
+                channel.sendResponse(new MasterPingResponseResponse()); // NOTE:htt, 如果当前是master节点，并且集群包含请求节点，则回心跳包成功
             }
         }
     }
 
 
-    public static class MasterPingRequest extends TransportRequest {
+    public static class MasterPingRequest extends TransportRequest { // NOTE: htt, master心跳探测请求, master ping request
 
-        private DiscoveryNode sourceNode;
+        private DiscoveryNode sourceNode; // NOTE: htt, 当前节点, current node
 
-        private DiscoveryNode masterNode;
-        private ClusterName clusterName;
+        private DiscoveryNode masterNode; // NOTE: htt, master节点, master node
+        private ClusterName clusterName; // NOTE: htt, 集群名称, cluster name
 
         public MasterPingRequest() {
         }
@@ -427,7 +427,7 @@ public class MasterFaultDetection extends FaultDetection {
         }
     }
 
-    private static class MasterPingResponseResponse extends TransportResponse {
+    private static class MasterPingResponseResponse extends TransportResponse { // NOTE: htt, master节点的心跳回包
 
         private MasterPingResponseResponse() {
         }

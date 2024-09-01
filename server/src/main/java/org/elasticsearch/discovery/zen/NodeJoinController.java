@@ -59,7 +59,7 @@ public class NodeJoinController extends AbstractComponent {
 
     private final MasterService masterService;
     private final AllocationService allocationService;
-    private final ElectMasterService electMaster;
+    private final ElectMasterService electMaster; // NOTE: htt, 候选节点个数满足要求，然后进行排序(先判断版本号(大的在前），若相等判断节点信息，id小的为在前)，再返回排序第一个候选节点作为master节点
     private final JoinTaskExecutor joinTaskExecutor = new JoinTaskExecutor();
 
     // this is set while trying to become a master
@@ -385,7 +385,7 @@ public class NodeJoinController extends AbstractComponent {
      */
     private static final DiscoveryNode BECOME_MASTER_TASK = new DiscoveryNode("_BECOME_MASTER_TASK_",
         new TransportAddress(TransportAddress.META_ADDRESS, 0),
-        Collections.emptyMap(), Collections.emptySet(), Version.CURRENT) {
+        Collections.emptyMap(), Collections.emptySet(), Version.CURRENT) { // NOTE:htt, 成为master节点任务
         @Override
         public String toString() {
             return ""; // this is not really task , so don't log anything about it...
@@ -396,7 +396,7 @@ public class NodeJoinController extends AbstractComponent {
      * a task that is used to signal the election is stopped and we should process pending joins.
      * it may be use in combination with {@link #BECOME_MASTER_TASK}
      */
-    private static final DiscoveryNode FINISH_ELECTION_TASK = new DiscoveryNode("_FINISH_ELECTION_",
+    private static final DiscoveryNode FINISH_ELECTION_TASK = new DiscoveryNode("_FINISH_ELECTION_", // NOTE:htt, 选举停止任务
         new TransportAddress(TransportAddress.META_ADDRESS, 0), Collections.emptyMap(), Collections.emptySet(), Version.CURRENT) {
             @Override
             public String toString() {
@@ -414,9 +414,9 @@ public class NodeJoinController extends AbstractComponent {
             boolean nodesChanged = false;
             ClusterState.Builder newState;
 
-            if (joiningNodes.size() == 1  && joiningNodes.get(0).equals(FINISH_ELECTION_TASK)) {
+            if (joiningNodes.size() == 1  && joiningNodes.get(0).equals(FINISH_ELECTION_TASK)) { // NOTE:htt, 如果是选举任务则返回
                 return results.successes(joiningNodes).build(currentState);
-            } else if (currentNodes.getMasterNode() == null && joiningNodes.contains(BECOME_MASTER_TASK)) {
+            } else if (currentNodes.getMasterNode() == null && joiningNodes.contains(BECOME_MASTER_TASK)) { // NOTE:htt, 成为master角色任务
                 assert joiningNodes.contains(FINISH_ELECTION_TASK) : "becoming a master but election is not finished " + joiningNodes;
                 // use these joins to try and become the master.
                 // Note that we don't have to do any validation of the amount of joining nodes - the commit
@@ -478,9 +478,9 @@ public class NodeJoinController extends AbstractComponent {
             assert currentState.nodes().getMasterNodeId() == null : currentState;
             DiscoveryNodes currentNodes = currentState.nodes();
             DiscoveryNodes.Builder nodesBuilder = DiscoveryNodes.builder(currentNodes);
-            nodesBuilder.masterNodeId(currentState.nodes().getLocalNodeId());
+            nodesBuilder.masterNodeId(currentState.nodes().getLocalNodeId()); // NOTE:htt, 将当前节点设置为master节点
 
-            for (final DiscoveryNode joiningNode : joiningNodes) {
+            for (final DiscoveryNode joiningNode : joiningNodes) { // NOTE:htt, 将 nodes列表中移除和新增加节点冲突节点：id/address 相同,但对象不同
                 final DiscoveryNode nodeWithSameId = nodesBuilder.get(joiningNode.getId());
                 if (nodeWithSameId != null && nodeWithSameId.equals(joiningNode) == false) {
                     logger.debug("removing existing node [{}], which conflicts with incoming join from [{}]", nodeWithSameId, joiningNode);
@@ -499,7 +499,7 @@ public class NodeJoinController extends AbstractComponent {
             // or removed by us above
             ClusterState tmpState = ClusterState.builder(currentState).nodes(nodesBuilder).blocks(ClusterBlocks.builder()
                 .blocks(currentState.blocks())
-                .removeGlobalBlock(DiscoverySettings.NO_MASTER_BLOCK_ID)).build();
+                .removeGlobalBlock(DiscoverySettings.NO_MASTER_BLOCK_ID)).build(); // NOTE:htt, 移除没有masterId的阻塞处理
             return ClusterState.builder(allocationService.deassociateDeadNodes(tmpState, false,
                 "removed dead nodes on election"));
         }

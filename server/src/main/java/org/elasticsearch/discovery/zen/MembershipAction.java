@@ -190,7 +190,7 @@ public class MembershipAction extends AbstractComponent { // NOTE:htt, 处理节
         }
 
         @Override
-        public void messageReceived(ValidateJoinRequest request, TransportChannel channel) throws Exception {
+        public void messageReceived(ValidateJoinRequest request, TransportChannel channel) throws Exception { // NOTE:htt, 验证节点加入
             DiscoveryNode node = localNodeSupplier.get();
             assert node != null : "local node is null";
             joinValidators.stream().forEach(action -> action.accept(node, request.state)); // NOTE:htt, 验证节点以及对应的集群状态
