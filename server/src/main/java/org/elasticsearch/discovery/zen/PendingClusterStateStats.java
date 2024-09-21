@@ -31,11 +31,11 @@ import java.io.IOException;
 /**
  * Class encapsulating stats about the PendingClusterStatsQueue
  */
-public class PendingClusterStateStats implements Writeable, ToXContentFragment {
+public class PendingClusterStateStats implements Writeable, ToXContentFragment { // NOTE: htt, pendingClusterStats including total/pending/committed
 
     private final int total;
-    private final int pending;
-    private final int committed;
+    private final int pending; // NOTE: htt, pending 任务数
+    private final int committed; // NOTE: htt, commit 任务数
 
     public PendingClusterStateStats(int total, int pending, int committed) {
         this.total = total;

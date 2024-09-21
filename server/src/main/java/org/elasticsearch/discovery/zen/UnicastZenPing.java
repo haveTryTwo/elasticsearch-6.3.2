@@ -309,11 +309,11 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
         final DiscoveryNodes nodes = contextProvider.clusterState().nodes();
         // add all possible master nodes that were active in the last known cluster configuration
         for (ObjectCursor<DiscoveryNode> masterNode : nodes.getMasterNodes().values()) {
-            seedNodes.add(masterNode.value);
+            seedNodes.add(masterNode.value); // NOTE: htt, 合并其他节点获取到master节点
         }
 
         final ConnectionProfile connectionProfile =
-            ConnectionProfile.buildSingleChannelProfile(TransportRequestOptions.Type.REG, requestDuration, requestDuration);
+            ConnectionProfile.buildSingleChannelProfile(TransportRequestOptions.Type.REG, requestDuration, requestDuration); // NOTE: htt, join cluster, titmeout is 3s
         final PingingRound pingingRound = new PingingRound(pingingRoundIdGenerator.incrementAndGet(), seedNodes, resultsConsumer,
             nodes.getLocalNode(), connectionProfile);
         activePingingRounds.put(pingingRound.id(), pingingRound);
@@ -330,10 +330,10 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
                 sendPings(requestDuration, pingingRound);
             }
         };
-        threadPool.generic().execute(pingSender);
-        threadPool.schedule(TimeValue.timeValueMillis(scheduleDuration.millis() / 3), ThreadPool.Names.GENERIC, pingSender);
-        threadPool.schedule(TimeValue.timeValueMillis(scheduleDuration.millis() / 3 * 2), ThreadPool.Names.GENERIC, pingSender);
-        threadPool.schedule(scheduleDuration, ThreadPool.Names.GENERIC, new AbstractRunnable() {
+        threadPool.generic().execute(pingSender); // NOTE: htt, ping first time immediately
+        threadPool.schedule(TimeValue.timeValueMillis(scheduleDuration.millis() / 3), ThreadPool.Names.GENERIC, pingSender); // NOTE: htt, ping second time after 1s
+        threadPool.schedule(TimeValue.timeValueMillis(scheduleDuration.millis() / 3 * 2), ThreadPool.Names.GENERIC, pingSender); // NOTE: htt, ping third time after 2s
+        threadPool.schedule(scheduleDuration, ThreadPool.Names.GENERIC, new AbstractRunnable() { // NOTE: htt, execute after 3s
             @Override
             protected void doRun() throws Exception {
                 finishPingingRound(pingingRound);
@@ -505,7 +505,7 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
                 logger.trace("[{}] sending to {}", pingingRound.id(), node);
                 transportService.sendRequest(connection, ACTION_NAME, pingRequest,
                     TransportRequestOptions.builder().withTimeout((long) (timeout.millis() * 1.25)).build(),
-                    getPingResponseHandler(pingingRound, node));
+                    getPingResponseHandler(pingingRound, node)); // NOTE:htt, 给每个节点发送ping请求
             }
 
             @Override

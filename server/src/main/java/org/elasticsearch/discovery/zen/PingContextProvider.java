@@ -21,7 +21,7 @@ package org.elasticsearch.discovery.zen;
 
 import org.elasticsearch.cluster.ClusterState;
 
-public interface PingContextProvider {
+public interface PingContextProvider { // NOTE: htt, provide current cluster state
 
     /** return the current cluster state of the node */
     ClusterState clusterState();

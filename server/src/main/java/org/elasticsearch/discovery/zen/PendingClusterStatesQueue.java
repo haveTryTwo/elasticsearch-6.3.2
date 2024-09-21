@@ -50,16 +50,16 @@ import java.util.Objects;
  */
 public class PendingClusterStatesQueue {
 
-    interface StateProcessedListener {
+    interface StateProcessedListener { // NOTE: htt, 状态监听
 
-        void onNewClusterStateProcessed();
+        void onNewClusterStateProcessed(); // NOTE:htt, 集群状态处理正常
 
-        void onNewClusterStateFailed(Exception e);
+        void onNewClusterStateFailed(Exception e); // NOTE:htt, 集群状态处理异常
     }
 
-    final ArrayList<ClusterStateContext> pendingStates = new ArrayList<>();
+    final ArrayList<ClusterStateContext> pendingStates = new ArrayList<>(); // NOTE:htt, 一组集群状态context，其中context包括state和listener
     final Logger logger;
-    final int maxQueueSize;
+    final int maxQueueSize; // NOTE:htt, 队列最多保存25个集群状态
 
     public PendingClusterStatesQueue(Logger logger, int maxQueueSize) {
         this.logger = logger;
@@ -67,14 +67,14 @@ public class PendingClusterStatesQueue {
     }
 
     /** Add an incoming, not yet committed cluster state */
-    public synchronized void addPending(ClusterState state) {
-        pendingStates.add(new ClusterStateContext(state));
-        if (pendingStates.size() > maxQueueSize) {
+    public synchronized void addPending(ClusterState state) { // NOTE:htt, 添加新的集群状态到队列中，待收到master的commit请求后再执行集群状态
+        pendingStates.add(new ClusterStateContext(state)); // NOTE:htt, 添加一个未提交的集群状态监听
+        if (pendingStates.size() > maxQueueSize) { // NOTE:htt, 如果队列超过最大值，则移除最先添加的集群状态，并执行状态变更异常
             ClusterStateContext context = pendingStates.remove(0);
             logger.warn("dropping pending state [{}]. more than [{}] pending states.", context, maxQueueSize);
-            if (context.committed()) {
+            if (context.committed()) { // NOTE:htt, 如果设置了集群状态监听，则抛出异常，因为需要再markAsCommitted时设置监听处理
                 context.listener.onNewClusterStateFailed(new ElasticsearchException("too many pending states ([{}] pending)",
-                    maxQueueSize));
+                    maxQueueSize)); // NOTE:htt, 执行状态异常
             }
         }
     }
@@ -83,20 +83,20 @@ public class PendingClusterStatesQueue {
      * Mark a previously added cluster state as committed. This will make it available via {@link #getNextClusterStateToProcess()}
      * When the cluster state is processed (or failed), the supplied listener will be called
      **/
-    public synchronized ClusterState markAsCommitted(String stateUUID, StateProcessedListener listener) {
-        final ClusterStateContext context = findState(stateUUID);
-        if (context == null) {
+    public synchronized ClusterState markAsCommitted(String stateUUID, StateProcessedListener listener) { // NOTE:htt, 对集群状态设置监听，以便commit之后执行listener监听
+        final ClusterStateContext context = findState(stateUUID); // NOTE:htt, 查找对应uuid的context
+        if (context == null) { // NOTE:htt, 没有找到对应context，直接执行监听失败
             listener.onNewClusterStateFailed(new IllegalStateException("can't resolve cluster state with uuid" +
                 " [" + stateUUID + "] to commit"));
             return null;
         }
-        if (context.committed()) {
+        if (context.committed()) { // NOTE:htt, 已经设置监听，则执行监听失败
             listener.onNewClusterStateFailed(new IllegalStateException("cluster state with uuid" +
                 " [" + stateUUID + "] is already committed"));
             return null;
         }
-        context.markAsCommitted(listener);
-        return context.state;
+        context.markAsCommitted(listener); // NOTE:htt, 设置监听，假装commit，待后续真正开始进行commit
+        return context.state; // NOTE:htt, 返回集群状态
     }
 
     /**
@@ -191,7 +191,7 @@ public class PendingClusterStatesQueue {
 
     }
 
-    ClusterStateContext findState(String stateUUID) {
+    ClusterStateContext findState(String stateUUID) { // NOTE:htt, 获取 集群状态uuid的context
         for (int i = 0; i < pendingStates.size(); i++) {
             final ClusterStateContext context = pendingStates.get(i);
             if (context.stateUUID().equals(stateUUID)) {
@@ -206,7 +206,7 @@ public class PendingClusterStatesQueue {
     public synchronized void failAllStatesAndClear(Exception reason) {
         for (ClusterStateContext pendingState : pendingStates) {
             if (pendingState.committed()) {
-                pendingState.listener.onNewClusterStateFailed(reason);
+                pendingState.listener.onNewClusterStateFailed(reason); // NOTE: htt, update cluster state failed, maybe containing 将当前节点的no master的 block 给设置上，这样当前节点就不能进行数据写入
             }
         }
         pendingStates.clear();
@@ -218,7 +218,7 @@ public class PendingClusterStatesQueue {
      * The method tries to batch operation by getting the cluster state the highest possible committed states
      * which succeeds the first committed state in queue (i.e., it comes from the same master).
      */
-    public synchronized ClusterState getNextClusterStateToProcess() {
+    public synchronized ClusterState getNextClusterStateToProcess() { // NOTE:htt, 获取下一个待处理的集群状态
         if (pendingStates.isEmpty()) {
             return null;
         }
@@ -227,7 +227,7 @@ public class PendingClusterStatesQueue {
         int index = 0;
         for (; index < pendingStates.size(); index++) {
             ClusterStateContext potentialState = pendingStates.get(index);
-            if (potentialState.committed()) {
+            if (potentialState.committed()) { // NOTE:htt, 如果设置监听，即收到master的集群状态commit请求，可以进行commit处理
                 stateToProcess = potentialState;
                 break;
             }
@@ -240,7 +240,7 @@ public class PendingClusterStatesQueue {
         for (; index < pendingStates.size(); index++) {
             ClusterStateContext potentialState = pendingStates.get(index);
 
-            if (potentialState.state.supersedes(stateToProcess.state) && potentialState.committed()) {
+            if (potentialState.state.supersedes(stateToProcess.state) && potentialState.committed()) { // NOTE:htt, 获取版本号最大的集群状态(并且进入commit阶段)
                 // we found a new one
                 stateToProcess = potentialState;
             }
@@ -258,22 +258,22 @@ public class PendingClusterStatesQueue {
         return states.toArray(new ClusterState[states.size()]);
     }
 
-    static class ClusterStateContext {
-        final ClusterState state;
-        StateProcessedListener listener;
+    static class ClusterStateContext { // NOTE: htt, 集群状态context，包括state和listener
+        final ClusterState state; // NOTE: htt, cluster state
+        StateProcessedListener listener; // NOTE: htt, 监听处理，在收到master的commit请求之后会设置该值，即本节点可以本地commit，并commit之后再执行listener
 
         ClusterStateContext(ClusterState clusterState) {
             this.state = clusterState;
         }
 
-        void markAsCommitted(StateProcessedListener listener) {
+        void markAsCommitted(StateProcessedListener listener) { // NOTE:htt, 设置监听，假装commit，待后续真正开始进行commit
             if (this.listener != null) {
                 throw new IllegalStateException(toString() + "is already committed");
             }
             this.listener = listener;
         }
 
-        boolean committed() {
+        boolean committed() { // NOTE: htt, 设置了监听状态
             return listener != null;
         }
 

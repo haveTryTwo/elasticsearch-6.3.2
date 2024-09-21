@@ -26,10 +26,10 @@ import java.util.List;
 /**
  * A pluggable provider of the list of unicast hosts to use for unicast discovery.
  */
-public interface UnicastHostsProvider {
+public interface UnicastHostsProvider { // NOTE: htt, unicast hosts to use for unicast discovery
 
     /**
      * Builds the dynamic list of unicast hosts to be used for unicast discovery.
      */
-    List<DiscoveryNode> buildDynamicNodes();
+    List<DiscoveryNode> buildDynamicNodes(); // NOTE:htt, 绑定 动态节点
 }
