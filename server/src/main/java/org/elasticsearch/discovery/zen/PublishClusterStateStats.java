@@ -30,11 +30,11 @@ import java.io.IOException;
 /**
  * Class encapsulating stats about the PublishClusterStateAction
  */
-public class PublishClusterStateStats implements Writeable, ToXContentObject {
+public class PublishClusterStateStats implements Writeable, ToXContentObject { // NOTE: htt, 节点收到master集群状态一致性统计
 
-    private final long fullClusterStateReceivedCount;
-    private final long incompatibleClusterStateDiffReceivedCount;
-    private final long compatibleClusterStateDiffReceivedCount;
+    private final long fullClusterStateReceivedCount; // NOTE: htt, 该节点收到和 master集群中收到状态的一致的次数
+    private final long incompatibleClusterStateDiffReceivedCount; // NOTE:htt, 该节点收到 和master 集群状态不兼容的次数
+    private final long compatibleClusterStateDiffReceivedCount; // NOTE:htt, 该节点收到 和master 集群状态兼容的次数
 
     /**
      * @param fullClusterStateReceivedCount the number of times this node has received a full copy of the cluster state from the master.
