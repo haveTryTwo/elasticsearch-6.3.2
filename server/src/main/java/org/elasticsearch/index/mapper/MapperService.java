@@ -97,7 +97,7 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
     public static final Setting<Long> INDEX_MAPPING_NESTED_FIELDS_LIMIT_SETTING =
         Setting.longSetting("index.mapping.nested_fields.limit", 50L, 0, Property.Dynamic, Property.IndexScope); // NOTE; htt, max nested field is 50
     public static final Setting<Long> INDEX_MAPPING_TOTAL_FIELDS_LIMIT_SETTING =
-        Setting.longSetting("index.mapping.total_fields.limit", 1000L, 0, Property.Dynamic, Property.IndexScope); // NOTE: htt, max fields is 1000
+        Setting.longSetting("index.mapping.total_fields.limit", 1000L, 0, Property.Dynamic, Property.IndexScope); // NOTE: htt, max fields is 1000,默认最多是1000字段
     public static final Setting<Long> INDEX_MAPPING_DEPTH_LIMIT_SETTING =
             Setting.longSetting("index.mapping.depth.limit", 20L, 1, Property.Dynamic, Property.IndexScope); // NOTE: htt, max depth limit is 20
     public static final boolean INDEX_MAPPER_DYNAMIC_DEFAULT = true;
@@ -232,7 +232,7 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
         final Map<String, DocumentMapper> updatedEntries;
         try {
             // only update entries if needed
-            updatedEntries = internalMerge(indexMetaData, MergeReason.MAPPING_RECOVERY, true, true); // NOTE: emep, 映射更新
+            updatedEntries = internalMerge(indexMetaData, MergeReason.MAPPING_RECOVERY, true, true); // NOTE: htt, 映射更新
         } catch (Exception e) {
             logger.warn(() -> new ParameterizedMessage("[{}] failed to apply mappings", index()), e);
             throw e;
@@ -392,7 +392,7 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
             if (indexSettings.getIndexVersionCreated().onOrAfter(Version.V_6_0_0_beta1)
                     && reason == MergeReason.MAPPING_UPDATE) { // only log in case of explicit mapping updates
                 DEPRECATION_LOGGER.deprecated("[_default_] mapping is deprecated since it is not useful anymore now that indexes " +
-                        "cannot have more than one type");
+                        "cannot have more than one type"); // NOTE:htt, _default_ 已废弃
             }
             assert defaultMapper.type().equals(DEFAULT_MAPPING);
             mappers.put(DEFAULT_MAPPING, defaultMapper);
@@ -454,13 +454,13 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
                 validateCopyTo(fieldMappers, fullPathObjectMappers, fieldTypes); // NOTE: htt, 检查 copy_to 一致性
             }
 
-            if (reason == MergeReason.MAPPING_UPDATE) {
+            if (reason == MergeReason.MAPPING_UPDATE) { // NOTE:htt, 字段数是否小于支持的字段数限制
                 // this check will only be performed on the master node when there is
                 // a call to the update mapping API. For all other cases like
                 // the master node restoring mappings from disk or data nodes
                 // deserializing cluster state that was sent by the master node,
                 // this check will be skipped.
-                checkTotalFieldsLimit(objectMappers.size() + fieldMappers.size()); // NOTE: htt, 小于1000个字段检查
+                checkTotalFieldsLimit(objectMappers.size() + fieldMappers.size()); // NOTE: htt, 小于1000个字段检查，仅在master节点上进行字段更新时检查；如果是从磁盘加载则不检测
             }
 
             if (oldMapper == null && newMapper.parentFieldMapper().active()) {
@@ -624,9 +624,9 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
         }
     }
 
-    private void checkTotalFieldsLimit(long totalMappers) {
+    private void checkTotalFieldsLimit(long totalMappers) { // NOTE:htt, 字段数是否小于支持的字段数限制
         long allowedTotalFields = indexSettings.getValue(INDEX_MAPPING_TOTAL_FIELDS_LIMIT_SETTING);
-        if (allowedTotalFields < totalMappers) {
+        if (allowedTotalFields < totalMappers) { // NOTE:htt, 当前字段数是否小于支持的字段数限制
             throw new IllegalArgumentException("Limit of total fields [" + allowedTotalFields + "] in index [" + index().getName() + "] has been exceeded");
         }
     }
