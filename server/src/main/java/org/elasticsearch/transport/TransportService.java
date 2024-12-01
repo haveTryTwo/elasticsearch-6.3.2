@@ -74,35 +74,35 @@ import java.util.stream.Stream;
 import static java.util.Collections.emptyList;
 import static org.elasticsearch.common.settings.Setting.listSetting;
 
-public class TransportService extends AbstractLifecycleComponent {
+public class TransportService extends AbstractLifecycleComponent { // NOTE: htt, 建立tcp连接并发送请求到对应节点, transportSevice to open connection to DiscoveryNode and sendRequest to node
 
     public static final String DIRECT_RESPONSE_PROFILE = ".direct";
     public static final String HANDSHAKE_ACTION_NAME = "internal:transport/handshake";
 
     private final CountDownLatch blockIncomingRequestsLatch = new CountDownLatch(1);
-    protected final Transport transport;
+    protected final Transport transport; // NOTE: htt, transport的处理入口，即netty收到包之后对应处理，目前为Netty4Transport
     protected final ThreadPool threadPool;
     protected final ClusterName clusterName;
-    protected final TaskManager taskManager;
+    protected final TaskManager taskManager; // NOTE: htt, task manager
     private final TransportInterceptor.AsyncSender asyncSender;
     private final Function<BoundTransportAddress, DiscoveryNode> localNodeFactory;
     private final boolean connectToRemoteCluster;
 
-    volatile Map<String, RequestHandlerRegistry> requestHandlers = Collections.emptyMap();
-    final Object requestHandlerMutex = new Object();
+    volatile Map<String, RequestHandlerRegistry> requestHandlers = Collections.emptyMap(); // NOTE: htt，包请求处理，收到请求后，根据action执行相应的处理
+    final Object requestHandlerMutex = new Object(); // NOTE: htt, requestHandler mutex
 
-    final ConcurrentMapLong<RequestHolder> clientHandlers = ConcurrentCollections.newConcurrentMapLongWithAggressiveConcurrency();
+    final ConcurrentMapLong<RequestHolder> clientHandlers = ConcurrentCollections.newConcurrentMapLongWithAggressiveConcurrency(); // NOTE: htt, clientHandlers，记录请求requestId以及对应的处理
 
-    final CopyOnWriteArrayList<TransportConnectionListener> connectionListeners = new CopyOnWriteArrayList<>();
+    final CopyOnWriteArrayList<TransportConnectionListener> connectionListeners = new CopyOnWriteArrayList<>(); // NOTE:htt, 链接建立完成后执行的操作
 
-    private final TransportInterceptor interceptor;
+    private final TransportInterceptor interceptor; // NOTE:htt, 拦截器
 
     // An LRU (don't really care about concurrency here) that holds the latest timed out requests so if they
     // do show up, we can print more descriptive information about them
     final Map<Long, TimeoutInfoHolder> timeoutInfoHandlers =
         Collections.synchronizedMap(new LinkedHashMap<Long, TimeoutInfoHolder>(100, .75F, true) {
             @Override
-            protected boolean removeEldestEntry(Map.Entry eldest) {
+            protected boolean removeEldestEntry(Map.Entry eldest) { // NOTE: htt, put(key,value)后执行 afterNodeInsertion() 然后会调用这里逻辑，只保留100个请求，超出的会将队首的请求移除；这里是当前请求超时后会从clientHandlers 中移到 timeoutInfoHandlers，但是 timeoutInfoHandlers并没有超时移除元素的问题，解决该map的过大的问题
                 return size() > 100;
             }
         });
@@ -115,18 +115,18 @@ public class TransportService extends AbstractLifecycleComponent {
         listSetting("transport.tracer.include", emptyList(), Function.identity(), Property.Dynamic, Property.NodeScope);
     public static final Setting<List<String>> TRACE_LOG_EXCLUDE_SETTING =
         listSetting("transport.tracer.exclude", Arrays.asList("internal:discovery/zen/fd*", TransportLivenessAction.NAME),
-            Function.identity(), Property.Dynamic, Property.NodeScope);
+            Function.identity(), Property.Dynamic, Property.NodeScope); // NOTE:htt, internal:discovery/zen/fd*信息不进行trace
 
-    private final Logger tracerLog;
+    private final Logger tracerLog; // NOTE:htt, tracer日志
 
-    volatile String[] tracerLogInclude;
-    volatile String[] tracerLogExclude;
+    volatile String[] tracerLogInclude; // NOTE:htt, 需要tracer的action
+    volatile String[] tracerLogExclude; // NOTE:htt, 不需要tracer的action
 
-    private final RemoteClusterService remoteClusterService;
+    private final RemoteClusterService remoteClusterService; // NOTE: htt remoteCluster
 
     /** if set will call requests sent to this id to shortcut and executed locally */
-    volatile DiscoveryNode localNode = null;
-    private final Transport.Connection localNodeConnection = new Transport.Connection() {
+    volatile DiscoveryNode localNode = null; // NOTE: htt, 本地节点
+    private final Transport.Connection localNodeConnection = new Transport.Connection() { // NOTE: htt, localNodeConnection
         @Override
         public DiscoveryNode getNode() {
             return localNode;
@@ -135,7 +135,7 @@ public class TransportService extends AbstractLifecycleComponent {
         @Override
         public void sendRequest(long requestId, String action, TransportRequest request, TransportRequestOptions options)
             throws IOException, TransportException {
-            sendLocalRequest(requestId, action, request, options);
+            sendLocalRequest(requestId, action, request, options); // NOTE: htt, 本节点内部发送高效性
         }
 
         @Override
@@ -208,7 +208,7 @@ public class TransportService extends AbstractLifecycleComponent {
     }
 
     @Override
-    protected void doStart() {
+    protected void doStart() { // NOTE: htt, do start transport services
         transport.setTransportService(this);
         transport.start();
 
@@ -219,8 +219,8 @@ public class TransportService extends AbstractLifecycleComponent {
             }
         }
         localNode = localNodeFactory.apply(transport.boundAddress());
-        registerRequestHandler(
-            HANDSHAKE_ACTION_NAME,
+        registerRequestHandler(  // NOTE: htt, register handshakeAction
+            HANDSHAKE_ACTION_NAME, // NOTE: htt, 心跳协议回包
             () -> HandshakeRequest.INSTANCE,
             ThreadPool.Names.SAME,
             false, false,
@@ -324,8 +324,8 @@ public class TransportService extends AbstractLifecycleComponent {
      * @param node the node to connect to
      * @param connectionProfile the connection profile to use when connecting to this node
      */
-    public void connectToNode(final DiscoveryNode node, ConnectionProfile connectionProfile) {
-        if (isLocalNode(node)) {
+    public void connectToNode(final DiscoveryNode node, ConnectionProfile connectionProfile) { // NOTE:htt, 连接到对端节点
+        if (isLocalNode(node)) { // NOTE: htt, local node just return
             return;
         }
         transport.connectToNode(node, connectionProfile, (newConnection, actualProfile) -> {
@@ -345,9 +345,9 @@ public class TransportService extends AbstractLifecycleComponent {
      */
     public Transport.Connection openConnection(final DiscoveryNode node, ConnectionProfile profile) throws IOException {
         if (isLocalNode(node)) {
-            return localNodeConnection;
+            return localNodeConnection; // NOTE: htt, 本节点内部连接
         } else {
-            return transport.openConnection(node, profile);
+            return transport.openConnection(node, profile); // NOTE: htt, TcpTransport.openConnection
         }
     }
 
@@ -396,13 +396,13 @@ public class TransportService extends AbstractLifecycleComponent {
                 }
             });
             sendRequest(connection, HANDSHAKE_ACTION_NAME, HandshakeRequest.INSTANCE,
-                TransportRequestOptions.builder().withTimeout(handshakeTimeout).build(), futureHandler);
-            response = futureHandler.txGet();
+                TransportRequestOptions.builder().withTimeout(handshakeTimeout).build(), futureHandler); // NOTE: htt, async send request
+            response = futureHandler.txGet(); // NOTE: htt, 同步等待状态获取，知道请求超时
         } catch (Exception e) {
             throw new IllegalStateException("handshake failed with " + node, e);
         }
 
-        if (!clusterNamePredicate.test(response.clusterName)) {
+        if (!clusterNamePredicate.test(response.clusterName)) { // NOTE: htt, not same clusterName then return
             throw new IllegalStateException("handshake failed, mismatched cluster name [" + response.clusterName + "] - " + node);
         } else if (response.version.isCompatible(localNode.getVersion()) == false) {
             throw new IllegalStateException("handshake failed, incompatible version [" + response.version + "] - " + node);
@@ -411,7 +411,7 @@ public class TransportService extends AbstractLifecycleComponent {
         return response;
     }
 
-    static class HandshakeRequest extends TransportRequest {
+    static class HandshakeRequest extends TransportRequest { // NOTE; htt, handshakeRequest
 
         public static final HandshakeRequest INSTANCE = new HandshakeRequest();
 
@@ -420,7 +420,7 @@ public class TransportService extends AbstractLifecycleComponent {
 
     }
 
-    public static class HandshakeResponse extends TransportResponse {
+    public static class HandshakeResponse extends TransportResponse { // NOTE: htt, handshake  response
         private DiscoveryNode discoveryNode;
         private ClusterName clusterName;
         private Version version;
@@ -523,7 +523,7 @@ public class TransportService extends AbstractLifecycleComponent {
                                                                 final TransportRequestOptions options,
                                                                 TransportResponseHandler<T> handler) {
 
-        asyncSender.sendRequest(connection, action, request, options, handler);
+        asyncSender.sendRequest(connection, action, request, options, handler); // NOTE: htt, sendRequestInternal
     }
 
     /**
@@ -531,7 +531,7 @@ public class TransportService extends AbstractLifecycleComponent {
      * @throws NodeNotConnectedException if the given node is not connected
      */
     public Transport.Connection getConnection(DiscoveryNode node) {
-        if (isLocalNode(node)) {
+        if (isLocalNode(node)) { // NOTE: htt, return local node connection
             return localNodeConnection;
         } else {
             return transport.getConnection(node);
@@ -585,15 +585,17 @@ public class TransportService extends AbstractLifecycleComponent {
         final long requestId = transport.newRequestId();
         final TimeoutHandler timeoutHandler;
         try {
-
+        	logger.debug("[outer-2, ]action:" + action + " ; request:"+ request);
             if (options.timeout() == null) {
+            	logger.debug("[in-2, ]action:" + action + " ; request:"+ request + " ; no timeout");
                 timeoutHandler = null;
             } else {
+            	logger.debug("[in-2, ]action:" + action + " ; request:"+ request + " ; has timeout");
                 timeoutHandler = new TimeoutHandler(requestId);
             }
             Supplier<ThreadContext.StoredContext> storedContextSupplier = threadPool.getThreadContext().newRestorableContext(true);
             TransportResponseHandler<T> responseHandler = new ContextRestoreResponseHandler<>(storedContextSupplier, handler);
-            clientHandlers.put(requestId, new RequestHolder<>(responseHandler, connection, action, timeoutHandler));
+            clientHandlers.put(requestId, new RequestHolder<>(responseHandler, connection, action, timeoutHandler)); // NOTE: htt, es侧用于异步请求管理，先保存待回包后根据 requestId来获取到对应的请求，以便继续处理
             if (lifecycle.stoppedOrClosed()) {
                 // if we are not started the exception handling will remove the RequestHolder again and calls the handler to notify
                 // the caller. It will only notify if the toStop code hasn't done the work yet.
@@ -601,7 +603,8 @@ public class TransportService extends AbstractLifecycleComponent {
             }
             if (timeoutHandler != null) {
                 assert options.timeout() != null;
-                timeoutHandler.future = threadPool.schedule(options.timeout(), ThreadPool.Names.GENERIC, timeoutHandler);
+                logger.debug("[in-3, ]action:" + action + " ; request:"+ request + " ; has timeout, and has been scheduled");
+                timeoutHandler.future = threadPool.schedule(options.timeout(), ThreadPool.Names.GENERIC, timeoutHandler); // NOTE: htt，带有超时时间请求加入时间handler监控处理
             }
             connection.sendRequest(requestId, action, request, options); // local node optimization happens upstream
         } catch (final Exception e) {
@@ -642,26 +645,26 @@ public class TransportService extends AbstractLifecycleComponent {
             }
         }
     }
-
+    // NOTE: htt, 如果是给本节点发送请求，则直接找到对应action，然后执行其中的handler
     private void sendLocalRequest(long requestId, final String action, final TransportRequest request, TransportRequestOptions options) {
         final DirectResponseChannel channel = new DirectResponseChannel(logger, localNode, action, requestId, this, threadPool);
         try {
             onRequestSent(localNode, requestId, action, request, options);
-            onRequestReceived(requestId, action);
-            final RequestHandlerRegistry reg = getRequestHandler(action);
+            onRequestReceived(requestId, action); // NOTE: htt, 阻塞直到可以接受请求
+            final RequestHandlerRegistry reg = getRequestHandler(action); // NOTE: htt, 本地请求，直接找到对应action的处理
             if (reg == null) {
                 throw new ActionNotFoundTransportException("Action [" + action + "] not found");
             }
             final String executor = reg.getExecutor();
-            if (ThreadPool.Names.SAME.equals(executor)) {
+            if (ThreadPool.Names.SAME.equals(executor)) { // NOTE: htt, same threadPool executor
                 //noinspection unchecked
                 reg.processMessageReceived(request, channel);
             } else {
-                threadPool.executor(executor).execute(new AbstractRunnable() {
+                threadPool.executor(executor).execute(new AbstractRunnable() { // NOTE: htt, threadPool executor
                     @Override
                     protected void doRun() throws Exception {
                         //noinspection unchecked
-                        reg.processMessageReceived(request, channel);
+                        reg.processMessageReceived(request, channel); // NOTE: htt, 新启动线程执行
                     }
 
                     @Override
@@ -694,14 +697,14 @@ public class TransportService extends AbstractLifecycleComponent {
         }
     }
 
-    private boolean shouldTraceAction(String action) {
+    private boolean shouldTraceAction(String action) { // NOTE:htt, 是否需要进行tracer
         if (tracerLogInclude.length > 0) {
-            if (Regex.simpleMatch(tracerLogInclude, action) == false) {
+            if (Regex.simpleMatch(tracerLogInclude, action) == false) { // NOTE:htt, 如果有tracer的action，但是当前不在其中则不进行tracer
                 return false;
             }
         }
         if (tracerLogExclude.length > 0) {
-            return !Regex.simpleMatch(tracerLogExclude, action);
+            return !Regex.simpleMatch(tracerLogExclude, action); // NOTE:htt, 如果有exclude的tracer的action，并且在其中则不进行tracer
         }
         return true;
     }
@@ -785,8 +788,8 @@ public class TransportService extends AbstractLifecycleComponent {
     }
 
     private <Request extends TransportRequest> void registerRequestHandler(RequestHandlerRegistry<Request> reg) {
-        synchronized (requestHandlerMutex) {
-            if (requestHandlers.containsKey(reg.getAction())) {
+        synchronized (requestHandlerMutex) { // NOTE: htt, lock then register request to requestHandlers
+            if (requestHandlers.containsKey(reg.getAction())) { // NOTE: htt, 每个action只能注册一次
                 throw new IllegalArgumentException("transport handlers for action " + reg.getAction() + " is already registered");
             }
             requestHandlers = MapBuilder.newMapBuilder(requestHandlers).put(reg.getAction(), reg).immutableMap();
@@ -796,7 +799,7 @@ public class TransportService extends AbstractLifecycleComponent {
     /** called by the {@link Transport} implementation once a request has been sent */
     void onRequestSent(DiscoveryNode node, long requestId, String action, TransportRequest request,
                        TransportRequestOptions options) {
-        if (traceEnabled() && shouldTraceAction(action)) {
+        if (traceEnabled() && shouldTraceAction(action)) { // NOTE:htt, 判断是否需要进行tracer
             traceRequestSent(node, requestId, action, options);
         }
     }
@@ -839,7 +842,7 @@ public class TransportService extends AbstractLifecycleComponent {
     }
 
     public RequestHandlerRegistry getRequestHandler(String action) {
-        return requestHandlers.get(action);
+        return requestHandlers.get(action); // NOTE: htt, 获取action对应的请求处理
     }
 
     /**
@@ -847,7 +850,7 @@ public class TransportService extends AbstractLifecycleComponent {
      * sent request (before any processing or deserialization was done). Returns the appropriate response handler or null if not
      * found.
      */
-    public TransportResponseHandler onResponseReceived(final long requestId) {
+    public TransportResponseHandler onResponseReceived(final long requestId) { // NOTE: htt, 执行回包操作
         RequestHolder holder = clientHandlers.remove(requestId);
 
         if (holder == null) {
@@ -855,7 +858,7 @@ public class TransportService extends AbstractLifecycleComponent {
             return null;
         }
         holder.cancelTimeout();
-        if (traceEnabled() && shouldTraceAction(holder.action())) {
+        if (traceEnabled() && shouldTraceAction(holder.action())) { // NOTE:htt, tracer收包信息
             traceReceivedResponse(requestId, holder.connection().getNode(), holder.action());
         }
         return holder.handler();
@@ -866,7 +869,7 @@ public class TransportService extends AbstractLifecycleComponent {
         final DiscoveryNode sourceNode;
         final String action;
         assert clientHandlers.get(requestId) == null;
-        TimeoutInfoHolder timeoutInfoHolder = timeoutInfoHandlers.remove(requestId);
+        TimeoutInfoHolder timeoutInfoHolder = timeoutInfoHandlers.remove(requestId); // NOTE: htt, get timeout handler
         if (timeoutInfoHolder != null) {
             long time = System.currentTimeMillis();
             logger.warn("Received response for a request that has timed out, sent [{}ms] ago, timed out [{}ms] ago, " +
@@ -891,7 +894,7 @@ public class TransportService extends AbstractLifecycleComponent {
         }
     }
 
-    void onNodeConnected(final DiscoveryNode node) {
+    void onNodeConnected(final DiscoveryNode node) { // NOTE:htt, 链接建立完成操作
         // capture listeners before spawning the background callback so the following pattern won't trigger a call
         // connectToNode(); connection is completed successfully
         // addConnectionListener(); this listener shouldn't be called
@@ -907,11 +910,11 @@ public class TransportService extends AbstractLifecycleComponent {
         getExecutorService().execute(() -> listenersToNotify.forEach(listener -> listener.onConnectionOpened(connection)));
     }
 
-    public void onNodeDisconnected(final DiscoveryNode node) {
+    public void onNodeDisconnected(final DiscoveryNode node) { // NOTE:htt, 连接断开后执行相应监听处理
         try {
             getExecutorService().execute( () -> {
                 for (final TransportConnectionListener connectionListener : connectionListeners) {
-                    connectionListener.onNodeDisconnected(node);
+                    connectionListener.onNodeDisconnected(node); // NOTE: htt, 执行connectionListener在当前节点上进行 disconnected(), ${FaultDetection#onNodeDisconnected}
                 }
             });
         } catch (EsRejectedExecutionException ex) {
@@ -919,17 +922,17 @@ public class TransportService extends AbstractLifecycleComponent {
         }
     }
 
-    void onConnectionClosed(Transport.Connection connection) {
+    void onConnectionClosed(Transport.Connection connection) { // NOTE: htt, 连接关闭后，会释放该连接上的对应的对象，此时不会该对象上剩余未回复的链接则不予考虑
         try {
             for (Map.Entry<Long, RequestHolder> entry : clientHandlers.entrySet()) {
                 RequestHolder holder = entry.getValue();
-                if (holder.connection().getCacheKey().equals(connection.getCacheKey())) {
-                    final RequestHolder holderToNotify = clientHandlers.remove(entry.getKey());
+                if (holder.connection().getCacheKey().equals(connection.getCacheKey())) { // NOTE: htt, 判断是否为同一个Connection，即 NodeChannels
+                    final RequestHolder holderToNotify = clientHandlers.remove(entry.getKey()); // NOTE: htt, 取出连接上的请求，并执行连接关闭处理
                     if (holderToNotify != null) {
                         // callback that an exception happened, but on a different thread since we don't
                         // want handlers to worry about stack overflows
                         getExecutorService().execute(() -> holderToNotify.handler().handleException(new NodeDisconnectedException(
-                            connection.getNode(), holderToNotify.action())));
+                            connection.getNode(), holderToNotify.action()))); // NOTE: htt, 该连接上的请求，执行连接关闭的异常清理处理
                     }
                 }
             }
@@ -955,10 +958,10 @@ public class TransportService extends AbstractLifecycleComponent {
     }
 
     protected void traceRequestSent(DiscoveryNode node, long requestId, String action, TransportRequestOptions options) {
-        tracerLog.trace("[{}][{}] sent to [{}] (timeout: [{}])", requestId, action, node, options.timeout());
+        tracerLog.trace("[{}][{}] sent to [{}] (timeout: [{}])", requestId, action, node, options.timeout()); // NOTE:htt, 跟踪发送请求，包括 requestId, action, timeout信息
     }
 
-    class TimeoutHandler implements Runnable {
+    class TimeoutHandler implements Runnable { // NOTE: htt, timeoutHandler of one request
 
         private final long requestId;
 
@@ -971,7 +974,7 @@ public class TransportService extends AbstractLifecycleComponent {
         }
 
         @Override
-        public void run() {
+        public void run() { // NOTE: htt, 超时之后执行这里操作； 1. requestId从clientHandlers获取对象，2. 将对象放入到 timeoutInfoHandlers， 3. 将对象从clientHandlers移除并执行超时（如果此时没有收到回包）
             // we get first to make sure we only add the TimeoutInfoHandler if needed.
             final RequestHolder holder = clientHandlers.get(requestId);
             if (holder != null) {
@@ -983,7 +986,7 @@ public class TransportService extends AbstractLifecycleComponent {
                 final RequestHolder removedHolder = clientHandlers.remove(requestId);
                 if (removedHolder != null) {
                     assert removedHolder == holder : "two different holder instances for request [" + requestId + "]";
-                    removedHolder.handler().handleException(
+                    removedHolder.handler().handleException( // NOTE: htt, 超时后 执行 RequestHolder 中传入的 TransportResponseHandler.handleException
                         new ReceiveTimeoutTransportException(holder.connection().getNode(), holder.action(),
                             "request_id [" + requestId + "] timed out after [" + (timeoutTime - sentTime) + "ms]"));
                 } else {
@@ -1004,7 +1007,7 @@ public class TransportService extends AbstractLifecycleComponent {
         }
     }
 
-    static class TimeoutInfoHolder {
+    static class TimeoutInfoHolder { // NOTE: htt, timeoutInfoHoler of discoveryNode from sendTime to timeoutTime
 
         private final DiscoveryNode node;
         private final String action;
@@ -1035,9 +1038,9 @@ public class TransportService extends AbstractLifecycleComponent {
         }
     }
 
-    static class RequestHolder<T extends TransportResponse> {
+    static class RequestHolder<T extends TransportResponse> { // NOTE: htt, requestHolder
 
-        private final TransportResponseHandler<T> handler;
+        private final TransportResponseHandler<T> handler; // NOTE: htt, transportResponseHandler
 
         private final Transport.Connection connection;
 
@@ -1075,7 +1078,7 @@ public class TransportService extends AbstractLifecycleComponent {
      * This handler wrapper ensures that the response thread executes with the correct thread context. Before any of the handle methods
      * are invoked we restore the context.
      */
-    public static final class ContextRestoreResponseHandler<T extends TransportResponse> implements TransportResponseHandler<T> {
+    public static final class ContextRestoreResponseHandler<T extends TransportResponse> implements TransportResponseHandler<T> { // NOTE: htt, contextRestoreResponseHandler which execute by delegate
 
         private final TransportResponseHandler<T> delegate;
         private final Supplier<ThreadContext.StoredContext> contextSupplier;
@@ -1116,7 +1119,7 @@ public class TransportService extends AbstractLifecycleComponent {
 
     }
 
-    static class DirectResponseChannel implements TransportChannel {
+    static class DirectResponseChannel implements TransportChannel { // NOTE; htt, directResponseChannel which sendResponse using TransportResponseHandler from service
         final Logger logger;
         final DiscoveryNode localNode;
         private final String action;
@@ -1170,16 +1173,16 @@ public class TransportService extends AbstractLifecycleComponent {
 
         @Override
         public void sendResponse(Exception exception) throws IOException {
-            service.onResponseSent(requestId, action, exception);
-            final TransportResponseHandler handler = service.onResponseReceived(requestId);
+            service.onResponseSent(requestId, action, exception); // NOTE: htt, trace log
+            final TransportResponseHandler handler = service.onResponseReceived(requestId); // NOTE: htt, trace log
             // ignore if its null, the service logs it
             if (handler != null) {
                 final RemoteTransportException rtx = wrapInRemote(exception);
                 final String executor = handler.executor();
                 if (ThreadPool.Names.SAME.equals(executor)) {
-                    processException(handler, rtx);
+                    processException(handler, rtx); // NOTE: htt, real execute
                 } else {
-                    threadPool.executor(handler.executor()).execute(() -> processException(handler, rtx));
+                    threadPool.executor(handler.executor()).execute(() -> processException(handler, rtx)); // NOTE: htt, real execute
                 }
             }
         }

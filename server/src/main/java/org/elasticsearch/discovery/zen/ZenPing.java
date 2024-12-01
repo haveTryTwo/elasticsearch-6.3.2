@@ -38,27 +38,27 @@ import java.util.function.Consumer;
 
 import static org.elasticsearch.gateway.GatewayService.STATE_NOT_RECOVERED_BLOCK;
 
-public interface ZenPing extends Releasable {
+public interface ZenPing extends Releasable { // NOTE: htt, zen ping接口，包括pingCollection，其中包含一组节点和对应回包
 
     void start();
 
     void ping(Consumer<PingCollection> resultsConsumer, TimeValue timeout);
 
-    class PingResponse implements Writeable {
+    class PingResponse implements Writeable { // NOTE: htt, ping response including clusterName/node/master/clusterStateVersion
 
         private static final AtomicLong idGenerator = new AtomicLong();
 
         // an always increasing unique identifier for this ping response.
         // lower values means older pings.
-        private final long id;
+        private final long id; // NOTE:htt, 递增的id信息
 
-        private final ClusterName clusterName;
+        private final ClusterName clusterName; // NOTE:htt, 集群名称
 
-        private final DiscoveryNode node;
+        private final DiscoveryNode node; // NOTE: htt, master ping的节点
 
-        private final DiscoveryNode master;
+        private final DiscoveryNode master; // NOTE: htt, master节点
 
-        private final long clusterStateVersion;
+        private final long clusterStateVersion; // NOTE: htt, cluster state version of current node
 
         /**
          * @param node                the node which this ping describes
@@ -141,9 +141,9 @@ public interface ZenPing extends Releasable {
     /**
      * a utility collection of pings where only the most recent ping is stored per node
      */
-    class PingCollection {
+    class PingCollection { // NOTE: htt, pings collection including echo ping of node
 
-        Map<DiscoveryNode, PingResponse> pings;
+        Map<DiscoveryNode, PingResponse> pings; // NOTE:htt, 每个节点的ping的回包列表
 
         public PingCollection() {
             pings = new HashMap<>();
@@ -154,7 +154,7 @@ public interface ZenPing extends Releasable {
          *
          * @return true if added, false o.w.
          */
-        public synchronized boolean addPing(PingResponse ping) {
+        public synchronized boolean addPing(PingResponse ping) { // NOTE:htt, 添加PingResponse，需要添加的id比原有的大
             PingResponse existingResponse = pings.get(ping.node());
             // in case both existing and new ping have the same id (probably because they come
             // from nodes from version <1.4.0) we prefer to use the last added one.
