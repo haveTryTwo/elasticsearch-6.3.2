@@ -24,19 +24,19 @@ package org.elasticsearch.action.search;
  *
  *
  */
-public enum SearchType {
+public enum SearchType {  // NOTE:htt, search类型
     /**
      * Same as {@link #QUERY_THEN_FETCH}, except for an initial scatter phase which goes and computes the distributed
      * term frequencies for more accurate scoring.
      */
-    DFS_QUERY_THEN_FETCH((byte) 0),
+    DFS_QUERY_THEN_FETCH((byte) 0),  // NOTE:htt, dfs query，再fetch
     /**
      * The query is executed against all shards, but only enough information is returned (not the document content).
      * The results are then sorted and ranked, and based on it, only the relevant shards are asked for the actual
      * document content. The return number of hits is exactly as specified in size, since they are the only ones that
      * are fetched. This is very handy when the index has a lot of shards (not replicas, shard id groups).
      */
-    QUERY_THEN_FETCH((byte) 1),
+    QUERY_THEN_FETCH((byte) 1),  // NOTE:htt, 先query再fetch
     // 2 used to be DFS_QUERY_AND_FETCH
 
     /**

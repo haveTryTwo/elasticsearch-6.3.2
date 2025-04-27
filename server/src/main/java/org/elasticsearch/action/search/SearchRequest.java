@@ -73,7 +73,7 @@ public final class SearchRequest extends ActionRequest implements IndicesRequest
     @Nullable
     private String preference;
 
-    private SearchSourceBuilder source;
+    private SearchSourceBuilder source;  // NOTE:htt, search 请求的参数，包括 from + size 等等
 
     private Boolean requestCache;
 

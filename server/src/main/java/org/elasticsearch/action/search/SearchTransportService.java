@@ -377,8 +377,8 @@ public class SearchTransportService extends AbstractComponent {
         transportService.registerRequestHandler(QUERY_ACTION_NAME, ShardSearchTransportRequest::new, ThreadPool.Names.SAME,
             new TaskAwareTransportRequestHandler<ShardSearchTransportRequest>() {
                 @Override
-                public void messageReceived(ShardSearchTransportRequest request, TransportChannel channel, Task task) throws Exception {
-                    searchService.executeQueryPhase(request, (SearchTask) task, new ActionListener<SearchPhaseResult>() {
+                public void messageReceived(ShardSearchTransportRequest request, TransportChannel channel, Task task) throws Exception { // NOTE:htt, 数据节点收到请求后处理
+                    searchService.executeQueryPhase(request, (SearchTask) task, new ActionListener<SearchPhaseResult>() {  // NOTE:htt, 数据节点收到数据处理搜索请求
                         @Override
                         public void onResponse(SearchPhaseResult searchPhaseResult) {
                             try {

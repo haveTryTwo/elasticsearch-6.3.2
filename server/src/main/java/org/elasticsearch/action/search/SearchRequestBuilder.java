@@ -200,7 +200,7 @@ public class SearchRequestBuilder extends ActionRequestBuilder<SearchRequest, Se
     /**
      * The number of search hits to return. Defaults to <tt>10</tt>.
      */
-    public SearchRequestBuilder setSize(int size) {
+    public SearchRequestBuilder setSize(int size) {  // NOTE:htt, search查询条数，默认返回10
         sourceBuilder().size(size);
         return this;
     }
