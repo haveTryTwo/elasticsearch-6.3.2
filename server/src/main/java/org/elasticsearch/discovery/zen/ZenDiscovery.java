@@ -150,8 +150,8 @@ public class ZenDiscovery extends AbstractLifecycleComponent implements Discover
     private final NodeJoinController nodeJoinController;
     private final NodeRemovalClusterStateTaskExecutor nodeRemovalExecutor;
     private final ClusterApplier clusterApplier;
-    private final AtomicReference<ClusterState> committedState; // last committed cluster state
-    private final Object stateMutex = new Object();
+    private final AtomicReference<ClusterState> committedState; // last committed cluster state // NOTE:htt, 最后提交的集群状态
+    private final Object stateMutex = new Object(); // NOTE:htt, 状态互斥锁，用于同步对集群状态的访问
     private final Collection<BiConsumer<DiscoveryNode, ClusterState>> onJoinValidators;
 
     public ZenDiscovery(Settings settings, ThreadPool threadPool, TransportService transportService,
@@ -434,36 +434,37 @@ public class ZenDiscovery extends AbstractLifecycleComponent implements Discover
      * the main function of a join thread. This function is guaranteed to join the cluster
      * or spawn a new join thread upon failure to do so.
      */
-    private void innerJoinCluster() {
-        DiscoveryNode masterNode = null;
-        final Thread currentThread = Thread.currentThread();
-        nodeJoinController.startElectionContext();
-        while (masterNode == null && joinThreadControl.joinThreadActive(currentThread)) {
+    // NOTE:htt, 内部join集群的主要函数。此函数保证加入集群或在新线程上失败时生成新线程。
+    private void innerJoinCluster() { // NOTE:htt, 内部join集群的主要函数。此函数保证加入集群或在新线程上失败时生成新线程。
+        DiscoveryNode masterNode = null; // NOTE:htt, 当前master节点
+        final Thread currentThread = Thread.currentThread(); // NOTE:htt, 当前线程
+        nodeJoinController.startElectionContext(); // NOTE:htt, 启动选举上下文
+        while (masterNode == null && joinThreadControl.joinThreadActive(currentThread)) { // NOTE:htt, 如果当前master节点为null且当前线程是活跃的join线程，则继续循环
             masterNode = findMaster(); // NOTE:htt, 查找master节点
         }
 
-        if (!joinThreadControl.joinThreadActive(currentThread)) {
-            logger.trace("thread is no longer in currentJoinThread. Stopping.");
-            return;
+        if (!joinThreadControl.joinThreadActive(currentThread)) { // NOTE:htt, 如果当前线程不是活跃的join线程，则返回
+            logger.trace("thread is no longer in currentJoinThread. Stopping."); // NOTE:htt, 打印日志
+            return; // NOTE:htt, 返回
         }
 
-        if (transportService.getLocalNode().equals(masterNode)) {
+        if (transportService.getLocalNode().equals(masterNode)) { // NOTE:htt, 如果当前节点是master节点，则等待其他节点加入
             final int requiredJoins = Math.max(0, electMaster.minimumMasterNodes() - 1); // we count as one // NOTE: htt, 选主时最少多少个节点需要确认，要满足 majority 机制
-            logger.debug("elected as master, waiting for incoming joins ([{}] needed)", requiredJoins);
-            nodeJoinController.waitToBeElectedAsMaster(requiredJoins, masterElectionWaitForJoinsTimeout,
-                    new NodeJoinController.ElectionCallback() {
+            logger.debug("elected as master, waiting for incoming joins ([{}] needed)", requiredJoins); // NOTE:htt, 打印日志
+            nodeJoinController.waitToBeElectedAsMaster(requiredJoins, masterElectionWaitForJoinsTimeout, // NOTE:htt, 等待成为master
+                    new NodeJoinController.ElectionCallback() { // NOTE:htt, 选举回调
                         @Override
-                        public void onElectedAsMaster(ClusterState state) {
-                            synchronized (stateMutex) {
-                                joinThreadControl.markThreadAsDone(currentThread);
+                        public void onElectedAsMaster(ClusterState state) { // NOTE:htt, 当选为master
+                            synchronized (stateMutex) { // NOTE:htt, 同步状态互斥锁
+                                joinThreadControl.markThreadAsDone(currentThread); // NOTE:htt, 标记当前线程为完成
                             }
                         }
 
                         @Override
-                        public void onFailure(Throwable t) {
-                            logger.trace("failed while waiting for nodes to join, rejoining", t);
-                            synchronized (stateMutex) {
-                                joinThreadControl.markThreadAsDoneAndStartNew(currentThread);
+                        public void onFailure(Throwable t) { // NOTE:htt, 选举失败
+                            logger.trace("failed while waiting for nodes to join, rejoining", t); // NOTE:htt, 打印日志
+                            synchronized (stateMutex) { // NOTE:htt, 同步状态互斥锁
+                                joinThreadControl.markThreadAsDoneAndStartNew(currentThread); // NOTE:htt, 标记当前线程为完成并启动新线程
                             }
                         }
                     }
@@ -471,28 +472,31 @@ public class ZenDiscovery extends AbstractLifecycleComponent implements Discover
             );
         } else {
             // process any incoming joins (they will fail because we are not the master)
-            nodeJoinController.stopElectionContext(masterNode + " elected");
+            // NOTE:htt, 处理任何传入的join请求（因为我们是master，所以它们会失败）
+            nodeJoinController.stopElectionContext(masterNode + " elected"); // NOTE:htt, 停止选举上下文
 
             // send join request
-            final boolean success = joinElectedMaster(masterNode);
+            // NOTE:htt, 发送join请求   
+            final boolean success = joinElectedMaster(masterNode); // NOTE:htt, 发送join请求
 
-            synchronized (stateMutex) {
-                if (success) {
-                    DiscoveryNode currentMasterNode = this.clusterState().getNodes().getMasterNode();
-                    if (currentMasterNode == null) {
+            synchronized (stateMutex) { // NOTE:htt, 同步状态互斥锁
+                if (success) { // NOTE:htt, 如果发送join请求成功
+                    DiscoveryNode currentMasterNode = this.clusterState().getNodes().getMasterNode(); // NOTE:htt, 获取当前master节点
+                    if (currentMasterNode == null) { // NOTE:htt, 如果当前master节点为null
                         // Post 1.3.0, the master should publish a new cluster state before acking our join request. we now should have
                         // a valid master.
-                        logger.debug("no master node is set, despite of join request completing. retrying pings.");
-                        joinThreadControl.markThreadAsDoneAndStartNew(currentThread);
-                    } else if (currentMasterNode.equals(masterNode) == false) {
+                        // NOTE:htt, 1.3.0版本后，master应该在ack我们的join请求之前发布新的集群状态。我们现在应该有一个有效的master。
+                        logger.debug("no master node is set, despite of join request completing. retrying pings."); // NOTE:htt, 打印日志
+                        joinThreadControl.markThreadAsDoneAndStartNew(currentThread); // NOTE:htt, 标记当前线程为完成并启动新线程
+                    } else if (currentMasterNode.equals(masterNode) == false) { // NOTE:htt, 如果当前master节点不等于master节点
                         // update cluster state
-                        joinThreadControl.stopRunningThreadAndRejoin("master_switched_while_finalizing_join");
+                        joinThreadControl.stopRunningThreadAndRejoin("master_switched_while_finalizing_join"); // NOTE:htt, 停止当前线程并重新加入集群
                     }
 
-                    joinThreadControl.markThreadAsDone(currentThread);
+                    joinThreadControl.markThreadAsDone(currentThread); // NOTE:htt, 标记当前线程为完成
                 } else {
                     // failed to join. Try again...
-                    joinThreadControl.markThreadAsDoneAndStartNew(currentThread);
+                    joinThreadControl.markThreadAsDoneAndStartNew(currentThread); // NOTE:htt, 标记当前线程为完成并启动新线程
                 }
             }
         }
@@ -970,34 +974,36 @@ public class ZenDiscovery extends AbstractLifecycleComponent implements Discover
         return pingResponses;
     }
 
-    protected void rejoin(String reason) {
-        assert Thread.holdsLock(stateMutex);
-        ClusterState clusterState = committedState.get();
+    protected void rejoin(String reason) { // NOTE:htt, 重新加入集群
+        assert Thread.holdsLock(stateMutex); // NOTE:htt, 确保当前线程持有stateMutex锁
+        ClusterState clusterState = committedState.get(); // NOTE:htt, 获取最后提交的集群状态
 
-        logger.warn("{}, current nodes: {}", reason, clusterState.nodes());
+        logger.warn("{}, current nodes: {}", reason, clusterState.nodes()); // NOTE:htt, 打印当前集群状态
         nodesFD.stop(); // NOTE:htt, 停止对所有其他节点探测（当前角色是主master节点）
-        masterFD.stop(reason); // NOTE:htt, 停止对master节点探测（当前角色是非主master节点，如数据节点）
+        masterFD.stop(reason); // NOTE:htt, 停止对master节点探测（当前角色是非主master 节点，如数据节点）
 
         // TODO: do we want to force a new thread if we actively removed the master? this is to give a full pinging cycle
         // before a decision is made.
-        joinThreadControl.startNewThreadIfNotRunning(); // TODO:htt, 重新发起探测
+        // NOTE:htt, TODO: 是否需要强制新线程，如果主动移除了主节点？
+        // 如果主动移除了主节点，则需要强制新线程，以确保在做出决策之前进行完整的pinging周期。
+        joinThreadControl.startNewThreadIfNotRunning(); // NOTE:htt, 重新发起探测
 
-        if (clusterState.nodes().getMasterNodeId() != null) {
+        if (clusterState.nodes().getMasterNodeId() != null) { // NOTE:htt, 如果当前集群状态有主节点，则移除主节点
             // remove block if it already exists before adding new one
-            assert clusterState.blocks().hasGlobalBlock(discoverySettings.getNoMasterBlock().id()) == false :
-                "NO_MASTER_BLOCK should only be added by ZenDiscovery";
-            ClusterBlocks clusterBlocks = ClusterBlocks.builder().blocks(clusterState.blocks())
-                .addGlobalBlock(discoverySettings.getNoMasterBlock())
-                .build();
+            assert clusterState.blocks().hasGlobalBlock(discoverySettings.getNoMasterBlock().id()) == false : // NOTE:htt, 确保当前集群状态没有NO_MASTER_BLOCK
+                "NO_MASTER_BLOCK should only be added by ZenDiscovery"; // NOTE:htt, NO_MASTER_BLOCK应该仅由ZenDiscovery添加
+            ClusterBlocks clusterBlocks = ClusterBlocks.builder().blocks(clusterState.blocks()) // NOTE:htt, 创建新的集群状态
+                .addGlobalBlock(discoverySettings.getNoMasterBlock()) // NOTE:htt, 添加NO_MASTER_BLOCK
+                .build(); // NOTE:htt, 构建新的集群状态
 
-            DiscoveryNodes discoveryNodes = new DiscoveryNodes.Builder(clusterState.nodes()).masterNodeId(null).build();
-            clusterState = ClusterState.builder(clusterState)
-                .blocks(clusterBlocks)
-                .nodes(discoveryNodes)
-                .build();
+            DiscoveryNodes discoveryNodes = new DiscoveryNodes.Builder(clusterState.nodes()).masterNodeId(null).build(); // NOTE:htt, 创建新的集群状态
+            clusterState = ClusterState.builder(clusterState) // NOTE:htt, 创建新的集群状态
+                .blocks(clusterBlocks) // NOTE:htt, 添加NO_MASTER_BLOCK
+                .nodes(discoveryNodes) // NOTE:htt, 移除主节点
+                .build(); // NOTE:htt, 构建新的集群状态
 
-            committedState.set(clusterState);
-            clusterApplier.onNewClusterState(reason, this::clusterState, (source, e) -> {}); // don't wait for state to be applied
+            committedState.set(clusterState); // NOTE:htt, 设置新的集群状态
+            clusterApplier.onNewClusterState(reason, this::clusterState, (source, e) -> {}); // NOTE:htt, 应用新的集群状态，不等待集群状态应用完成
         }
     }
 
@@ -1206,55 +1212,64 @@ public class ZenDiscovery extends AbstractLifecycleComponent implements Discover
      * This is important to make sure that the background joining process is always in sync with any cluster state updates
      * like master loss, failure to join, received cluster state while joining etc.
      */
-    private class JoinThreadControl {
+    // NOTE:htt, 所有join线程的控制都应该在集群状态更新任务线程下进行。
+    // 这一点很重要，以确保后台join进程始终与任何集群状态更新保持同步，例如主节点丢失、加入失败、加入时收到集群状态等。
+    private class JoinThreadControl { // NOTE:htt, 控制join线程的启动、停止、标记完成等操作
 
-        private final AtomicBoolean running = new AtomicBoolean(false);
-        private final AtomicReference<Thread> currentJoinThread = new AtomicReference<>();
+        private final AtomicBoolean running = new AtomicBoolean(false); // NOTE:htt, 是否启动join线程
+        private final AtomicReference<Thread> currentJoinThread = new AtomicReference<>(); // NOTE:htt, 当前join线程
 
         /** returns true if join thread control is started and there is currently an active join thread */
-        public boolean joinThreadActive() {
-            Thread currentThread = currentJoinThread.get();
-            return running.get() && currentThread != null && currentThread.isAlive();
-        }
+        // NOTE:htt, 返回true如果join线程控制已启动且当前有活跃的join线程
+        public boolean joinThreadActive() { // NOTE:htt, 返回true如果join线程控制已启动且当前有活跃的join线程
+            Thread currentThread = currentJoinThread.get(); // NOTE:htt, 当前join线程
+            return running.get() && currentThread != null && currentThread.isAlive(); // NOTE:htt, 如果join线程控制已启动且当前有活跃的join线程，则返回true
+        }   
 
         /** returns true if join thread control is started and the supplied thread is the currently active joinThread */
-        public boolean joinThreadActive(Thread joinThread) {
-            return running.get() && joinThread.equals(currentJoinThread.get());
+        // NOTE:htt, 返回true如果join线程控制已启动且供应的线程是当前活跃的join线程
+        public boolean joinThreadActive(Thread joinThread) { // NOTE:htt, 返回true如果join线程控制已启动且供应的线程是当前活跃的join线程
+            return running.get() && joinThread.equals(currentJoinThread.get()); // NOTE:htt, 如果join线程控制已启动且供应的线程是当前活跃的join线程，则返回true
         }
 
         /** cleans any running joining thread and calls {@link #rejoin} */
-        public void stopRunningThreadAndRejoin(String reason) {
-            assert Thread.holdsLock(stateMutex);
-            currentJoinThread.set(null);
-            rejoin(reason);
+        // NOTE:htt, 停止任何活跃的join线程并调用{@link #rejoin}
+        public void stopRunningThreadAndRejoin(String reason) { // NOTE:htt, 停止任何活跃的join线程并调用{@link #rejoin}
+            assert Thread.holdsLock(stateMutex); // NOTE:htt, 确保当前线程持有stateMutex锁
+            currentJoinThread.set(null); // NOTE:htt, 设置当前join线程为null
+            rejoin(reason); // NOTE:htt, 重新加入集群
         }
 
         /** starts a new joining thread if there is no currently active one and join thread controlling is started */
-        public void startNewThreadIfNotRunning() {
-            assert Thread.holdsLock(stateMutex);
-            if (joinThreadActive()) {
-                return;
+        // NOTE:htt, 如果当前没有活跃的join线程且join线程控制已启动，则启动一个新的join线程
+        public void startNewThreadIfNotRunning() { // NOTE:htt, 如果当前没有活跃的join线程且join线程控制已启动，则启动一个新的join线程
+            assert Thread.holdsLock(stateMutex); // NOTE:htt, 确保当前线程持有stateMutex锁
+            if (joinThreadActive()) { // NOTE:htt, 如果当前有活跃的join线程，则返回
+                return; // NOTE:htt, 如果当前有活跃的join线程，则返回
             }
-            threadPool.generic().execute(new Runnable() {
+            threadPool.generic().execute(new Runnable() { // NOTE:htt, 执行新的join线程
                 @Override
                 public void run() {
-                    Thread currentThread = Thread.currentThread();
-                    if (!currentJoinThread.compareAndSet(null, currentThread)) {
-                        return;
+                    Thread currentThread = Thread.currentThread(); // NOTE:htt, 当前线程
+                    if (!currentJoinThread.compareAndSet(null, currentThread)) { // NOTE:htt, 如果当前join线程不为null，则返回
+                        return; // NOTE:htt, 如果当前join线程不为null，则返回
                     }
-                    while (running.get() && joinThreadActive(currentThread)) {
+                    while (running.get() && joinThreadActive(currentThread)) { // NOTE:htt, 如果join线程控制已启动且当前线程是活跃的join线程，则继续循环
                         try {
-                            innerJoinCluster();
-                            return;
+                            innerJoinCluster(); // NOTE:htt, 执行join操作
+                            return; // NOTE:htt, 如果join操作成功，则返回
                         } catch (Exception e) {
-                            logger.error("unexpected error while joining cluster, trying again", e);
+                            logger.error("unexpected error while joining cluster, trying again", e); // NOTE:htt, 打印异常
                             // Because we catch any exception here, we want to know in
                             // tests if an uncaught exception got to this point and the test infra uncaught exception
                             // leak detection can catch this. In practise no uncaught exception should leak
-                            assert ExceptionsHelper.reThrowIfNotNull(e);
+                            // NOTE:htt, 因为这里捕获了任何异常，我们希望在测试中知道是否有未捕获的异常到达这一点，并且测试基础设施的未捕获异常泄漏检测可以捕获这一点。
+                            // 在实践中，不应该有未捕获的异常到达这一点。
+                            assert ExceptionsHelper.reThrowIfNotNull(e); // NOTE:htt, 如果异常不为null，则抛出异常
                         }
                     }
                     // cleaning the current thread from currentJoinThread is done by explicit calls.
+                    // NOTE:htt, 从currentJoinThread中清理当前线程，通过显式调用完成
                 }
             });
         }
@@ -1263,30 +1278,32 @@ public class ZenDiscovery extends AbstractLifecycleComponent implements Discover
          * marks the given joinThread as completed and makes sure another thread is running (starting one if needed)
          * If the given thread is not the currently running join thread, the command is ignored.
          */
-        public void markThreadAsDoneAndStartNew(Thread joinThread) {
-            assert Thread.holdsLock(stateMutex);
-            if (!markThreadAsDone(joinThread)) {
-                return;
+        // NOTE:htt, 标记给定的join线程为完成，并确保另一个线程正在运行（如果需要则启动一个）。
+        // 如果供应的线程不是当前活跃的join线程，则命令被忽略。
+        public void markThreadAsDoneAndStartNew(Thread joinThread) { // NOTE:htt, 标记给定的join线程为完成，并确保另一个线程正在运行（如果需要则启动一个）。
+            assert Thread.holdsLock(stateMutex); // NOTE:htt, 确保当前线程持有stateMutex锁
+            if (!markThreadAsDone(joinThread)) { // NOTE:htt, 如果供应的线程不是当前活跃的join线程，则命令被忽略。
+                return; // NOTE:htt, 如果供应的线程不是当前活跃的join线程，则命令被忽略。
             }
-            startNewThreadIfNotRunning();
+            startNewThreadIfNotRunning(); // NOTE:htt, 启动一个新的join线程
         }
 
         /** marks the given joinThread as completed. Returns false if the supplied thread is not the currently active join thread */
-        public boolean markThreadAsDone(Thread joinThread) {
-            assert Thread.holdsLock(stateMutex);
-            return currentJoinThread.compareAndSet(joinThread, null);
+        public boolean markThreadAsDone(Thread joinThread) { // NOTE:htt, 标记给定的join线程为完成。如果供应的线程不是当前活跃的join线程，则返回false
+            assert Thread.holdsLock(stateMutex); // NOTE:htt, 确保当前线程持有stateMutex锁
+            return currentJoinThread.compareAndSet(joinThread, null); // NOTE:htt, 如果当前join线程与供应的线程相等，则设置为null，并返回true
         }
 
-        public void stop() {
-            running.set(false);
-            Thread joinThread = currentJoinThread.getAndSet(null);
-            if (joinThread != null) {
-                joinThread.interrupt();
+        public void stop() { // NOTE:htt, 停止join线程控制
+            running.set(false); // NOTE:htt, 设置running为false
+            Thread joinThread = currentJoinThread.getAndSet(null); // NOTE:htt, 获取当前join线程并设置为null
+            if (joinThread != null) { // NOTE:htt, 如果当前join线程不为null，则中断
+                joinThread.interrupt(); // NOTE:htt, 中断当前join线程
             }
         }
 
-        public void start() {
-            running.set(true);
+        public void start() { // NOTE:htt, 启动join线程控制
+            running.set(true); // NOTE:htt, 设置running为true
         }
 
     }
