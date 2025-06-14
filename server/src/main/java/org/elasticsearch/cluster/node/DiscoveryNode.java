@@ -42,9 +42,9 @@ import java.util.function.Predicate;
 /**
  * A discovery node represents a node that is part of the cluster.
  */
-public class DiscoveryNode implements Writeable, ToXContentFragment {
+public class DiscoveryNode implements Writeable, ToXContentFragment { // NODE: htt, discovery node represent a node of cluster which also may create local node,该节点信息是集群间通信，node中不能随意增加字段，因为通信间不兼容
 
-    public static boolean nodeRequiresLocalStorage(Settings settings) {
+    public static boolean nodeRequiresLocalStorage(Settings settings) { // NOTE: htt, local storage for data node or master node
         boolean localStorageEnable = Node.NODE_LOCAL_STORAGE_SETTING.get(settings);
         if (localStorageEnable == false &&
             (Node.NODE_DATA_SETTING.get(settings) ||
@@ -56,27 +56,27 @@ public class DiscoveryNode implements Writeable, ToXContentFragment {
         return localStorageEnable;
     }
 
-    public static boolean isMasterNode(Settings settings) {
+    public static boolean isMasterNode(Settings settings) {  // NOTE:htt, 判断是否为master节点
         return Node.NODE_MASTER_SETTING.get(settings);
     }
 
-    public static boolean isDataNode(Settings settings) {
+    public static boolean isDataNode(Settings settings) { // NOTE:htt, 数据节点
         return Node.NODE_DATA_SETTING.get(settings);
     }
 
-    public static boolean isIngestNode(Settings settings) {
+    public static boolean isIngestNode(Settings settings) { // NOTE:htt, 判断是否为 ingest节点
         return Node.NODE_INGEST_SETTING.get(settings);
     }
 
-    private final String nodeName;
-    private final String nodeId;
-    private final String ephemeralId;
-    private final String hostName;
-    private final String hostAddress;
-    private final TransportAddress address;
-    private final Map<String, String> attributes;
-    private final Version version;
-    private final Set<Role> roles;
+    private final String nodeName; // NOTE: htt, node.name,节点名称
+    private final String nodeId;	// NOTE: htt, node id，节点ID
+    private final String ephemeralId; // NOTE:htt, 临时节点，每次节点DiscoveryNode创建后都会随机生成一个
+    private final String hostName;	// NOTE: htt, node host name
+    private final String hostAddress; // NOTE: htt, node host address
+    private final TransportAddress address; // NOTE: htt, node ip port
+    private final Map<String, String> attributes; // NOTE: htt，节点属性, node attr, <zone, cold_chengdu>, <zone, hot_chengdu>
+    private final Version version; // NOTE: htt, 节点当前ES的版本，node version
+    private final Set<Role> roles; // NOTE: htt, node role，用于区分 master/data/ingest 节点，可以有多个角色属性信息
 
 
     /**
@@ -188,7 +188,7 @@ public class DiscoveryNode implements Writeable, ToXContentFragment {
     }
 
     /** Creates a DiscoveryNode representing the local node. */
-    public static DiscoveryNode createLocal(Settings settings, TransportAddress publishAddress, String nodeId) {
+    public static DiscoveryNode createLocal(Settings settings, TransportAddress publishAddress, String nodeId) { // NOTE: htt, create local node
         Map<String, String> attributes = Node.NODE_ATTRIBUTES.getAsMap(settings);
         Set<Role> roles = getRolesFromSettings(settings);
         return new DiscoveryNode(Node.NODE_NAME_SETTING.get(settings), nodeId, publishAddress, attributes, roles, Version.CURRENT);
@@ -310,7 +310,7 @@ public class DiscoveryNode implements Writeable, ToXContentFragment {
     /**
      * Can this node become master or not.
      */
-    public boolean isMasterNode() {
+    public boolean isMasterNode() { // NOTE: htt, 是否为master角色
         return roles.contains(Role.MASTER);
     }
 
@@ -364,7 +364,7 @@ public class DiscoveryNode implements Writeable, ToXContentFragment {
     }
 
     @Override
-    public String toString() {
+    public String toString() { // NOTE:htt, 节点 字符串信息
         StringBuilder sb = new StringBuilder();
         if (nodeName.length() > 0) {
             sb.append('{').append(nodeName).append('}');
@@ -400,7 +400,7 @@ public class DiscoveryNode implements Writeable, ToXContentFragment {
      * Enum that holds all the possible roles that that a node can fulfill in a cluster.
      * Each role has its name and a corresponding abbreviation used by cat apis.
      */
-    public enum Role {
+    public enum Role { // NOTE: htt, role of es include master/data/ingest
         MASTER("master", "m"), // NOTE:htt, master节点
         DATA("data", "d"), // NOTE:htt, 数据节点
         INGEST("ingest", "i"); // NOTE:htt, ingest节点

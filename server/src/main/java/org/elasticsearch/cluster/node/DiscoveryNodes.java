@@ -45,17 +45,17 @@ import java.util.stream.StreamSupport;
  * This class holds all {@link DiscoveryNode} in the cluster and provides convenience methods to
  * access, modify merge / diff discovery nodes.
  */
-public class DiscoveryNodes extends AbstractDiffable<DiscoveryNodes> implements Iterable<DiscoveryNode> {
+public class DiscoveryNodes extends AbstractDiffable<DiscoveryNodes> implements Iterable<DiscoveryNode> { // NOTE: htt,集群节点, discovery nodes include dataNodes/masterNodes
 
     public static final DiscoveryNodes EMPTY_NODES = builder().build();
 
-    private final ImmutableOpenMap<String, DiscoveryNode> nodes;
-    private final ImmutableOpenMap<String, DiscoveryNode> dataNodes;
-    private final ImmutableOpenMap<String, DiscoveryNode> masterNodes;
-    private final ImmutableOpenMap<String, DiscoveryNode> ingestNodes;
+    private final ImmutableOpenMap<String, DiscoveryNode> nodes; // NOTE: htt, 集群中所有的节点，all nodes, which key is nodeId, value is node
+    private final ImmutableOpenMap<String, DiscoveryNode> dataNodes; // NOTE: htt, data nodes, <节点id, 节点>
+    private final ImmutableOpenMap<String, DiscoveryNode> masterNodes; // NOTE: htt, master节点
+    private final ImmutableOpenMap<String, DiscoveryNode> ingestNodes;  // NOTE: htt, ingest节点，文档写入之前的预处理
 
-    private final String masterNodeId;
-    private final String localNodeId;
+    private final String masterNodeId; // NOTE: htt, master nodeId，当选的master节点
+    private final String localNodeId; // NOTE: htt, local nodeId， 当前节点
     private final Version minNonClientNodeVersion;
     private final Version maxNonClientNodeVersion;
     private final Version maxNodeVersion;
@@ -297,7 +297,7 @@ public class DiscoveryNodes extends AbstractDiffable<DiscoveryNodes> implements 
      * - a "attr:value" pattern, where attr can be a node role (master, data, ingest etc.) in which case the value can be true of false
      *   or a generic node attribute name in which case value will be treated as a wildcard and matched against the node attribute values.
      */
-    public String[] resolveNodes(String... nodes) {
+    public String[] resolveNodes(String... nodes) { // NOTE:htt, 通过nodes解析对应节点的id信息
         if (nodes == null || nodes.length == 0) {
             return StreamSupport.stream(this.spliterator(), false).map(DiscoveryNode::getId).toArray(String[]::new);
         } else {
@@ -306,15 +306,15 @@ public class DiscoveryNodes extends AbstractDiffable<DiscoveryNodes> implements 
                 if (nodeId.equals("_local")) {
                     String localNodeId = getLocalNodeId();
                     if (localNodeId != null) {
-                        resolvedNodesIds.add(localNodeId);
+                        resolvedNodesIds.add(localNodeId); // NOTE:htt, 本地节点id
                     }
                 } else if (nodeId.equals("_master")) {
                     String masterNodeId = getMasterNodeId();
                     if (masterNodeId != null) {
-                        resolvedNodesIds.add(masterNodeId);
+                        resolvedNodesIds.add(masterNodeId); // NOTE:htt, 添加master节点id
                     }
                 } else if (nodeExists(nodeId)) {
-                    resolvedNodesIds.add(nodeId);
+                    resolvedNodesIds.add(nodeId); // NOTE:htt, 已存在的节点，则直接添加
                 } else {
                     for (DiscoveryNode node : this) {
                         if ("_all".equals(nodeId)
@@ -324,25 +324,25 @@ public class DiscoveryNodes extends AbstractDiffable<DiscoveryNodes> implements 
                             resolvedNodesIds.add(node.getId());
                         }
                     }
-                    int index = nodeId.indexOf(':');
+                    int index = nodeId.indexOf(':'); // NOTE:htt, 截下 attr:value 信息，获取节点信息，如 data:true
                     if (index != -1) {
                         String matchAttrName = nodeId.substring(0, index);
                         String matchAttrValue = nodeId.substring(index + 1);
-                        if (DiscoveryNode.Role.DATA.getRoleName().equals(matchAttrName)) {
-                            if (Booleans.parseBoolean(matchAttrValue, true)) {
-                                resolvedNodesIds.addAll(dataNodes.keys());
+                        if (DiscoveryNode.Role.DATA.getRoleName().equals(matchAttrName)) { // NOTE:htt, date节点
+                            if (Booleans.parseBoolean(matchAttrValue, true)) { // NOTE:htt, 添加数据节点为true
+                                resolvedNodesIds.addAll(dataNodes.keys()); // NOTE:htt, 添加所有data节点
                             } else {
-                                resolvedNodesIds.removeAll(dataNodes.keys());
+                                resolvedNodesIds.removeAll(dataNodes.keys());// NOTE:htt, 否则移除所有的data节点
                             }
-                        } else if (DiscoveryNode.Role.MASTER.getRoleName().equals(matchAttrName)) {
+                        } else if (DiscoveryNode.Role.MASTER.getRoleName().equals(matchAttrName)) { // NOTE:htt, master节点
                             if (Booleans.parseBoolean(matchAttrValue, true)) {
-                                resolvedNodesIds.addAll(masterNodes.keys());
+                                resolvedNodesIds.addAll(masterNodes.keys()); // NOTE:htt, 如果添加master节点为true，则添加所有的master节点
                             } else {
                                 resolvedNodesIds.removeAll(masterNodes.keys());
                             }
-                        } else if (DiscoveryNode.Role.INGEST.getRoleName().equals(matchAttrName)) {
+                        } else if (DiscoveryNode.Role.INGEST.getRoleName().equals(matchAttrName)) { // NOTE:htt, ingest节点
                             if (Booleans.parseBoolean(matchAttrValue, true)) {
-                                resolvedNodesIds.addAll(ingestNodes.keys());
+                                resolvedNodesIds.addAll(ingestNodes.keys()); // NOTE:htt, 如果添加ingest节点为true，则添加ingest节点
                             } else {
                                 resolvedNodesIds.removeAll(ingestNodes.keys());
                             }
@@ -371,7 +371,7 @@ public class DiscoveryNodes extends AbstractDiffable<DiscoveryNodes> implements 
     /**
      * Returns the changes comparing this nodes to the provided nodes.
      */
-    public Delta delta(DiscoveryNodes other) {
+    public Delta delta(DiscoveryNodes other) { // NOTE: htt, changes comparing nodes
         List<DiscoveryNode> removed = new ArrayList<>();
         List<DiscoveryNode> added = new ArrayList<>();
         for (DiscoveryNode node : other) {
@@ -413,7 +413,7 @@ public class DiscoveryNodes extends AbstractDiffable<DiscoveryNodes> implements 
         return sb.toString();
     }
 
-    public static class Delta {
+    public static class Delta { // NOTE: htt, delta，上次变更的节点列表
 
         private final String localNodeId;
         private final DiscoveryNode previousMasterNode;
@@ -560,7 +560,7 @@ public class DiscoveryNodes extends AbstractDiffable<DiscoveryNodes> implements 
         return new Builder(nodes);
     }
 
-    public static class Builder {
+    public static class Builder { // NOTE: htt, builder discovery nodes
 
         private final ImmutableOpenMap.Builder<String, DiscoveryNode> nodes;
         private String masterNodeId;
@@ -616,7 +616,7 @@ public class DiscoveryNodes extends AbstractDiffable<DiscoveryNodes> implements 
         }
 
 
-        public Builder masterNodeId(String masterNodeId) {
+        public Builder masterNodeId(String masterNodeId) { // NOTE:htt, 设置当前的master node，在当选为master节点之后会使用
             this.masterNodeId = masterNodeId;
             return this;
         }

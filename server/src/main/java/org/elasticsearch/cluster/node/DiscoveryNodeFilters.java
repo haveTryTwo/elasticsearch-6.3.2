@@ -31,9 +31,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-public class DiscoveryNodeFilters {
+public class DiscoveryNodeFilters { // NOTE: htt, 节点过滤条件以及组合方式 （AND/OR)，判断当前是否为对应节点
 
-    public enum OpType { // NOTE:htt, 操作类型
+    public enum OpType { // NOTE: htt, node op (and may be include, or may be require, TODO: check)
         AND,
         OR
     }
@@ -46,8 +46,8 @@ public class DiscoveryNodeFilters {
     public static final BiConsumer<String, String> IP_VALIDATOR = (propertyKey, rawValue) -> {
         if (rawValue != null) {
             if (propertyKey.endsWith("._ip") || propertyKey.endsWith("._host_ip") || propertyKey.endsWith("_publish_ip")) {
-                for (String value : Strings.tokenizeToStringArray(rawValue, ",")) {
-                    if (Regex.isSimpleMatchPattern(value) == false && InetAddresses.isInetAddress(value) == false) {
+                for (String value : Strings.tokenizeToStringArray(rawValue, ",")) { // NOTE: htt, 按 , 分割ip
+                    if (Regex.isSimpleMatchPattern(value) == false && InetAddresses.isInetAddress(value) == false) { // NOTE: htt, 校验ip
                         throw new IllegalArgumentException("invalid IP address [" + value + "] for [" + propertyKey + "]");
                     }
                 }
@@ -69,16 +69,16 @@ public class DiscoveryNodeFilters {
         return new DiscoveryNodeFilters(opType, bFilters);
     }
 
-    private final Map<String, String[]> filters;
+    private final Map<String, String[]> filters; // NOTE: htt, 一个key以及对应filters，如_ip 对应 1.1.1.1,2.2.2.2
 
-    private final OpType opType;
+    private final OpType opType; // NOTE: htt, 联合方式， AND 和 OR
 
     DiscoveryNodeFilters(OpType opType, Map<String, String[]> filters) {
         this.opType = opType;
         this.filters = filters;
     }
 
-    private boolean matchByIP(String[] values, @Nullable String hostIp, @Nullable String publishIp) {
+    private boolean matchByIP(String[] values, @Nullable String hostIp, @Nullable String publishIp) { // NOTE: htt, 遍历满足条件的ip，有满足的ip则直接返回，否则继续判断
         for (String value : values) {
             boolean matchIp = Regex.simpleMatch(value, hostIp) || Regex.simpleMatch(value, publishIp);
             if (matchIp) {
@@ -89,19 +89,19 @@ public class DiscoveryNodeFilters {
     }
 
     public boolean match(DiscoveryNode node) {
-        for (Map.Entry<String, String[]> entry : filters.entrySet()) {
+        for (Map.Entry<String, String[]> entry : filters.entrySet()) { // NOTE: htt, and条件只要一个不符合则返回false, or条件只要一个符合返回true
             String attr = entry.getKey();
             String[] values = entry.getValue();
-            if ("_ip".equals(attr)) {
+            if ("_ip".equals(attr)) { // NOTE: htt, _ip 判断
                 // We check both the host_ip or the publish_ip
                 String publishAddress = null;
                 if (node.getAddress() instanceof TransportAddress) {
                     publishAddress = NetworkAddress.format(node.getAddress().address().getAddress());
                 }
-
+                // NOTE: htt, 判断ip是否相等
                 boolean match = matchByIP(values, node.getHostAddress(), publishAddress);
 
-                if (opType == OpType.AND) {
+                if (opType == OpType.AND) { // NOTE: htt, and would check all ip
                     if (match) {
                         // If we match, we can check to the next filter
                         continue;
@@ -109,7 +109,7 @@ public class DiscoveryNodeFilters {
                     return false;
                 }
 
-                if (match && opType == OpType.OR) {
+                if (match && opType == OpType.OR) { // NOTE: htt, OR组合下，只要有一个 attribute 满足即返回yes
                     return true;
                 }
             } else if ("_host_ip".equals(attr)) {
@@ -123,7 +123,7 @@ public class DiscoveryNodeFilters {
                     return false;
                 }
 
-                if (match && opType == OpType.OR) {
+                if (match && opType == OpType.OR) { // NOTE: htt, OR组合下，只要有一个 attribute 满足即返回yes
                     return true;
                 }
             } else if ("_publish_ip".equals(attr)) {
