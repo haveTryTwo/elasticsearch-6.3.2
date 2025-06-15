@@ -129,7 +129,7 @@ public class ClusterApplierService extends AbstractLifecycleComponent implements
     }
 
     @Override
-    protected synchronized void doStart() { // NOTE: emep, start which add listener and create threadPool
+    protected synchronized void doStart() { // NOTE: htt, start which add listener and create threadPool
         Objects.requireNonNull(nodeConnectionsService, "please set the node connection service before starting");
         Objects.requireNonNull(state.get(), "please set initial state before starting");
         addListener(localNodeMasterListeners);

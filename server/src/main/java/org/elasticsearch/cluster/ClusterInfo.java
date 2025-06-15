@@ -38,12 +38,12 @@ import java.util.Map;
  * <code>InternalClusterInfoService.shardIdentifierFromRouting(String)</code>
  * for the key used in the shardSizes map
  */
-public class ClusterInfo implements ToXContentFragment, Writeable {
-    private final ImmutableOpenMap<String, DiskUsage> leastAvailableSpaceUsage;
-    private final ImmutableOpenMap<String, DiskUsage> mostAvailableSpaceUsage;
-    final ImmutableOpenMap<String, Long> shardSizes;
+public class ClusterInfo implements ToXContentFragment, Writeable { // NOTE: htt, 集群信息，包括 节点对应磁盘使用，shard在节点上路由以及大小
+    private final ImmutableOpenMap<String, DiskUsage> leastAvailableSpaceUsage; // NOTE: htt, <节点，磁盘使用率> 每个节点上最少可用空间（节点上有四个盘，则剩余空间最小的盘）
+    private final ImmutableOpenMap<String, DiskUsage> mostAvailableSpaceUsage; // NOTE; htt, <节点，磁盘使用率> 每个节点上最多可用空间（节点有四个盘，则剩余空间最大的盘）
+    final ImmutableOpenMap<String, Long> shardSizes; // NOTE: htt, shards大小，如 <[test_one][0][p], size>
     public static final ClusterInfo EMPTY = new ClusterInfo();
-    final ImmutableOpenMap<ShardRouting, String> routingToDataPath;
+    final ImmutableOpenMap<ShardRouting, String> routingToDataPath; // NOTE: htt, shard对应路径，如 <shardRouting, dataPath>
 
     protected ClusterInfo() {
        this(ImmutableOpenMap.of(), ImmutableOpenMap.of(), ImmutableOpenMap.of(), ImmutableOpenMap.of());
@@ -171,14 +171,14 @@ public class ClusterInfo implements ToXContentFragment, Writeable {
     /**
      * Returns the nodes absolute data-path the given shard is allocated on or <code>null</code> if the information is not available.
      */
-    public String getDataPath(ShardRouting shardRouting) {
+    public String getDataPath(ShardRouting shardRouting) { // NOTE:htt, 获取shard对应的绝对路径
         return routingToDataPath.get(shardRouting);
     }
 
     /**
      * Returns the shard size for the given shard routing or <code>defaultValue</code> it that metric is not available.
      */
-    public long getShardSize(ShardRouting shardRouting, long defaultValue) {
+    public long getShardSize(ShardRouting shardRouting, long defaultValue) { // NOTE:htt, 获取shard的大小信息
         Long shardSize = getShardSize(shardRouting);
         return shardSize == null ? defaultValue : shardSize;
     }
@@ -187,7 +187,7 @@ public class ClusterInfo implements ToXContentFragment, Writeable {
      * Method that incorporates the ShardId for the shard into a string that
      * includes a 'p' or 'r' depending on whether the shard is a primary.
      */
-    static String shardIdentifierFromRouting(ShardRouting shardRouting) {
+    static String shardIdentifierFromRouting(ShardRouting shardRouting) { // NOTE:htt, 名称向  [test_one][0][p] [${indexName}][${shardId}][p/r]
         return shardRouting.shardId().toString() + "[" + (shardRouting.primary() ? "p" : "r") + "]";
     }
 }

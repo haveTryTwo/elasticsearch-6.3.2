@@ -88,14 +88,14 @@ import java.util.Set;
  * throws the {@link IncompatibleClusterStateVersionException}, which causes the publishing mechanism to send
  * a full version of the cluster state to the node on which this exception was thrown.
  */
-public class ClusterState implements ToXContentFragment, Diffable<ClusterState> {
+public class ClusterState implements ToXContentFragment, Diffable<ClusterState> { // NOTE: htt, clusteState including version/stateUUID/routingTable/nodes/metaData/clusterBlock/clusterName
 
     public static final ClusterState EMPTY_STATE = builder(ClusterName.CLUSTER_NAME_SETTING.getDefault(Settings.EMPTY)).build();
 
     /**
      * An interface that implementors use when a class requires a client to maybe have a feature.
      */
-    public interface FeatureAware {
+    public interface FeatureAware { // NOTE: htt, client's feature
 
         /**
          * An optional feature that is required for the client to have.
@@ -136,7 +136,7 @@ public class ClusterState implements ToXContentFragment, Diffable<ClusterState> 
 
     }
 
-    public interface Custom extends NamedDiffable<Custom>, ToXContentFragment, FeatureAware {
+    public interface Custom extends NamedDiffable<Custom>, ToXContentFragment, FeatureAware { // NOTE: htt, custom whether privte
 
         /**
          * Returns <code>true</code> iff this {@link Custom} is private to the cluster and should never be send to a client.
@@ -154,26 +154,26 @@ public class ClusterState implements ToXContentFragment, Diffable<ClusterState> 
 
     public static final long UNKNOWN_VERSION = -1;
 
-    private final long version;
+    private final long version; // NOTE: htt, 集群状态的版本
 
-    private final String stateUUID;
+    private final String stateUUID; // NOTE: htt, 集群状态的uuid
 
-    private final RoutingTable routingTable;
+    private final RoutingTable routingTable; // NOTE: htt, 节点所有索引的路由, cluster routing table including all indices routing tables
 
-    private final DiscoveryNodes nodes;
+    private final DiscoveryNodes nodes; // NOTE: htt, cluster nodes，集群状态中nodes.localNode即materNode本身
 
-    private final MetaData metaData;
+    private final MetaData metaData; // NOTE: htt, cluster meta info，包括集群配置，所有索引、模板等
 
-    private final ClusterBlocks blocks;
+    private final ClusterBlocks blocks; // NOTE: htt, 集群以及索引的路由阻塞信息, cluster blocks info
 
     private final ImmutableOpenMap<String, Custom> customs;
 
-    private final ClusterName clusterName;
+    private final ClusterName clusterName; // NOTE: htt, cluster name
 
     private final boolean wasReadFromDiff;
 
     // built on demand
-    private volatile RoutingNodes routingNodes;
+    private volatile RoutingNodes routingNodes; // NOTE: htt, 路由节点信息， routingNodes info
 
     public ClusterState(long version, String stateUUID, ClusterState state) {
         this(state.clusterName, version, stateUUID, state.metaData(), state.routingTable(), state.nodes(), state.blocks(), state.customs(),
@@ -321,13 +321,13 @@ public class ClusterState implements ToXContentFragment, Diffable<ClusterState> 
      * <p>
      * In essence that means that all the changes from the other cluster state are also reflected by the current one
      */
-    public boolean supersedes(ClusterState other) {
+    public boolean supersedes(ClusterState other) { // NOTE:htt, 判断当前集群状态是否比其他集群状态更新
         return this.nodes().getMasterNodeId() != null && this.nodes().getMasterNodeId().equals(other.nodes().getMasterNodeId())
             && this.version() > other.version();
 
     }
 
-    public enum Metric {
+    public enum Metric { // NOTE: htt, metric of clusterState
         VERSION("version"),
         MASTER_NODE("master_node"),
         BLOCKS("blocks"),
@@ -581,15 +581,15 @@ public class ClusterState implements ToXContentFragment, Diffable<ClusterState> 
         return new Builder(state);
     }
 
-    public static class Builder {
+    public static class Builder { // NOTE: htt, builder cluster state
 
         private final ClusterName clusterName;
         private long version = 0;
         private String uuid = UNKNOWN_UUID;
-        private MetaData metaData = MetaData.EMPTY_META_DATA;
+        private MetaData metaData = MetaData.EMPTY_META_DATA; // NOTE: htt, 集群元数据
         private RoutingTable routingTable = RoutingTable.EMPTY_ROUTING_TABLE;
         private DiscoveryNodes nodes = DiscoveryNodes.EMPTY_NODES;
-        private ClusterBlocks blocks = ClusterBlocks.EMPTY_CLUSTER_BLOCK;
+        private ClusterBlocks blocks = ClusterBlocks.EMPTY_CLUSTER_BLOCK; // NOTE:htt,
         private final ImmutableOpenMap.Builder<String, Custom> customs;
         private boolean fromDiff;
 
@@ -624,7 +624,7 @@ public class ClusterState implements ToXContentFragment, Diffable<ClusterState> 
             return nodes;
         }
 
-        public Builder routingTable(RoutingTable routingTable) {
+        public Builder routingTable(RoutingTable routingTable) { // NOTE:htt, 设置新的路由
             this.routingTable = routingTable;
             return this;
         }
@@ -653,7 +653,7 @@ public class ClusterState implements ToXContentFragment, Diffable<ClusterState> 
         }
 
         public Builder incrementVersion() {
-            this.version = version + 1;
+            this.version = version + 1; // NOTE: htt, 在集群状态更新时会加1
             this.uuid = UNKNOWN_UUID;
             return this;
         }
@@ -708,23 +708,23 @@ public class ClusterState implements ToXContentFragment, Diffable<ClusterState> 
     }
 
     @Override
-    public Diff<ClusterState> diff(ClusterState previousState) {
+    public Diff<ClusterState> diff(ClusterState previousState) {  // NOTE: htt, 获取集群状态的diff
         return new ClusterStateDiff(previousState, this);
     }
 
-    public static Diff<ClusterState> readDiffFrom(StreamInput in, DiscoveryNode localNode) throws IOException {
+    public static Diff<ClusterState> readDiffFrom(StreamInput in, DiscoveryNode localNode) throws IOException { // NOTE:htt, 读取序列化的diff数据
         return new ClusterStateDiff(in, localNode);
     }
 
-    public static ClusterState readFrom(StreamInput in, DiscoveryNode localNode) throws IOException {
-        ClusterName clusterName = new ClusterName(in);
+    public static ClusterState readFrom(StreamInput in, DiscoveryNode localNode) throws IOException { // NOTE:htt, 读取集群状态序列化信息
+        ClusterName clusterName = new ClusterName(in); // NOTE:htt, 读取cluster name
         Builder builder = new Builder(clusterName);
-        builder.version = in.readLong();
-        builder.uuid = in.readString();
-        builder.metaData = MetaData.readFrom(in);
-        builder.routingTable = RoutingTable.readFrom(in);
-        builder.nodes = DiscoveryNodes.readFrom(in, localNode);
-        builder.blocks = new ClusterBlocks(in);
+        builder.version = in.readLong(); // NOTE:htt, 读取version
+        builder.uuid = in.readString(); // NOTE:htt, 读取UUID
+        builder.metaData = MetaData.readFrom(in); // NOTE:htt, 读取元数据
+        builder.routingTable = RoutingTable.readFrom(in); // NOTE:htt, 读取路由表
+        builder.nodes = DiscoveryNodes.readFrom(in, localNode); // NOTE:htt, 读取nodes
+        builder.blocks = new ClusterBlocks(in); // NOTE:htt, 读取集群和索引拦截信息 blocks
         int customSize = in.readVInt();
         for (int i = 0; i < customSize; i++) {
             Custom customIndexMetaData = in.readNamedWriteable(Custom.class);
@@ -734,14 +734,14 @@ public class ClusterState implements ToXContentFragment, Diffable<ClusterState> 
     }
 
     @Override
-    public void writeTo(StreamOutput out) throws IOException {
-        clusterName.writeTo(out);
-        out.writeLong(version);
-        out.writeString(stateUUID);
-        metaData.writeTo(out);
-        routingTable.writeTo(out);
-        nodes.writeTo(out);
-        blocks.writeTo(out);
+    public void writeTo(StreamOutput out) throws IOException { // NOTE:htt, 序列化集群状态
+        clusterName.writeTo(out);  // NOTE: htt, write cluster name
+        out.writeLong(version);   // NOTE: htt, 写入 cluster state version
+        out.writeString(stateUUID); // NOTE:htt, 写入状态的uuid
+        metaData.writeTo(out); // NOTE: htt, 元数据写入到stream
+        routingTable.writeTo(out); // NOTE: htt, shard路由表写入到stream
+        nodes.writeTo(out); // NOTE: htt, 写入 nodes 信息
+        blocks.writeTo(out); // NOTE: htt, 写入 集群和索引拦截信息 blocks
         // filter out custom states not supported by the other node
         int numberOfCustoms = 0;
         for (final ObjectCursor<Custom> cursor : customs.values()) {
@@ -757,15 +757,15 @@ public class ClusterState implements ToXContentFragment, Diffable<ClusterState> 
         }
     }
 
-    private static class ClusterStateDiff implements Diff<ClusterState> {
+    private static class ClusterStateDiff implements Diff<ClusterState> { // NOTE: htt, 获取集群状态的diff
 
-        private final long toVersion;
+        private final long toVersion; // NOTE:htt, 新的集群状态的version
 
-        private final String fromUuid;
+        private final String fromUuid; // NOTE:htt, pre的UUid
 
-        private final String toUuid;
+        private final String toUuid; // NOTE:htt, to新的UUid
 
-        private final ClusterName clusterName;
+        private final ClusterName clusterName; // NOTE:htt, 新的集群名称
 
         private final Diff<RoutingTable> routingTable;
 
@@ -782,14 +782,14 @@ public class ClusterState implements ToXContentFragment, Diffable<ClusterState> 
             toUuid = after.stateUUID;
             toVersion = after.version;
             clusterName = after.clusterName;
-            routingTable = after.routingTable.diff(before.routingTable);
-            nodes = after.nodes.diff(before.nodes);
-            metaData = after.metaData.diff(before.metaData);
-            blocks = after.blocks.diff(before.blocks);
+            routingTable = after.routingTable.diff(before.routingTable); // NOTE: htt, 路由表的diff，包括待删除对象，diff值（保存的差异值），upserts值（保存key的全量值）
+            nodes = after.nodes.diff(before.nodes);  // NOTE: htt, 节点diff，直接保存全量的节点值
+            metaData = after.metaData.diff(before.metaData);  // NOTE: htt, 元信息diff，包括集群配置diff（保存全量新的diff），index的元信息的diff，索引模板的diff
+            blocks = after.blocks.diff(before.blocks); // NOTE: htt, 集群和索引的拦截信息的diff
             customs = DiffableUtils.diff(before.customs, after.customs, DiffableUtils.getStringKeySerializer(), CUSTOM_VALUE_SERIALIZER);
         }
 
-        ClusterStateDiff(StreamInput in, DiscoveryNode localNode) throws IOException {
+        ClusterStateDiff(StreamInput in, DiscoveryNode localNode) throws IOException { // NOTE:htt, 读取集群状态的diff数据
             clusterName = new ClusterName(in);
             fromUuid = in.readString();
             toUuid = in.readString();
@@ -802,7 +802,7 @@ public class ClusterState implements ToXContentFragment, Diffable<ClusterState> 
         }
 
         @Override
-        public void writeTo(StreamOutput out) throws IOException {
+        public void writeTo(StreamOutput out) throws IOException { // NOTE:htt, 将diff内容序列化到 out 流中
             clusterName.writeTo(out);
             out.writeString(fromUuid);
             out.writeString(toUuid);
@@ -815,13 +815,13 @@ public class ClusterState implements ToXContentFragment, Diffable<ClusterState> 
         }
 
         @Override
-        public ClusterState apply(ClusterState state) {
+        public ClusterState apply(ClusterState state) {  // NOTE:htt, 根据从stream获取的diff数据，以及当前的state数据，整合最新的集群状态
             Builder builder = new Builder(clusterName);
-            if (toUuid.equals(state.stateUUID)) {
+            if (toUuid.equals(state.stateUUID)) { // NOTE:htt, 如果集群状态已经最新，则返回
                 // no need to read the rest - cluster state didn't change
                 return state;
             }
-            if (fromUuid.equals(state.stateUUID) == false) {
+            if (fromUuid.equals(state.stateUUID) == false) { // NOTE:htt, 起始的集群状态uuid必须一致，否则当前的diff数据无效
                 throw new IncompatibleClusterStateVersionException(state.version, state.stateUUID, toVersion, fromUuid);
             }
             builder.stateUUID(toUuid);

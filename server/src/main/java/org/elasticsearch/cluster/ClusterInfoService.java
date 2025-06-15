@@ -23,7 +23,7 @@ package org.elasticsearch.cluster;
  * Interface for a class used to gather information about a cluster at
  * regular intervals
  */
-public interface ClusterInfoService {
+public interface ClusterInfoService { // NOTE: htt, get Cluster Info
 
     /** The latest cluster information */
     ClusterInfo getClusterInfo();

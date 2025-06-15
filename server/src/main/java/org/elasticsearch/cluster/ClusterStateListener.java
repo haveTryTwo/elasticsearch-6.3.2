@@ -24,7 +24,7 @@ package org.elasticsearch.cluster;
  *
  *
  */
-public interface ClusterStateListener {
+public interface ClusterStateListener { // NOTE: htt, cluster state listener
 
     /**
      * Called when cluster state changes.

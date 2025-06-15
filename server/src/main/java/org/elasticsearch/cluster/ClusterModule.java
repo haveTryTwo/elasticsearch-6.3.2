@@ -98,9 +98,9 @@ public class ClusterModule extends AbstractModule {
     public static final Setting<String> SHARDS_ALLOCATOR_TYPE_SETTING =
         new Setting<>("cluster.routing.allocation.type", BALANCED_ALLOCATOR, Function.identity(), Property.NodeScope);
 
-    private final ClusterService clusterService;
-    private final IndexNameExpressionResolver indexNameExpressionResolver;
-    private final AllocationDeciders allocationDeciders;
+    private final ClusterService clusterService; // NOTE: htt, clusterService deal with clusterState
+    private final IndexNameExpressionResolver indexNameExpressionResolver; // NOTE: htt, indexName resolver
+    private final AllocationDeciders allocationDeciders; // NOTE: htt, allocation decides
     private final AllocationService allocationService;
     // pkg private for tests
     final Collection<AllocationDecider> deciderList;

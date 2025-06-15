@@ -25,7 +25,7 @@ import org.elasticsearch.cluster.service.ClusterService;
  * A component that is in charge of applying an incoming cluster state to the node internal data structures.
  * The single apply method is called before the cluster state becomes visible via {@link ClusterService#state()}.
  */
-public interface ClusterStateApplier {
+public interface ClusterStateApplier { // NOTE; htt, cluster state applier
 
     /**
      * Called when a new cluster state ({@link ClusterChangedEvent#state()} needs to be applied
