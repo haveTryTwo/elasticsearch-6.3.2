@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * A builder for scaling executors.
  */
-public final class ScalingExecutorBuilder extends ExecutorBuilder<ScalingExecutorBuilder.ScalingExecutorSettings> {
+public final class ScalingExecutorBuilder extends ExecutorBuilder<ScalingExecutorBuilder.ScalingExecutorSettings> {	// NOTE: htt, scaling executor builder to create scaling executor service
 
     private final Setting<Integer> coreSetting;
     private final Setting<Integer> maxSetting;
@@ -90,7 +90,7 @@ public final class ScalingExecutorBuilder extends ExecutorBuilder<ScalingExecuto
         return new ScalingExecutorSettings(nodeName, coreThreads, maxThreads, keepAlive);
     }
 
-    ThreadPool.ExecutorHolder build(final ScalingExecutorSettings settings, final ThreadContext threadContext) {
+    ThreadPool.ExecutorHolder build(final ScalingExecutorSettings settings, final ThreadContext threadContext) {	// NOTE: htt, create scaling executor services
         TimeValue keepAlive = settings.keepAlive;
         int core = settings.core;
         int max = settings.max;
@@ -119,11 +119,11 @@ public final class ScalingExecutorBuilder extends ExecutorBuilder<ScalingExecuto
             info.getKeepAlive());
     }
 
-    static class ScalingExecutorSettings extends ExecutorBuilder.ExecutorSettings {
+    static class ScalingExecutorSettings extends ExecutorBuilder.ExecutorSettings {	// NOTE; htt, scaling number settings
 
-        private final int core;
-        private final int max;
-        private final TimeValue keepAlive;
+        private final int core;	// NOTE: htt, min threads number
+        private final int max;	// NOTE: htt, max threads number
+        private final TimeValue keepAlive;	// NOTE: htt, keep alive for keeping idle threads
 
         ScalingExecutorSettings(final String nodeName, final int core, final int max, final TimeValue keepAlive) {
             super(nodeName);

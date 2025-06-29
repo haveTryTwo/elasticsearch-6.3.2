@@ -36,7 +36,7 @@ import java.util.concurrent.ThreadFactory;
 /**
  * A builder for fixed executors.
  */
-public final class FixedExecutorBuilder extends ExecutorBuilder<FixedExecutorBuilder.FixedExecutorSettings> {
+public final class FixedExecutorBuilder extends ExecutorBuilder<FixedExecutorBuilder.FixedExecutorSettings> {	// NOTE: htt, fixed executor builder to create fixed executor
 
     private final Setting<Integer> sizeSetting;
     private final Setting<Integer> fallbackSizeSetting;
@@ -113,8 +113,8 @@ public final class FixedExecutorBuilder extends ExecutorBuilder<FixedExecutorBui
             final String fallbackPrefix,
             final boolean deprecated) {
         super(name);
-        final String sizeKey = settingsKey(prefix, "size");
-        final String queueSizeKey = settingsKey(prefix, "queue_size");
+        final String sizeKey = settingsKey(prefix, "size");	// NOTE: htt, thread_pool.size
+        final String queueSizeKey = settingsKey(prefix, "queue_size");	// NOTE: htt, thread_pool.queue_size
         if (fallbackName == null) {
             final Setting.Property[] properties;
             if (deprecated) {
@@ -184,12 +184,12 @@ public final class FixedExecutorBuilder extends ExecutorBuilder<FixedExecutorBui
     }
 
     @Override
-    ThreadPool.ExecutorHolder build(final FixedExecutorSettings settings, final ThreadContext threadContext) {
+    ThreadPool.ExecutorHolder build(final FixedExecutorSettings settings, final ThreadContext threadContext) {	// NOTE: htt, create ExecutorHolder using executor and info
         int size = settings.size;
         int queueSize = settings.queueSize;
         final ThreadFactory threadFactory = EsExecutors.daemonThreadFactory(EsExecutors.threadName(settings.nodeName, name()));
         final ExecutorService executor =
-                EsExecutors.newFixed(settings.nodeName + "/" + name(), size, queueSize, threadFactory, threadContext);
+                EsExecutors.newFixed(settings.nodeName + "/" + name(), size, queueSize, threadFactory, threadContext);	// NOTE: htt, create ExecutorService
         final String name;
         if ("write".equals(name()) && Booleans.parseBoolean(System.getProperty("es.thread_pool.write.use_bulk_as_display_name", "false"))) {
             name = "bulk";
@@ -211,7 +211,7 @@ public final class FixedExecutorBuilder extends ExecutorBuilder<FixedExecutorBui
             info.getQueueSize() == null ? "unbounded" : info.getQueueSize());
     }
 
-    static class FixedExecutorSettings extends ExecutorBuilder.ExecutorSettings {
+    static class FixedExecutorSettings extends ExecutorBuilder.ExecutorSettings {	// NOTE: htt, fixed executor settings with nodename, size and queueSize
 
         private final int size;
         private final int queueSize;

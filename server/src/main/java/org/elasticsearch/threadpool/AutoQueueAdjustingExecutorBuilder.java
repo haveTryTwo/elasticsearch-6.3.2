@@ -37,7 +37,7 @@ import java.util.concurrent.ThreadFactory;
  * A builder for executors that automatically adjust the queue length as needed, depending on
  * Little's Law. See https://en.wikipedia.org/wiki/Little's_law for more information.
  */
-public final class AutoQueueAdjustingExecutorBuilder extends ExecutorBuilder<AutoQueueAdjustingExecutorBuilder.AutoExecutorSettings> {
+public final class AutoQueueAdjustingExecutorBuilder extends ExecutorBuilder<AutoQueueAdjustingExecutorBuilder.AutoExecutorSettings> { // NOTE: htt, auto queu adjusting builder to create AutoQueuAdjustExecutorService
 
     private final Setting<Integer> sizeSetting;
     private final Setting<Integer> queueSizeSetting;
@@ -103,7 +103,7 @@ public final class AutoQueueAdjustingExecutorBuilder extends ExecutorBuilder<Aut
 
     @Override
     ThreadPool.ExecutorHolder build(final AutoExecutorSettings settings,
-                                    final ThreadContext threadContext) {
+                                    final ThreadContext threadContext) { // NOTE: htt, create auto queue fixed executor service
         int size = settings.size;
         int initialQueueSize = settings.initialQueueSize;
         int minQueueSize = settings.minQueueSize;
@@ -139,7 +139,7 @@ public final class AutoQueueAdjustingExecutorBuilder extends ExecutorBuilder<Aut
             info.getQueueSize() == null ? "unbounded" : info.getQueueSize());
     }
 
-    static final class AutoExecutorSettings extends ExecutorBuilder.ExecutorSettings {
+    static final class AutoExecutorSettings extends ExecutorBuilder.ExecutorSettings {	// NOTE: htt, setting for auto executor service
 
         private final int size;
         private final int initialQueueSize;

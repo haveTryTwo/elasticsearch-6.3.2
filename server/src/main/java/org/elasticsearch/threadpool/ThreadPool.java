@@ -60,7 +60,7 @@ import java.util.concurrent.TimeUnit;
 
 import static java.util.Collections.unmodifiableMap;
 
-public class ThreadPool extends AbstractComponent implements Scheduler, Closeable {
+public class ThreadPool extends AbstractComponent implements Scheduler, Closeable { // NOTE: htt, thread pool keeping all type(index/search...) and its thread pool
 
     public static class Names {
         public static final String SAME = "same";
@@ -70,11 +70,11 @@ public class ThreadPool extends AbstractComponent implements Scheduler, Closeabl
         public static final String ANALYZE = "analyze";
         public static final String INDEX = "index";
         public static final String WRITE = "write";
-        public static final String SEARCH = "search";
+        public static final String SEARCH = "search"; // NOTE: htt, search线程池
         public static final String MANAGEMENT = "management";
         public static final String FLUSH = "flush";
         public static final String REFRESH = "refresh";
-        public static final String WARMER = "warmer";
+        public static final String WARMER = "warmer"; // NOTE: htt, fielddata 等预热加载线程
         public static final String SNAPSHOT = "snapshot";
         public static final String FORCE_MERGE = "force_merge";
         public static final String FETCH_SHARD_STARTED = "fetch_shard_started";
@@ -82,10 +82,10 @@ public class ThreadPool extends AbstractComponent implements Scheduler, Closeabl
     }
 
     public enum ThreadPoolType {
-        DIRECT("direct"),
-        FIXED("fixed"),
-        FIXED_AUTO_QUEUE_SIZE("fixed_auto_queue_size"),
-        SCALING("scaling");
+        DIRECT("direct"), // NOTE: htt, direct threads
+        FIXED("fixed"),		// NOTE: htt, fixed threads number
+        FIXED_AUTO_QUEUE_SIZE("fixed_auto_queue_size"),	// NOTE: htt, fixed threads number with auto queue size
+        SCALING("scaling"); // NOTE: htt, scaling threads number
 
         private final String type;
 
@@ -121,11 +121,11 @@ public class ThreadPool extends AbstractComponent implements Scheduler, Closeabl
     static {
         HashMap<String, ThreadPoolType> map = new HashMap<>();
         map.put(Names.SAME, ThreadPoolType.DIRECT);
-        map.put(Names.GENERIC, ThreadPoolType.SCALING);
+        map.put(Names.GENERIC, ThreadPoolType.SCALING); // NOTE: htt, CPU个数在4 ~ 4*cpu个数 范围，支持discovery等操作
         map.put(Names.LISTENER, ThreadPoolType.FIXED);
         map.put(Names.GET, ThreadPoolType.FIXED);
         map.put(Names.ANALYZE, ThreadPoolType.FIXED);
-        map.put(Names.INDEX, ThreadPoolType.FIXED);
+        map.put(Names.INDEX, ThreadPoolType.FIXED);	// NOTE: htt, fixed threads for index operation
         map.put(Names.WRITE, ThreadPoolType.FIXED);
         map.put(Names.SEARCH, ThreadPoolType.FIXED_AUTO_QUEUE_SIZE);
         map.put(Names.MANAGEMENT, ThreadPoolType.SCALING);
@@ -178,8 +178,8 @@ public class ThreadPool extends AbstractComponent implements Scheduler, Closeabl
         builders.put(Names.MANAGEMENT, new ScalingExecutorBuilder(Names.MANAGEMENT, 1, 5, TimeValue.timeValueMinutes(5)));
         // no queue as this means clients will need to handle rejections on listener queue even if the operation succeeded
         // the assumption here is that the listeners should be very lightweight on the listeners side
-        builders.put(Names.LISTENER, new FixedExecutorBuilder(settings, Names.LISTENER, halfProcMaxAt10, -1));
-        builders.put(Names.FLUSH, new ScalingExecutorBuilder(Names.FLUSH, 1, halfProcMaxAt5, TimeValue.timeValueMinutes(5)));
+        builders.put(Names.LISTENER, new FixedExecutorBuilder(settings, Names.LISTENER, halfProcMaxAt10, -1)); // NOTE: htt, 监听线程池，共10个线程
+        builders.put(Names.FLUSH, new ScalingExecutorBuilder(Names.FLUSH, 1, halfProcMaxAt5, TimeValue.timeValueMinutes(5))); // NOTE: htt, 最少1个，最多5个线程 flush
         builders.put(Names.REFRESH, new ScalingExecutorBuilder(Names.REFRESH, 1, halfProcMaxAt10, TimeValue.timeValueMinutes(5)));
         builders.put(Names.WARMER, new ScalingExecutorBuilder(Names.WARMER, 1, halfProcMaxAt5, TimeValue.timeValueMinutes(5)));
         builders.put(Names.SNAPSHOT, new ScalingExecutorBuilder(Names.SNAPSHOT, 1, halfProcMaxAt5, TimeValue.timeValueMinutes(5)));
@@ -207,11 +207,11 @@ public class ThreadPool extends AbstractComponent implements Scheduler, Closeabl
             executors.put(entry.getKey(), executorHolder);
         }
 
-        executors.put(Names.SAME, new ExecutorHolder(DIRECT_EXECUTOR, new Info(Names.SAME, ThreadPoolType.DIRECT)));
+        executors.put(Names.SAME, new ExecutorHolder(DIRECT_EXECUTOR, new Info(Names.SAME, ThreadPoolType.DIRECT)));	// NOTE: htt, direct thread pool
         this.executors = unmodifiableMap(executors);
         this.scheduler = Scheduler.initScheduler(settings);
         TimeValue estimatedTimeInterval = ESTIMATED_TIME_INTERVAL_SETTING.get(settings);
-        this.cachedTimeThread = new CachedTimeThread(EsExecutors.threadName(settings, "[timer]"), estimatedTimeInterval.millis());
+        this.cachedTimeThread = new CachedTimeThread(EsExecutors.threadName(settings, "[timer]"), estimatedTimeInterval.millis()); // NOTE: htt, 200ms to run
         this.cachedTimeThread.start();
     }
 
@@ -315,7 +315,7 @@ public class ThreadPool extends AbstractComponent implements Scheduler, Closeabl
      * @param name the name of the executor service to obtain
      * @throws IllegalArgumentException if no executor service with the specified name exists
      */
-    public ExecutorService executor(String name) {
+    public ExecutorService executor(String name) { // NOTE: htt, return ExecutorService
         final ExecutorHolder holder = executors.get(name);
         if (holder == null) {
             throw new IllegalArgumentException("no executor service found for [" + name + "]");
@@ -338,7 +338,7 @@ public class ThreadPool extends AbstractComponent implements Scheduler, Closeabl
      *         the ScheduledFuture will cannot interact with it.
      * @throws org.elasticsearch.common.util.concurrent.EsRejectedExecutionException if the task cannot be scheduled for execution
      */
-    public ScheduledFuture<?> schedule(TimeValue delay, String executor, Runnable command) {
+    public ScheduledFuture<?> schedule(TimeValue delay, String executor, Runnable command) { // NOTE: htt, 定期延迟后调度任务
         if (!Names.SAME.equals(executor)) {
             command = new ThreadedRunnable(command, executor(executor));
         }
@@ -429,7 +429,7 @@ public class ThreadPool extends AbstractComponent implements Scheduler, Closeabl
         return ((availableProcessors * 3) / 2) + 1;
     }
 
-    class LoggingRunnable implements Runnable {
+    class LoggingRunnable implements Runnable { // NOTE: htt, log runnable
 
         private final Runnable runnable;
 
@@ -463,7 +463,7 @@ public class ThreadPool extends AbstractComponent implements Scheduler, Closeabl
         }
     }
 
-    class ThreadedRunnable implements Runnable {
+    class ThreadedRunnable implements Runnable {	// NOTE: htt, thread runnable
 
         private final Runnable runnable;
 
@@ -501,13 +501,13 @@ public class ThreadPool extends AbstractComponent implements Scheduler, Closeabl
      *
      * The values are updated at a specified interval.
      */
-    static class CachedTimeThread extends Thread {
+    static class CachedTimeThread extends Thread { // NOTE: htt, record current time when running
 
         final long interval;
         final TimeCounter counter;
         volatile boolean running = true;
-        volatile long relativeMillis;
-        volatile long absoluteMillis;
+        volatile long relativeMillis;	// NOTE: htt, relative time using System.nanoTime()
+        volatile long absoluteMillis;	// NOTE: htt, absolute time which is GMT time
 
         CachedTimeThread(String name, long interval) {
             super(name);
@@ -548,7 +548,7 @@ public class ThreadPool extends AbstractComponent implements Scheduler, Closeabl
             }
         }
 
-        private class TimeCounter extends Counter {
+        private class TimeCounter extends Counter { // NOTE: htt, time counter
 
             @Override
             public long addAndGet(long delta) {
@@ -562,7 +562,7 @@ public class ThreadPool extends AbstractComponent implements Scheduler, Closeabl
         }
     }
 
-    static class ExecutorHolder {
+    static class ExecutorHolder { // NOTE: ExecutorService and its info
         private final ExecutorService executor;
         public final Info info;
 
@@ -577,14 +577,14 @@ public class ThreadPool extends AbstractComponent implements Scheduler, Closeabl
         }
     }
 
-    public static class Info implements Writeable, ToXContentFragment {
+    public static class Info implements Writeable, ToXContentFragment { // NOTE: htt, info of executor service
 
-        private final String name;
-        private final ThreadPoolType type;
-        private final int min;
-        private final int max;
-        private final TimeValue keepAlive;
-        private final SizeValue queueSize;
+        private final String name;			// NOTE: htt, thread name
+        private final ThreadPoolType type;	// NOTE: htt, thread pool type
+        private final int min;				// NOTE: htt, min threads
+        private final int max;				// NOTE: htt, max threads
+        private final TimeValue keepAlive;	// NOTE: htt, keep alive time
+        private final SizeValue queueSize;	// NOTE: htt, queue size
 
         public Info(String name, ThreadPoolType type) {
             this(name, type, -1);
@@ -693,7 +693,7 @@ public class ThreadPool extends AbstractComponent implements Scheduler, Closeabl
         if (service != null) {
             service.shutdown();
             if (awaitTermination(service, timeout, timeUnit)) return true;
-            service.shutdownNow();
+            service.shutdownNow(); // NOTE: htt, force shutDown if timeout of service first shutdown
             return awaitTermination(service, timeout, timeUnit);
         }
         return false;

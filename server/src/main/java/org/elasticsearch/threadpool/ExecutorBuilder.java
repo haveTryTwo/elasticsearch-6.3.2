@@ -31,7 +31,7 @@ import java.util.List;
  *
  * @param <U> the underlying type of the executor settings
  */
-public abstract class ExecutorBuilder<U extends ExecutorBuilder.ExecutorSettings> {
+public abstract class ExecutorBuilder<U extends ExecutorBuilder.ExecutorSettings> { // NOTE: htt, executor builder for creating ExecutorHolder
 
     private final String name;
 
@@ -87,7 +87,7 @@ public abstract class ExecutorBuilder<U extends ExecutorBuilder.ExecutorSettings
      */
     abstract String formatInfo(ThreadPool.Info info);
 
-    abstract static class ExecutorSettings {
+    abstract static class ExecutorSettings { // NOTE: htt, executor node name
 
         protected final String nodeName;
 

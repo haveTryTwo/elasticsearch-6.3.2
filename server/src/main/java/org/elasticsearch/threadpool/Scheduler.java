@@ -34,7 +34,7 @@ import java.util.function.Consumer;
 /**
  * Scheduler that allows to schedule one-shot and periodic commands.
  */
-public interface Scheduler {
+public interface Scheduler { // NOTE: htt, schedule 单个或定期命令
 
     static ScheduledThreadPoolExecutor initScheduler(Settings settings) {
         ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1,
@@ -111,7 +111,7 @@ public interface Scheduler {
     /**
      * This interface represents an object whose execution may be cancelled during runtime.
      */
-    interface Cancellable {
+    interface Cancellable { // NOTE: htt, cancallable interface
 
         /**
          * Cancel the execution of this object. This method is idempotent.
@@ -135,7 +135,7 @@ public interface Scheduler {
      * {@link ScheduledThreadPoolExecutor#scheduleWithFixedDelay(Runnable, long, long, TimeUnit)} semantics as an exception there would
      * terminate the rescheduling of the runnable.
      */
-    final class ReschedulingRunnable extends AbstractRunnable implements Cancellable {
+    final class ReschedulingRunnable extends AbstractRunnable implements Cancellable { // NOTE: htt, 实现定期调度策略，在onAfter()之后继续执行
 
         private final Runnable runnable;
         private final TimeValue interval;
@@ -162,7 +162,7 @@ public interface Scheduler {
             this.scheduler = scheduler;
             this.rejectionConsumer = rejectionConsumer;
             this.failureConsumer = failureConsumer;
-            scheduler.schedule(interval, executor, this);
+            scheduler.schedule(interval, executor, this); // NOTE: htt, 开始调度
         }
 
         @Override
@@ -199,7 +199,7 @@ public interface Scheduler {
             // if this has not been cancelled reschedule it to run again
             if (run) {
                 try {
-                    scheduler.schedule(interval, executor, this);
+                    scheduler.schedule(interval, executor, this); // NOTE: htt, interval 后再次启动当前进程，实现定期定期执行的策略
                 } catch (final EsRejectedExecutionException e) {
                     onRejection(e);
                 }

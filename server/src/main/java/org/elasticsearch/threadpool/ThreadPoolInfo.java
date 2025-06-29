@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class ThreadPoolInfo implements Writeable, Iterable<ThreadPool.Info>, ToXContentFragment {
+public class ThreadPoolInfo implements Writeable, Iterable<ThreadPool.Info>, ToXContentFragment {	// NOTE: htt, info for all threads pool
 
     private final List<ThreadPool.Info> infos;
 
@@ -53,7 +53,7 @@ public class ThreadPoolInfo implements Writeable, Iterable<ThreadPool.Info>, ToX
         return infos.iterator();
     }
 
-    static final class Fields {
+    static final class Fields { // NOTE:htt, threadpool
         static final String THREAD_POOL = "thread_pool";
     }
 

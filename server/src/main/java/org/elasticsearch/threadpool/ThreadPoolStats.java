@@ -31,17 +31,17 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class ThreadPoolStats implements Writeable, ToXContentFragment, Iterable<ThreadPoolStats.Stats> {
+public class ThreadPoolStats implements Writeable, ToXContentFragment, Iterable<ThreadPoolStats.Stats> { // NOTE: htt, thread pool stats
 
-    public static class Stats implements Writeable, ToXContentFragment, Comparable<Stats> {
+    public static class Stats implements Writeable, ToXContentFragment, Comparable<Stats> { // NOTE: htt, thread stats infom
 
-        private final String name;
+        private final String name; // NOTE: htt, 线程池名称
         private final int threads;
-        private final int queue;
-        private final int active;
-        private final long rejected;
-        private final int largest;
-        private final long completed;
+        private final int queue; // NOTE: htt, 排队任务请求数
+        private final int active; // NOTE: htt, active线程数
+        private final long rejected; // NOTE: htt, 拒绝任务请求数
+        private final int largest; // NOTE: htt, 线程池中最大active线程数
+        private final long completed; // NOTE: htt, 完成任务请求数
 
         public Stats(String name, int threads, int queue, int active, long rejected, int largest, long completed) {
             this.name = name;
@@ -166,7 +166,7 @@ public class ThreadPoolStats implements Writeable, ToXContentFragment, Iterable<
         return stats.iterator();
     }
 
-    static final class Fields {
+    static final class Fields { // NOTE: htt, 线程池统计信息字段
         static final String THREAD_POOL = "thread_pool";
         static final String THREADS = "threads";
         static final String QUEUE = "queue";
