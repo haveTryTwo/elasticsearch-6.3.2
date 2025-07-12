@@ -37,7 +37,7 @@ package org.elasticsearch.common.util.concurrent;
  *      }
  * </pre>
  */
-public interface RefCounted {
+public interface RefCounted { // NOTE: htt, interface of ref count
 
     /**
      * Increments the refCount of this instance.

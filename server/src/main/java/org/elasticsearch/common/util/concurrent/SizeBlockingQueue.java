@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Mainly makes sense to use with blocking queues that are unbounded to provide the ability to do
  * capacity verification.
  */
-public class SizeBlockingQueue<E> extends AbstractQueue<E> implements BlockingQueue<E> {
+public class SizeBlockingQueue<E> extends AbstractQueue<E> implements BlockingQueue<E> { // NOTE: htt, add size for queue so it's fast to get size of queue
 
     private final BlockingQueue<E> queue;
     private final int capacity;
@@ -135,7 +135,7 @@ public class SizeBlockingQueue<E> extends AbstractQueue<E> implements BlockingQu
             if (current >= capacity()) {
                 return false;
             }
-            if (size.compareAndSet(current, 1 + current)) {
+            if (size.compareAndSet(current, 1 + current)) { // NOTE: htt, 单独size用于记录队列大小
                 break;
             }
         }

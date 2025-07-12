@@ -21,7 +21,7 @@ package org.elasticsearch.common.util.concurrent;
 
 import java.util.concurrent.ConcurrentMap;
 
-public interface ConcurrentMapLong<T> extends ConcurrentMap<Long, T> {
+public interface ConcurrentMapLong<T> extends ConcurrentMap<Long, T> { // NOTE: htt, type of key is long of ConcurrentMapLong
 
     T get(long key);
 

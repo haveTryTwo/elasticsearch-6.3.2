@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * <p>
  * Note, if two tasks have the same priority, the first to arrive will be executed first (FIFO style).
  */
-public class PrioritizedEsThreadPoolExecutor extends EsThreadPoolExecutor {
+public class PrioritizedEsThreadPoolExecutor extends EsThreadPoolExecutor { // NOTE: htt, es thread pool executor with priority for runnable task for master node
 
     private static final TimeValue NO_WAIT_TIME_VALUE = TimeValue.timeValueMillis(0);
     private final AtomicLong insertionOrder = new AtomicLong();
@@ -61,7 +61,7 @@ public class PrioritizedEsThreadPoolExecutor extends EsThreadPoolExecutor {
         return pending.toArray(new Pending[pending.size()]);
     }
 
-    public int getNumberOfPendingTasks() {
+    public int getNumberOfPendingTasks() { // NOTE: htt, number of pending task
         int size = current.size();
         size += getQueue().size();
         return size;
@@ -87,7 +87,7 @@ public class PrioritizedEsThreadPoolExecutor extends EsThreadPoolExecutor {
         return TimeValue.timeValueNanos(now - oldestCreationDateInNanos);
     }
 
-    private void addPending(List<Runnable> runnables, List<Pending> pending, boolean executing) {
+    private void addPending(List<Runnable> runnables, List<Pending> pending, boolean executing) { // NOTE: htt, add pend task
         for (Runnable runnable : runnables) {
             if (runnable instanceof TieBreakingPrioritizedRunnable) {
                 TieBreakingPrioritizedRunnable t = (TieBreakingPrioritizedRunnable) runnable;
@@ -167,7 +167,7 @@ public class PrioritizedEsThreadPoolExecutor extends EsThreadPoolExecutor {
         return new PrioritizedFutureTask<>((PrioritizedCallable)callable, insertionOrder.incrementAndGet());
     }
 
-    public static class Pending {
+    public static class Pending { // NOTE: htt, pending class with task and priority and insertionOrder
         public final Object task;
         public final Priority priority;
         public final long insertionOrder;
@@ -181,7 +181,7 @@ public class PrioritizedEsThreadPoolExecutor extends EsThreadPoolExecutor {
         }
     }
 
-    private final class TieBreakingPrioritizedRunnable extends PrioritizedRunnable {
+    private final class TieBreakingPrioritizedRunnable extends PrioritizedRunnable { // NOTE: htt, priority runnable with insertion order
 
         private Runnable runnable;
         private final long insertionOrder;
@@ -250,7 +250,7 @@ public class PrioritizedEsThreadPoolExecutor extends EsThreadPoolExecutor {
         }
     }
 
-    private final class PrioritizedFutureTask<T> extends FutureTask<T> implements Comparable<PrioritizedFutureTask> {
+    private final class PrioritizedFutureTask<T> extends FutureTask<T> implements Comparable<PrioritizedFutureTask> { // NOTE: htt, prioritize future task
 
         final Object task;
         final Priority priority;

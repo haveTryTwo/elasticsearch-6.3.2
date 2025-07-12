@@ -23,9 +23,9 @@ import org.elasticsearch.common.Priority;
 import java.util.concurrent.TimeUnit;
 import java.util.function.LongSupplier;
 
-public abstract class PrioritizedRunnable implements Runnable, Comparable<PrioritizedRunnable> {
+public abstract class PrioritizedRunnable implements Runnable, Comparable<PrioritizedRunnable> { // NOTE: htt, runnable with priority
 
-    private final Priority priority;
+    private final Priority priority; // NOTE: htt, 优先级
     private final long creationDate;
     private final LongSupplier relativeTimeProvider;
 
@@ -69,7 +69,7 @@ public abstract class PrioritizedRunnable implements Runnable, Comparable<Priori
         return priority;
     }
 
-    static class Wrapped extends PrioritizedRunnable {
+    static class Wrapped extends PrioritizedRunnable { // NOTE: htt, wrap prioritize runnable
 
         private final Runnable runnable;
 

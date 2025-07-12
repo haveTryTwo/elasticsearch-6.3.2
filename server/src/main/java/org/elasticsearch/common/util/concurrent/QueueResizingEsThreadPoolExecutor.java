@@ -37,7 +37,7 @@ import java.util.function.Supplier;
  * An extension to thread pool executor, which automatically adjusts the queue size of the
  * {@code ResizableBlockingQueue} according to Little's Law.
  */
-public final class QueueResizingEsThreadPoolExecutor extends EsThreadPoolExecutor {
+public final class QueueResizingEsThreadPoolExecutor extends EsThreadPoolExecutor { // NOTE: htt, fix thread number with queue resize which using little's law(L=λ*W)
 
     // This is a random starting point alpha. TODO: revisit this with actual testing and/or make it configurable
     public static double EWMA_ALPHA = 0.3;

@@ -21,7 +21,7 @@ package org.elasticsearch.common.util.concurrent;
 
 import java.util.concurrent.RejectedExecutionHandler;
 
-public interface XRejectedExecutionHandler extends RejectedExecutionHandler {
+public interface XRejectedExecutionHandler extends RejectedExecutionHandler {  // NOTE: htt, define rejected() function
 
     /**
      * The number of rejected executions.

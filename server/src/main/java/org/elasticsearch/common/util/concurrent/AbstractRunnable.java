@@ -22,7 +22,7 @@ package org.elasticsearch.common.util.concurrent;
 /**
  * An extension to runnable.
  */
-public abstract class AbstractRunnable implements Runnable { // NOTE:htt, 定义执行失败前后处理
+public abstract class AbstractRunnable implements Runnable { // NOTE: htt, extension for runnable
 
     /**
      * Should the runnable force its execution in case it gets rejected?
@@ -32,13 +32,13 @@ public abstract class AbstractRunnable implements Runnable { // NOTE:htt, 定义
     }
 
     @Override
-    public final void run() { // NOTE:htt, 执行
+    public final void run() {
         try {
             doRun();
         } catch (Exception t) {
-            onFailure(t); // NOTE:htt, 执行异常处理
+            onFailure(t);
         } finally {
-            onAfter(); // NOTE:htt, 执行完毕处理
+            onAfter();
         }
     }
 

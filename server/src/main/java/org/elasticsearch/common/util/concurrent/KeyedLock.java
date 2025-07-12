@@ -35,9 +35,9 @@ import java.util.concurrent.locks.ReentrantLock;
  * Note: this lock is reentrant
  *
  * */
-public final class KeyedLock<T> {
+public final class KeyedLock<T> { // NOTE: htt, key mapping to lock which is reentrant
 
-    private final ConcurrentMap<T, KeyLock> map = ConcurrentCollections.newConcurrentMapWithAggressiveConcurrency();
+    private final ConcurrentMap<T, KeyLock> map = ConcurrentCollections.newConcurrentMapWithAggressiveConcurrency(); // NOTE: htt, key 为记录的 id
     private final boolean fair;
 
     /**
@@ -59,7 +59,7 @@ public final class KeyedLock<T> {
      * Acquires a lock for the given key. The key is compared by it's equals method not by object identity. The lock can be acquired
      * by the same thread multiple times. The lock is released by closing the returned {@link Releasable}.
      */
-    public Releasable acquire(T key) {
+    public Releasable acquire(T key) { // NOTE: htt, acquire lock on key, and get releasableLock
         while (true) {
             KeyLock perNodeLock = map.get(key);
             if (perNodeLock == null) {
@@ -133,7 +133,7 @@ public final class KeyedLock<T> {
     }
 
 
-    private final class ReleasableLock implements Releasable {
+    private final class ReleasableLock implements Releasable { // NOTE: htt, release lock
         final T key;
         final KeyLock lock;
         final AtomicBoolean closed = new AtomicBoolean();
@@ -152,7 +152,7 @@ public final class KeyedLock<T> {
     }
 
     @SuppressWarnings("serial")
-    private static final class KeyLock extends ReentrantLock {
+    private static final class KeyLock extends ReentrantLock { // NOTE: htt, keyLock
         KeyLock(boolean fair) {
             super(fair);
         }

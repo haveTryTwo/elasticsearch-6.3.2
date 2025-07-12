@@ -28,7 +28,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class FutureUtils {
+public class FutureUtils { // NOTE: htt, future utils
 
     @SuppressForbidden(reason = "Future#cancel()")
     public static boolean cancel(Future<?> toCancel) {
@@ -68,7 +68,7 @@ public class FutureUtils {
     public static  <T> T get(Future<T> future, long timeout, TimeUnit unit) {
         try {
             return future.get(timeout, unit);
-        } catch (TimeoutException e) {
+        } catch (TimeoutException e) { // NOTE: htt, 超时后就抛出ES的异常信息
             throw new ElasticsearchTimeoutException(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

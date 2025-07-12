@@ -22,7 +22,7 @@ import org.elasticsearch.common.Priority;
 
 import java.util.concurrent.Callable;
 
-public abstract class PrioritizedCallable<T> implements Callable<T>, Comparable<PrioritizedCallable> {
+public abstract class PrioritizedCallable<T> implements Callable<T>, Comparable<PrioritizedCallable> { // NOTE: htt, callable witch priority
 
     private final Priority priority;
 

@@ -21,7 +21,7 @@ package org.elasticsearch.common.util.concurrent;
 
 import java.util.concurrent.RejectedExecutionException;
 
-public class EsRejectedExecutionException extends RejectedExecutionException {
+public class EsRejectedExecutionException extends RejectedExecutionException { // NOTE: htt, es execution exception, such as queue full
 
     private final boolean isExecutorShutdown;
 

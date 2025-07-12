@@ -28,7 +28,7 @@ import java.util.stream.Stream;
 /**
  * An extension to thread pool executor, allowing (in the future) to add specific additional stats to it.
  */
-public class EsThreadPoolExecutor extends ThreadPoolExecutor {
+public class EsThreadPoolExecutor extends ThreadPoolExecutor { // NOTE; htt, ES ThreadPoolExecutor extension to thread pool executor
 
     private final ThreadContext contextHolder;
     private volatile ShutdownListener listener;

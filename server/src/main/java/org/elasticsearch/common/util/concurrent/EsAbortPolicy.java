@@ -24,7 +24,7 @@ import org.elasticsearch.common.metrics.CounterMetric;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 
-public class EsAbortPolicy implements XRejectedExecutionHandler {
+public class EsAbortPolicy implements XRejectedExecutionHandler { // NOTE: htt, ESAbort Policy with reject action and increade rejected number
     private final CounterMetric rejected = new CounterMetric();
 
     @Override
@@ -35,8 +35,8 @@ public class EsAbortPolicy implements XRejectedExecutionHandler {
                 if (!(queue instanceof SizeBlockingQueue)) {
                     throw new IllegalStateException("forced execution, but expected a size queue");
                 }
-                try {
-                    ((SizeBlockingQueue) queue).forcePut(r);
+                try { 
+                    ((SizeBlockingQueue) queue).forcePut(r); // NOTE: htt, 如果是 AbstractRunnable, 并且线程池队列是SizeBlockingQueue，则强制插入到队列， TODO：写请求满足这里的条件，除非异常情况下丢弃请求时对应的请求不是 AbstractRunnable类型； 确认下协调节点刚接受到请求时是否满足这里条件
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     throw new IllegalStateException("forced execution, but got interrupted", e);

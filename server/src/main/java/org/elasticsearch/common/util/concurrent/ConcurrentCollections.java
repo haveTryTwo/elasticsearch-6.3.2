@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedTransferQueue;
 
 
-public abstract class ConcurrentCollections {
+public abstract class ConcurrentCollections { // NOTE: htt, concurrent collections wrap
 
     static final int aggressiveConcurrencyLevel;
 

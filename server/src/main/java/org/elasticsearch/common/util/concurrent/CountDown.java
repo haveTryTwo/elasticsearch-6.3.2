@@ -25,12 +25,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A simple thread safe count-down class that in contrast to a {@link CountDownLatch}
- * never blocks. This class is useful if a certain action has to wait for N concurrent 
+ * never blocks. This class is useful if a certain action has to wait for N concurrent
  * tasks to return or a timeout to occur in order to proceed.
  */
-public final class CountDown {
+public final class CountDown { // NOTE: htt, 模拟countDown
 
-    private final AtomicInteger countDown;
+    private final AtomicInteger countDown; // NOTE:htt, 原子计数
     private final int originalCount;
 
     public CountDown(int count) {
@@ -54,7 +54,7 @@ public final class CountDown {
                 return false;
             }
             if (countDown.compareAndSet(current, current - 1)) {
-                return current == 1;
+                return current == 1; // NOTE: htt, has reached 0
             }
         }
     }
@@ -69,7 +69,7 @@ public final class CountDown {
         assert countDown.get() >= 0;
         return countDown.getAndSet(0) > 0;
     }
-    
+
     /**
      * Returns <code>true</code> iff the count-down has reached zero. Otherwise <code>false</code>
      */

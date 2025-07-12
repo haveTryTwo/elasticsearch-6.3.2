@@ -28,12 +28,12 @@ import java.util.concurrent.locks.Lock;
 /**
  * Releasable lock used inside of Engine implementations
  */
-public class ReleasableLock implements Releasable {
+public class ReleasableLock implements Releasable { // NOTE: htt, releasable lock liking reference lock
     private final Lock lock;
 
 
     // a per-thread count indicating how many times the thread has entered the lock; only works if assertions are enabled
-    private final ThreadLocal<Integer> holdingThreads;
+    private final ThreadLocal<Integer> holdingThreads; // NOTE: htt, reentry lock, 记录当前线程调用了多少次锁
 
     public ReleasableLock(Lock lock) {
         this.lock = lock;
@@ -45,7 +45,7 @@ public class ReleasableLock implements Releasable {
     }
 
     @Override
-    public void close() {
+    public void close() { // NOTE: htt, try-with-resources block 临时对象作用域退出后会自动调用该函数，当前场景将 主要用在 try-with-resources block 临时对象退出则调用该函数
         lock.unlock();
         assert removeCurrentThread();
     }
@@ -53,7 +53,7 @@ public class ReleasableLock implements Releasable {
 
     public ReleasableLock acquire() throws EngineException {
         lock.lock();
-        assert addCurrentThread();
+        assert addCurrentThread(); // NOTE: htt, 次数+1
         return this;
     }
 
@@ -67,9 +67,9 @@ public class ReleasableLock implements Releasable {
         final Integer count = holdingThreads.get();
         assert count != null && count > 0;
         if (count == 1) {
-            holdingThreads.remove();
+            holdingThreads.remove(); // NOTE: htt, 如果已经处理完则删除
         } else {
-            holdingThreads.set(count - 1);
+            holdingThreads.set(count - 1); // NOTE: htt, 如果还有重入次数，则减1
         }
         return true;
     }

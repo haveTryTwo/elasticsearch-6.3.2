@@ -28,11 +28,11 @@ import java.util.Objects;
  * <p>
  * This simplifies the running and rescheduling of {@link Lifecycle}-based {@code Runnable}s.
  */
-public abstract class AbstractLifecycleRunnable extends AbstractRunnable {
+public abstract class AbstractLifecycleRunnable extends AbstractRunnable { // NOTE: htt, runnable的实现，实现doRun()时会判断生命周期
     /**
      * The monitored lifecycle for the associated service.
      */
-    private final Lifecycle lifecycle;
+    private final Lifecycle lifecycle; // NOTE: htt, 监听当前的生命周期
     /**
      * The service's logger (note: this is passed in!).
      */

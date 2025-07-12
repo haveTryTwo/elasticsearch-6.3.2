@@ -38,13 +38,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-public class EsExecutors {
+public class EsExecutors { // NOTE: htt, EsExecutors threads pool
 
     /**
      * Settings key to manually set the number of available processors.
      * This is used to adjust thread pools sizes etc. per node.
      */
-    public static final Setting<Integer> PROCESSORS_SETTING =
+    public static final Setting<Integer> PROCESSORS_SETTING = // NOTE:htt, cpu的个数，默认为机器上CPU个数，当部署多节点的情况下需要调整该值，避免节点之间CPU消耗过多；该配置在 elasticsearch.yml中配置
         Setting.intSetting("processors", Runtime.getRuntime().availableProcessors(), 1, Property.NodeScope);
 
     /**
@@ -58,18 +58,18 @@ public class EsExecutors {
     public static int numberOfProcessors(final Settings settings) {
         return PROCESSORS_SETTING.get(settings);
     }
-
+    // NOTE: htt, create priority thread pool executor
     public static PrioritizedEsThreadPoolExecutor newSinglePrioritizing(String name, ThreadFactory threadFactory, ThreadContext contextHolder, ScheduledExecutorService timer) {
         return new PrioritizedEsThreadPoolExecutor(name, 1, 1, 0L, TimeUnit.MILLISECONDS, threadFactory, contextHolder, timer);
     }
-
+    // NOTE: htt, scale threads number
     public static EsThreadPoolExecutor newScaling(String name, int min, int max, long keepAliveTime, TimeUnit unit, ThreadFactory threadFactory, ThreadContext contextHolder) {
         ExecutorScalingQueue<Runnable> queue = new ExecutorScalingQueue<>();
         EsThreadPoolExecutor executor = new EsThreadPoolExecutor(name, min, max, keepAliveTime, unit, queue, threadFactory, new ForceQueuePolicy(), contextHolder);
         queue.executor = executor;
         return executor;
     }
-
+    // NOTE: htt, create fix thread size for EsThreadPoolExecutor
     public static EsThreadPoolExecutor newFixed(String name, int size, int queueCapacity, ThreadFactory threadFactory, ThreadContext contextHolder) {
         BlockingQueue<Runnable> queue;
         if (queueCapacity < 0) {
@@ -97,13 +97,13 @@ public class EsExecutors {
                             initialQueueCapacity);
         }
         ResizableBlockingQueue<Runnable> queue =
-                new ResizableBlockingQueue<>(ConcurrentCollections.<Runnable>newBlockingQueue(), initialQueueCapacity);
+                new ResizableBlockingQueue<>(ConcurrentCollections.<Runnable>newBlockingQueue(), initialQueueCapacity); // NOTE: htt, 指定长度队列
         return new QueueResizingEsThreadPoolExecutor(name, size, size, 0, TimeUnit.MILLISECONDS,
                 queue, minQueueSize, maxQueueSize, TimedRunnable::new, frameSize, targetedResponseTime, threadFactory,
                 new EsAbortPolicy(), contextHolder);
     }
 
-    private static final ExecutorService DIRECT_EXECUTOR_SERVICE = new AbstractExecutorService() {
+    private static final ExecutorService DIRECT_EXECUTOR_SERVICE = new AbstractExecutorService() { // NOTE: emep, director executor service
 
         @Override
         public void shutdown() {
@@ -143,7 +143,7 @@ public class EsExecutors {
      *
      * @return an {@link ExecutorService} that executes submitted tasks on the current thread
      */
-    public static ExecutorService newDirectExecutorService() {
+    public static ExecutorService newDirectExecutorService() { // NOTE: htt, return direct executor service
         return DIRECT_EXECUTOR_SERVICE;
     }
 
@@ -164,7 +164,7 @@ public class EsExecutors {
         }
     }
 
-    public static String threadName(final String nodeName, final String namePrefix) {
+    public static String threadName(final String nodeName, final String namePrefix) { // NOTE: htt, elasticsearch thread name，线程的名称
         return "elasticsearch" + (nodeName.isEmpty() ? "" : "[") + nodeName + (nodeName.isEmpty() ? "" : "]") + "[" + namePrefix + "]";
     }
 
@@ -180,7 +180,7 @@ public class EsExecutors {
         return new EsThreadFactory(namePrefix);
     }
 
-    static class EsThreadFactory implements ThreadFactory {
+    static class EsThreadFactory implements ThreadFactory { // NOTE: htt, es thread factory which create thread with special name，线程池工厂，提供单独的线程池，我们在实现自己的 ThreadPoolExecutor时只用重定义 ThreadFactory
 
         final ThreadGroup group;
         final AtomicInteger threadNumber = new AtomicInteger(1);
@@ -196,7 +196,7 @@ public class EsExecutors {
         @Override
         public Thread newThread(Runnable r) {
             Thread t = new Thread(group, r,
-                    namePrefix + "[T#" + threadNumber.getAndIncrement() + "]",
+                    namePrefix + "[T#" + threadNumber.getAndIncrement() + "]", // NOTE: htt, thread with name
                     0);
             t.setDaemon(true);
             return t;
@@ -210,7 +210,7 @@ public class EsExecutors {
     private EsExecutors() {
     }
 
-    static class ExecutorScalingQueue<E> extends LinkedTransferQueue<E> {
+    static class ExecutorScalingQueue<E> extends LinkedTransferQueue<E> { // NOTE: htt, scaling queue
 
         ThreadPoolExecutor executor;
 
@@ -245,7 +245,7 @@ public class EsExecutors {
      * A handler for rejected tasks that adds the specified element to this queue,
      * waiting if necessary for space to become available.
      */
-    static class ForceQueuePolicy implements XRejectedExecutionHandler {
+    static class ForceQueuePolicy implements XRejectedExecutionHandler { // NOTE: htt, force queue policy using with ExecutorScalingQueue
 
         @Override
         public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {

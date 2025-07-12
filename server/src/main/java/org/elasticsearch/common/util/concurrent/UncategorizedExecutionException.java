@@ -24,7 +24,7 @@ import org.elasticsearch.common.io.stream.StreamInput;
 
 import java.io.IOException;
 
-public class UncategorizedExecutionException extends ElasticsearchException {
+public class UncategorizedExecutionException extends ElasticsearchException { // NOTE: htt, uncategorized execution exception
 
     public UncategorizedExecutionException(String msg, Throwable cause) {
         super(msg, cause);

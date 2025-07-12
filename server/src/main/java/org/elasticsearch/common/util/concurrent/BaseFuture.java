@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
-public abstract class BaseFuture<V> implements Future<V> {
+public abstract class BaseFuture<V> implements Future<V> { // NOTE: htt, base future to get/set and check isDone()/isCancel() using sync
 
     private static final String BLOCKING_OP_REASON = "Blocking operation";
 
@@ -191,22 +191,22 @@ public abstract class BaseFuture<V> implements Future<V> {
      * We don't use the integer argument passed between acquire methods so we
      * pass around a -1 everywhere.
      */
-    static final class Sync<V> extends AbstractQueuedSynchronizer {
+    static final class Sync<V> extends AbstractQueuedSynchronizer { // NOTE: htt, sync using compareAndSetState to update state and get value/exception
         /* Valid states. */
-        static final int RUNNING = 0;
+        static final int RUNNING = 0;  // NOTE: htt, state 默认为0，即RUNNING，所以后续CAS(RUNNING, COMPLETING)更新的时候，则首次会成功，因为RUNNING即0， state默认初始化为0，当前更好是显示初始化下
         static final int COMPLETING = 1;
         static final int COMPLETED = 2;
         static final int CANCELLED = 4;
 
-        private V value;
+        private V value;  // htt: htt, 设置结果
         private Throwable exception;
 
         /*
         * Acquisition succeeds if the future is done, otherwise it fails.
         */
         @Override
-        protected int tryAcquireShared(int ignored) {
-            if (isDone()) {
+        protected int tryAcquireShared(int ignored) { // NOTE: htt, acquire shard if success
+            if (isDone()) { // NOTE: htt, value has been set, then 可以获得 acquire shared，即可以获得数据
                 return 1;
             }
             return -1;
@@ -218,7 +218,7 @@ public abstract class BaseFuture<V> implements Future<V> {
         */
         @Override
         protected boolean tryReleaseShared(int finalState) {
-            setState(finalState);
+            setState(finalState); // NOTE: htt, 更新状态，比如数据已经写入则更新状态为 COMPLETED 或 CANCELED
             return true;
         }
 
@@ -228,7 +228,7 @@ public abstract class BaseFuture<V> implements Future<V> {
          * {@link #get()}.
          */
         V get(long nanos) throws TimeoutException, CancellationException,
-                ExecutionException, InterruptedException {
+                ExecutionException, InterruptedException { // NOTE: htt, 带超时时间等待
 
             // Attempt to acquire the shared lock with a timeout.
             if (!tryAcquireSharedNanos(-1, nanos)) {
@@ -245,7 +245,7 @@ public abstract class BaseFuture<V> implements Future<V> {
          * an error.
          */
         V get() throws CancellationException, ExecutionException,
-                InterruptedException {
+                InterruptedException { // NOTE: htt, 不带超时时间等待，如果 !isDone() 会一直等待
 
             // Acquire the shared lock allowing interruption.
             acquireSharedInterruptibly(-1);
@@ -261,8 +261,8 @@ public abstract class BaseFuture<V> implements Future<V> {
             int state = getState();
             switch (state) {
                 case COMPLETED:
-                    if (exception != null) {
-                        throw new ExecutionException(exception);
+                    if (exception != null) { // NOTE: htt, 如果异常被设置，那么就直接返回出错
+                        throw new ExecutionException(exception); // NOTE: htt, 返回 ExecutionException(exception)
                     } else {
                         return value;
                     }
@@ -324,14 +324,14 @@ public abstract class BaseFuture<V> implements Future<V> {
          */
         private boolean complete(@Nullable V v, @Nullable Throwable t,
                                  int finalState) {
-            boolean doCompletion = compareAndSetState(RUNNING, COMPLETING);
+            boolean doCompletion = compareAndSetState(RUNNING, COMPLETING); // NOTE: htt, cas更新，只有CAS更新成功才允许设置value
             if (doCompletion) {
                 // If this thread successfully transitioned to COMPLETING, set the value
                 // and exception and then release to the final state.
                 this.value = v;
                 this.exception = t;
                 releaseShared(finalState);
-            } else if (getState() == COMPLETING) {
+            } else if (getState() == COMPLETING) { // NOTE: htt, cas冲突则说明有其他程序在处理，当前就是等待完成状态（包括COMPLETED, CANCELED)
                 // If some other thread is currently completing the future, block until
                 // they are done so we can guarantee completion.
                 acquireShared(-1);

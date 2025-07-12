@@ -23,7 +23,7 @@ package org.elasticsearch.common.util.concurrent;
  * A class used to wrap a {@code Runnable} that allows capturing the time of the task since creation
  * through execution as well as only execution time.
  */
-class TimedRunnable extends AbstractRunnable {
+class TimedRunnable extends AbstractRunnable { // NOTE: htt, abstract runnable with time info
     private final Runnable original;
     private final long creationTimeNanos;
     private long startTimeNanos;

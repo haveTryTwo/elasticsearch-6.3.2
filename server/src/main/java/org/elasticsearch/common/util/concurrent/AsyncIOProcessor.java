@@ -36,9 +36,9 @@ import java.util.function.Consumer;
  * hijack a worker if nobody else is currently processing queued items. If the internal queue has reached it's capacity incoming threads
  * might be blocked until other items are processed
  */
-public abstract class AsyncIOProcessor<Item> {
+public abstract class AsyncIOProcessor<Item> { // NOTE: htt, 异步IO，以便批量处理
     private final Logger logger;
-    private final ArrayBlockingQueue<Tuple<Item, Consumer<Exception>>> queue;
+    private final ArrayBlockingQueue<Tuple<Item, Consumer<Exception>>> queue; // NOTE: htt, 保存待处理的IO
     private final Semaphore promiseSemaphore = new Semaphore(1);
 
     protected AsyncIOProcessor(Logger logger, int queueSize) {
@@ -79,7 +79,7 @@ public abstract class AsyncIOProcessor<Item> {
                     candidates.add(itemTuple);
                 }
                 // since we made the promise to process we gotta do it here at least once
-                drainAndProcess(candidates);
+                drainAndProcess(candidates); // NOTE: htt, 转移并处理请求
             } finally {
                 promiseSemaphore.release(); // now to ensure we are passing it on we release the promise so another thread can take over
             }
@@ -95,8 +95,8 @@ public abstract class AsyncIOProcessor<Item> {
     }
 
     private void drainAndProcess(List<Tuple<Item, Consumer<Exception>>> candidates) {
-        queue.drainTo(candidates);
-        processList(candidates);
+        queue.drainTo(candidates); // NOTE: htt, 将请求转移到 candidates并进行写入处理
+        processList(candidates); // NOTE: htt, 处理请求
         candidates.clear();
     }
 
@@ -104,7 +104,7 @@ public abstract class AsyncIOProcessor<Item> {
         Exception exception = null;
         if (candidates.isEmpty() == false) {
             try {
-                write(candidates);
+                write(candidates); // NOTE: htt, 执行后续io处理
             } catch (Exception ex) { // if this fails we are in deep shit - fail the request
                 logger.debug("failed to write candidates", ex);
                 // this exception is passed to all listeners - we don't retry. if this doesn't work we are in deep shit

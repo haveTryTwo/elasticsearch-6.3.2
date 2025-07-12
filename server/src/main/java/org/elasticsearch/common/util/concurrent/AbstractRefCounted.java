@@ -28,8 +28,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * ref count of 1 and calls {@link #closeInternal()} once it reaches
  * a 0 ref count
  */
-public abstract class AbstractRefCounted implements RefCounted {
-    private final AtomicInteger refCount = new AtomicInteger(1);
+public abstract class AbstractRefCounted implements RefCounted { // NOTE: htt, an implementation of ref count, and when count=0, closeInternal will be called
+    private final AtomicInteger refCount = new AtomicInteger(1); // NOTE: htt, 应用
     private final String name;
 
     public AbstractRefCounted(String name) {
@@ -62,7 +62,7 @@ public abstract class AbstractRefCounted implements RefCounted {
         int i = refCount.decrementAndGet();
         assert i >= 0;
         if (i == 0) {
-            closeInternal();
+            closeInternal();  // NOTE: htt, 引用为0，关闭写入，并且清理临时文件
         }
 
     }

@@ -81,7 +81,7 @@ import java.nio.charset.StandardCharsets;
  * </pre>
  *
  */
-public final class ThreadContext implements Closeable, Writeable {
+public final class ThreadContext implements Closeable, Writeable {// NOTE: htt, thread context include ContextThreadLocal and ThreadContextStruct
 
     public static final String PREFIX = "request.headers";
     public static final Setting<Settings> DEFAULT_HEADERS_SETTING = Setting.groupSetting(PREFIX + ".", Property.NodeScope);
@@ -356,7 +356,7 @@ public final class ThreadContext implements Closeable, Writeable {
     }
 
     @FunctionalInterface
-    public interface StoredContext extends AutoCloseable {
+    public interface StoredContext extends AutoCloseable { // NOTE: htt, store context
         @Override
         void close();
 
@@ -365,7 +365,7 @@ public final class ThreadContext implements Closeable, Writeable {
         }
     }
 
-    private static final class ThreadContextStruct {
+    private static final class ThreadContextStruct { // NOTE: htt, thread context struct including requestHeaders/reponseHeaders
         private final Map<String, String> requestHeaders;
         private final Map<String, Object> transientHeaders;
         private final Map<String, List<String>> responseHeaders;
@@ -556,7 +556,7 @@ public final class ThreadContext implements Closeable, Writeable {
         }
     }
 
-    private static class ContextThreadLocal extends CloseableThreadLocal<ThreadContextStruct> {
+    private static class ContextThreadLocal extends CloseableThreadLocal<ThreadContextStruct> { // NOTE: htt, thread local context struct
         private final AtomicBoolean closed = new AtomicBoolean(false);
 
         @Override
@@ -608,7 +608,7 @@ public final class ThreadContext implements Closeable, Writeable {
     /**
      * Wraps a Runnable to preserve the thread context.
      */
-    private class ContextPreservingRunnable implements Runnable {
+    private class ContextPreservingRunnable implements Runnable { // NOTE: htt, runnable to preserve thread context
         private final Runnable in;
         private final ThreadContext.StoredContext ctx;
 
@@ -678,7 +678,7 @@ public final class ThreadContext implements Closeable, Writeable {
     /**
      * Wraps an AbstractRunnable to preserve the thread context.
      */
-    private class ContextPreservingAbstractRunnable extends AbstractRunnable {
+    private class ContextPreservingAbstractRunnable extends AbstractRunnable { // NOTE: htt abstract runnable to preserve thread context
         private final AbstractRunnable in;
         private final ThreadContext.StoredContext creatorsContext;
 
