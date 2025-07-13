@@ -98,7 +98,7 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
         Setting.listSetting("discovery.zen.ping.unicast.hosts", emptyList(), Function.identity(),
             Property.NodeScope);
     public static final Setting<Integer> DISCOVERY_ZEN_PING_UNICAST_CONCURRENT_CONNECTS_SETTING =
-        Setting.intSetting("discovery.zen.ping.unicast.concurrent_connects", 10, 0, Property.NodeScope);
+        Setting.intSetting("discovery.zen.ping.unicast.concurrent_connects", 10, 0, Property.NodeScope); // NOTE:htt, 并行运行线程数
     public static final Setting<TimeValue> DISCOVERY_ZEN_PING_UNICAST_HOSTS_RESOLVE_TIMEOUT =
         Setting.positiveTimeSetting("discovery.zen.ping.unicast.hosts.resolve_timeout", TimeValue.timeValueSeconds(5), Property.NodeScope);
 
@@ -106,15 +106,15 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
     public static final int LIMIT_FOREIGN_PORTS_COUNT = 1;
     public static final int LIMIT_LOCAL_PORTS_COUNT = 5;
 
-    private final ThreadPool threadPool;
-    private final TransportService transportService;
-    private final ClusterName clusterName;
+    private final ThreadPool threadPool; // NOTE: htt, thread pool keeping all type(index/search...) and its thread pool
+    private final TransportService transportService; // NOTE: htt, 建立tcp连接并发送请求到对应节点, transportSevice to open connection to DiscoveryNode and sendRequest to node
+    private final ClusterName clusterName; // NOTE:htt, 集群名称
 
     private final List<String> configuredHosts;
 
     private final int limitPortCounts;
 
-    private final PingContextProvider contextProvider;
+    private final PingContextProvider contextProvider; // NOTE: htt, provide current cluster state
 
     private final AtomicInteger pingingRoundIdGenerator = new AtomicInteger();
 
@@ -253,10 +253,10 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
     }
 
     @Override
-    public void close() {
-        ThreadPool.terminate(unicastZenPingExecutorService, 10, TimeUnit.SECONDS);
+    public void close() { // NOTE:htt, 关闭ping线程
+        ThreadPool.terminate(unicastZenPingExecutorService, 10, TimeUnit.SECONDS); // NOTE:htt, 终止ping线程服务
         Releasables.close(activePingingRounds.values());
-        closed = true;
+        closed = true; // NOTE:htt, 设置closed为true
     }
 
     @Override
@@ -595,7 +595,7 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
 
         @Override
         public void messageReceived(UnicastPingRequest request, TransportChannel channel) throws Exception {
-            if (closed) {
+            if (closed) { // NOTE:htt, 如果线程已关闭，则返回node已关闭
                 throw new AlreadyClosedException("node is shutting down");
             }
             if (request.pingResponse.clusterName().equals(clusterName)) {
@@ -612,11 +612,11 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
 
     }
 
-    static class UnicastPingRequest extends TransportRequest {
+    static class UnicastPingRequest extends TransportRequest { // NOTE:htt, unicast ping请求
 
-        final int id;
-        final TimeValue timeout;
-        final PingResponse pingResponse;
+        final int id; // NOTE:htt, id
+        final TimeValue timeout; // NOTE:htt, 超时时间
+        final PingResponse pingResponse; // NOTE: htt, ping response including clusterName/node/master/clusterStateVersion
 
         UnicastPingRequest(int id, TimeValue timeout, PingResponse pingResponse) {
             this.id = id;
@@ -650,11 +650,11 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
         return new PingResponse(discoNodes.getLocalNode(), discoNodes.getMasterNode(), clusterState);
     }
 
-    static class UnicastPingResponse extends TransportResponse {
+    static class UnicastPingResponse extends TransportResponse { // NOTE:htt, unicast ping回包
 
-        final int id;
+        final int id; // NOTE:htt, id
 
-        final PingResponse[] pingResponses;
+        final PingResponse[] pingResponses; // NOTE:htt, ping多个回包
 
         UnicastPingResponse(int id, PingResponse[] pingResponses) {
             this.id = id;

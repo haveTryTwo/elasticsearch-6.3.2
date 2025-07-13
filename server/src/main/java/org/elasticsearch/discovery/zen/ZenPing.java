@@ -50,7 +50,7 @@ public interface ZenPing extends Releasable { // NOTE: htt, zen ping接口，包
 
         // an always increasing unique identifier for this ping response.
         // lower values means older pings.
-        private final long id; // NOTE:htt, 递增的id信息
+        private final long id; // NOTE:htt, 递增的id信息，此 ping 响应的始终增加的唯一标识符。较低的值表示较旧的 ping。
 
         private final ClusterName clusterName; // NOTE:htt, 集群名称
 
@@ -75,9 +75,9 @@ public interface ZenPing extends Releasable { // NOTE: htt, zen ping接口，包
             this.clusterStateVersion = clusterStateVersion;
         }
 
-        public PingResponse(DiscoveryNode node, DiscoveryNode master, ClusterState state) {
+        public PingResponse(DiscoveryNode node, DiscoveryNode master, ClusterState state) { // NOTE:htt, ping回包
             this(node, master, state.getClusterName(),
-                state.blocks().hasGlobalBlock(STATE_NOT_RECOVERED_BLOCK) ?
+                state.blocks().hasGlobalBlock(STATE_NOT_RECOVERED_BLOCK) ? // NOTE:htt, 如果节点被block，则将集群版本设置为-1
                     ElectMasterService.MasterCandidate.UNRECOVERED_CLUSTER_VERSION : state.version());
         }
 
@@ -141,11 +141,12 @@ public interface ZenPing extends Releasable { // NOTE: htt, zen ping接口，包
     /**
      * a utility collection of pings where only the most recent ping is stored per node
      */
+    // NOTE:htt, 一个实用的 ping 集合，每个节点只存储最新的 ping
     class PingCollection { // NOTE: htt, pings collection including echo ping of node
 
         Map<DiscoveryNode, PingResponse> pings; // NOTE:htt, 每个节点的ping的回包列表
 
-        public PingCollection() {
+        public PingCollection() { // NOTE:htt, 返回新的ping回包
             pings = new HashMap<>();
         }
 
@@ -158,7 +159,7 @@ public interface ZenPing extends Releasable { // NOTE: htt, zen ping接口，包
             PingResponse existingResponse = pings.get(ping.node());
             // in case both existing and new ping have the same id (probably because they come
             // from nodes from version <1.4.0) we prefer to use the last added one.
-            if (existingResponse == null || existingResponse.id() <= ping.id()) {
+            if (existingResponse == null || existingResponse.id() <= ping.id()) { // NOTE:htt, 不存在或者就的id则被新的id取代
                 pings.put(ping.node(), ping);
                 return true;
             }
