@@ -313,7 +313,7 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
         }
 
         final ConnectionProfile connectionProfile =
-            ConnectionProfile.buildSingleChannelProfile(TransportRequestOptions.Type.REG, requestDuration, requestDuration); // NOTE: htt, join cluster, titmeout is 3s
+            ConnectionProfile.buildSingleChannelProfile(TransportRequestOptions.Type.REG, requestDuration, requestDuration); // NOTE: htt, join cluster, titmeout is 3s，请求类型的个数的连接profile
         final PingingRound pingingRound = new PingingRound(pingingRoundIdGenerator.incrementAndGet(), seedNodes, resultsConsumer,
             nodes.getLocalNode(), connectionProfile);
         activePingingRounds.put(pingingRound.id(), pingingRound);
@@ -356,9 +356,9 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
         private final Map<TransportAddress, Connection> tempConnections = new HashMap<>();
         private final KeyedLock<TransportAddress> connectionLock = new KeyedLock<>(true);
         private final PingCollection pingCollection;
-        private final List<DiscoveryNode> seedNodes;
+        private final List<DiscoveryNode> seedNodes; // NOTE:htt, 种子节点
         private final Consumer<PingCollection> pingListener;
-        private final DiscoveryNode localNode;
+        private final DiscoveryNode localNode; // NOTE:htt, local节点
         private final ConnectionProfile connectionProfile;
 
         private AtomicBoolean closed = new AtomicBoolean(false);
