@@ -19,7 +19,7 @@
 
 package org.elasticsearch.common;
 
-public final class Booleans {
+public final class Booleans { // TODO: htt,  把相关字符串转换为 boolean的判断
     private Booleans() {
         throw new AssertionError("No instances intended");
     }
@@ -79,7 +79,7 @@ public final class Booleans {
         }
         int strLen = str.length();
         for (int i = 0; i < strLen; i++) {
-            if (!Character.isWhitespace(str.charAt(i))) {
+            if (!Character.isWhitespace(str.charAt(i))) { // NOTE: htt, 空白符也认为是空字符串
                 return true;
             }
         }

@@ -36,7 +36,7 @@ import java.nio.file.Paths;
  */
 @SuppressForbidden(reason = "accesses the default filesystem by design")
 // TODO: can we move this to the .env package and make it package-private?
-public final class PathUtils {
+public final class PathUtils { // NOTE: htt, Path Utils to get Path from string path or URI
     /** no instantiation */
     private PathUtils() {}
     

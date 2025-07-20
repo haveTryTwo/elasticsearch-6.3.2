@@ -24,7 +24,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-public class TimeValue implements Comparable<TimeValue> {
+public class TimeValue implements Comparable<TimeValue> { // NOTE: htt, 时间管理控制，针对不同时间单位管理，然后提供相应的时间信息
 
     /** How many nano-seconds in one milli-second */
     public static final long NSEC_PER_MSEC = TimeUnit.NANOSECONDS.convert(1, TimeUnit.MILLISECONDS);
@@ -52,7 +52,7 @@ public class TimeValue implements Comparable<TimeValue> {
         return new TimeValue(hours, TimeUnit.HOURS);
     }
 
-    private final long duration;
+    private final long duration; // NOTE: htt, time value
 
     /**
      * @return the number of {@link #timeUnit()} units this value contains
@@ -61,7 +61,7 @@ public class TimeValue implements Comparable<TimeValue> {
         return duration;
     }
 
-    private final TimeUnit timeUnit;
+    private final TimeUnit timeUnit; // NOTE: htt, time unit
 
     /**
      * @return the unit used for the this time value, see {@link #duration()}

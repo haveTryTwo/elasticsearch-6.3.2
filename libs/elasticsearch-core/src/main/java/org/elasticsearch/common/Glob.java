@@ -22,7 +22,7 @@ package org.elasticsearch.common;
 /**
  * Utility class for glob-like matching
  */
-public class Glob {
+public class Glob { // NOTE:htt, 模式匹配
 
     /**
      * Match a String against the given pattern, supporting the following simple
@@ -33,38 +33,38 @@ public class Glob {
      * @param str     the String to match
      * @return whether the String matches the given pattern
      */
-    public static boolean globMatch(String pattern, String str) {
+    public static boolean globMatch(String pattern, String str) { // NOTE:htt, 查找简单的字符串模式匹配
         if (pattern == null || str == null) {
             return false;
         }
-        int firstIndex = pattern.indexOf('*');
+        int firstIndex = pattern.indexOf('*');  // NOTE:htt, 查找*符号
         if (firstIndex == -1) {
-            return pattern.equals(str);
+            return pattern.equals(str); // NOTE:htt, 没找到则字符串匹配
         }
-        if (firstIndex == 0) {
-            if (pattern.length() == 1) {
+        if (firstIndex == 0) { // NOTE:htt, 第一个字符为*
+            if (pattern.length() == 1) { // NOTE:htt, 仅一个*则返回true
                 return true;
             }
             int nextIndex = pattern.indexOf('*', firstIndex + 1);
             if (nextIndex == -1) {
-                return str.endsWith(pattern.substring(1));
+                return str.endsWith(pattern.substring(1)); // NOTE:htt, 如果仅一个*，则比较str是否和pattern剩余相等
             } else if (nextIndex == 1) {
                 // Double wildcard "**" - skipping the first "*"
-                return globMatch(pattern.substring(1), str);
+                return globMatch(pattern.substring(1), str); // NOTE:htt, 如果两个**，则直接忽略一个继续比较
             }
             String part = pattern.substring(1, nextIndex);
             int partIndex = str.indexOf(part);
             while (partIndex != -1) {
-                if (globMatch(pattern.substring(nextIndex), str.substring(partIndex + part.length()))) {
+                if (globMatch(pattern.substring(nextIndex), str.substring(partIndex + part.length()))) { // NOTE:htt, 查找后续内容
                     return true;
                 }
-                partIndex = str.indexOf(part, partIndex + 1);
+                partIndex = str.indexOf(part, partIndex + 1); // NOTE:htt, 从下一个位置继续查找part，如果找到则循环找后续内容
             }
             return false;
         }
         return (str.length() >= firstIndex &&
             pattern.substring(0, firstIndex).equals(str.substring(0, firstIndex)) &&
-            globMatch(pattern.substring(firstIndex), str.substring(firstIndex)));
+            globMatch(pattern.substring(firstIndex), str.substring(firstIndex))); // NOTE:htt, *前面内容相同并继续比较*之后内容
     }
 
 }

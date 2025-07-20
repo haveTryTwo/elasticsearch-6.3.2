@@ -25,6 +25,6 @@ import java.util.function.Function;
  * A {@link Function}-like interface which allows throwing checked exceptions.
  */
 @FunctionalInterface
-public interface CheckedFunction<T, R, E extends Exception> {
+public interface CheckedFunction<T, R, E extends Exception> { // NOTE: htt, 接口，提供apply函数
     R apply(T t) throws E;
 }
