@@ -51,8 +51,8 @@ public abstract class FaultDetection extends AbstractComponent implements Closea
     public static final Setting<Boolean> REGISTER_CONNECTION_LISTENER_SETTING =
         Setting.boolSetting("discovery.zen.fd.register_connection_listener", true, Property.NodeScope);
 
-    protected final ThreadPool threadPool;
-    protected final ClusterName clusterName;
+    protected final ThreadPool threadPool;  // NOTE: htt, 线程池
+    protected final ClusterName clusterName; // NOTE: htt, 集群名字
     protected final TransportService transportService; // NOTE: htt, 建立tcp连接并发送请求到对应节点
 
     // used mainly for testing, should always be true

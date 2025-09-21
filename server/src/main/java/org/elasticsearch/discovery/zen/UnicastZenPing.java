@@ -100,7 +100,7 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
     public static final Setting<Integer> DISCOVERY_ZEN_PING_UNICAST_CONCURRENT_CONNECTS_SETTING =
         Setting.intSetting("discovery.zen.ping.unicast.concurrent_connects", 10, 0, Property.NodeScope); // NOTE:htt, 并行运行线程数
     public static final Setting<TimeValue> DISCOVERY_ZEN_PING_UNICAST_HOSTS_RESOLVE_TIMEOUT =
-        Setting.positiveTimeSetting("discovery.zen.ping.unicast.hosts.resolve_timeout", TimeValue.timeValueSeconds(5), Property.NodeScope);
+        Setting.positiveTimeSetting("discovery.zen.ping.unicast.hosts.resolve_timeout", TimeValue.timeValueSeconds(5), Property.NodeScope); // NOTE:htt, 解析超时时间，默认是5s
 
     // these limits are per-address
     public static final int LIMIT_FOREIGN_PORTS_COUNT = 1;
@@ -110,29 +110,29 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
     private final TransportService transportService; // NOTE: htt, 建立tcp连接并发送请求到对应节点, transportSevice to open connection to DiscoveryNode and sendRequest to node
     private final ClusterName clusterName; // NOTE:htt, 集群名称
 
-    private final List<String> configuredHosts;
+    private final List<String> configuredHosts; // NOTE: htt, 配置的节点列表
 
-    private final int limitPortCounts;
+    private final int limitPortCounts; // NOTE: htt, 限制的端口数量
 
     private final PingContextProvider contextProvider; // NOTE: htt, provide current cluster state
 
     private final AtomicInteger pingingRoundIdGenerator = new AtomicInteger();
 
     // used as a node id prefix for configured unicast host nodes/address
-    private static final String UNICAST_NODE_PREFIX = "#zen_unicast_";
+    private static final String UNICAST_NODE_PREFIX = "#zen_unicast_"; // NOTE: htt, 节点前缀
 
     private final Map<Integer, PingingRound> activePingingRounds = newConcurrentMap();
 
     // a list of temporal responses a node will return for a request (holds responses from other nodes)
     private final Queue<PingResponse> temporalResponses = ConcurrentCollections.newQueue();
 
-    private final UnicastHostsProvider hostsProvider;
+    private final UnicastHostsProvider hostsProvider; // NOTE:htt, 主机提供者
 
-    protected final EsThreadPoolExecutor unicastZenPingExecutorService;
+    protected final EsThreadPoolExecutor unicastZenPingExecutorService; // NOTE:htt, 执行器服务
 
-    private final TimeValue resolveTimeout;
+    private final TimeValue resolveTimeout; // NOTE:htt, 解析超时时间
 
-    private volatile boolean closed = false;
+    private volatile boolean closed = false; // NOTE:htt, 是否关闭
 
     public UnicastZenPing(Settings settings, ThreadPool threadPool, TransportService transportService,
                           UnicastHostsProvider unicastHostsProvider, PingContextProvider contextProvider) {
@@ -145,15 +145,15 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
 
         final int concurrentConnects = DISCOVERY_ZEN_PING_UNICAST_CONCURRENT_CONNECTS_SETTING.get(settings);
         if (DISCOVERY_ZEN_PING_UNICAST_HOSTS_SETTING.exists(settings)) {
-            configuredHosts = DISCOVERY_ZEN_PING_UNICAST_HOSTS_SETTING.get(settings);
+            configuredHosts = DISCOVERY_ZEN_PING_UNICAST_HOSTS_SETTING.get(settings); // NOTE:htt, 获取配置的节点列表
             // we only limit to 1 addresses, makes no sense to ping 100 ports
-            limitPortCounts = LIMIT_FOREIGN_PORTS_COUNT;
-        } else {
+            limitPortCounts = LIMIT_FOREIGN_PORTS_COUNT; // NOTE:htt, 限制的端口数量
+        } else { // NOTE:htt, 如果配置的节点列表不存在，则获取本地机器的地址
             // if unicast hosts are not specified, fill with simple defaults on the local machine
-            configuredHosts = transportService.getLocalAddresses();
-            limitPortCounts = LIMIT_LOCAL_PORTS_COUNT;
+            configuredHosts = transportService.getLocalAddresses(); // NOTE:htt, 获取本地机器的地址
+            limitPortCounts = LIMIT_LOCAL_PORTS_COUNT; // NOTE:htt, 限制的端口数量
         }
-        resolveTimeout = DISCOVERY_ZEN_PING_UNICAST_HOSTS_RESOLVE_TIMEOUT.get(settings);
+        resolveTimeout = DISCOVERY_ZEN_PING_UNICAST_HOSTS_RESOLVE_TIMEOUT.get(settings); // NOTE:htt, 获取解析超时时间
         logger.debug(
             "using initial hosts {}, with concurrent_connects [{}], resolve_timeout [{}]",
             configuredHosts,
@@ -161,17 +161,17 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
             resolveTimeout);
 
         transportService.registerRequestHandler(ACTION_NAME, ThreadPool.Names.SAME, UnicastPingRequest::new,
-            new UnicastPingRequestHandler());
+            new UnicastPingRequestHandler()); // NOTE:htt, 注册请求处理器
 
-        final ThreadFactory threadFactory = EsExecutors.daemonThreadFactory(settings, "[unicast_connect]");
-        unicastZenPingExecutorService = EsExecutors.newScaling(
-                nodeName() + "/" + "unicast_connect",
+        final ThreadFactory threadFactory = EsExecutors.daemonThreadFactory(settings, "[unicast_connect]"); // NOTE:htt, 创建线程工厂
+        unicastZenPingExecutorService = EsExecutors.newScaling( // NOTE:htt, 创建执行器服务
+                nodeName() + "/" + "unicast_connect", // NOTE:htt, 线程名称
                 0,
-                concurrentConnects,
-                60,
-                TimeUnit.SECONDS,
-                threadFactory,
-                threadPool.getThreadContext());
+                concurrentConnects, // NOTE:htt, 并行运行线程数
+                60, // NOTE:htt, 线程池大小
+                TimeUnit.SECONDS, // NOTE:htt, 时间单位
+                threadFactory, // NOTE:htt, 线程工厂
+                threadPool.getThreadContext()); // NOTE:htt, 线程上下文
     }
 
     /**
@@ -195,43 +195,45 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
         final int limitPortCounts,
         final TransportService transportService,
         final String nodeId_prefix,
-        final TimeValue resolveTimeout) throws InterruptedException {
+        final TimeValue resolveTimeout) throws InterruptedException { // NOTE:htt, 解析hosts列表, 返回discoveryNodes列表
         Objects.requireNonNull(executorService);
         Objects.requireNonNull(logger);
         Objects.requireNonNull(hosts);
-        Objects.requireNonNull(transportService);
+        Objects.requireNonNull(transportService); // NOTE:htt, 检测不为空
         Objects.requireNonNull(nodeId_prefix);
-        Objects.requireNonNull(resolveTimeout);
-        if (resolveTimeout.nanos() < 0) {
+        Objects.requireNonNull(resolveTimeout); // NOTE:htt, 检测不为空
+        if (resolveTimeout.nanos() < 0) { // NOTE:htt, 如果resolveTimeout小于0则抛出异常
             throw new IllegalArgumentException("resolve timeout must be non-negative but was [" + resolveTimeout + "]");
         }
         // create tasks to submit to the executor service; we will wait up to resolveTimeout for these tasks to complete
+        // 创建任务提交到executorService; 我们将在resolveTimeout时间内等待这些任务完成
         final List<Callable<TransportAddress[]>> callables =
             hosts
                 .stream()
                 .map(hn -> (Callable<TransportAddress[]>) () -> transportService.addressesFromString(hn, limitPortCounts))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()); // NOTE:htt, 将hosts列表转换为Callable列表
         final List<Future<TransportAddress[]>> futures =
-            executorService.invokeAll(callables, resolveTimeout.nanos(), TimeUnit.NANOSECONDS);
-        final List<DiscoveryNode> discoveryNodes = new ArrayList<>();
-        final Set<TransportAddress> localAddresses = new HashSet<>();
-        localAddresses.add(transportService.boundAddress().publishAddress());
-        localAddresses.addAll(Arrays.asList(transportService.boundAddress().boundAddresses()));
+            executorService.invokeAll(callables, resolveTimeout.nanos(), TimeUnit.NANOSECONDS); // NOTE:htt, 调用executorService的invokeAll方法
+        final List<DiscoveryNode> discoveryNodes = new ArrayList<>(); // NOTE:htt, 创建discoveryNodes列表
+        final Set<TransportAddress> localAddresses = new HashSet<>(); // NOTE:htt, 创建localAddresses列表
+        localAddresses.add(transportService.boundAddress().publishAddress());  // NOTE:htt, 添加publishAddress到localAddresses列表
+        localAddresses.addAll(Arrays.asList(transportService.boundAddress().boundAddresses())); // NOTE:htt, 添加boundAddresses到localAddresses列表
         // ExecutorService#invokeAll guarantees that the futures are returned in the iteration order of the tasks so we can associate the
         // hostname with the corresponding task by iterating together
-        final Iterator<String> it = hosts.iterator();
-        for (final Future<TransportAddress[]> future : futures) {
-            final String hostname = it.next();
-            if (!future.isCancelled()) {
-                assert future.isDone();
+        // ExecutorService#invokeAll 保证返回的future列表与callables列表的顺序一致，所以我们可以关联hostname预对应任务
+        final Iterator<String> it = hosts.iterator();  // NOTE:htt, 创建it迭代器
+        for (final Future<TransportAddress[]> future : futures) { // NOTE:htt, 遍历future列表
+            final String hostname = it.next(); // NOTE:htt, 获取hostname
+            if (!future.isCancelled()) { // NOTE:htt, 如果future没有被取消
+                assert future.isDone(); // NOTE:htt, 则future必定完成
                 try {
-                    final TransportAddress[] addresses = future.get();
-                    logger.trace("resolved host [{}] to {}", hostname, addresses);
-                    for (int addressId = 0; addressId < addresses.length; addressId++) {
-                        final TransportAddress address = addresses[addressId];
+                    final TransportAddress[] addresses = future.get(); // NOTE:htt, 获取addresses
+                    logger.trace("resolved host [{}] to {}", hostname, addresses); // NOTE:htt, 打印resolved host [{}] to [{}]
+                    for (int addressId = 0; addressId < addresses.length; addressId++) { // NOTE:htt, 遍历addresses列表
+                        final TransportAddress address = addresses[addressId]; // NOTE:htt, 获取address
                         // no point in pinging ourselves
-                        if (localAddresses.contains(address) == false) {
-                            discoveryNodes.add(
+                        if (localAddresses.contains(address) == false) { // NOTE:htt, 如果address不在localAddresses列表中
+                            discoveryNodes.add( // NOTE:htt, 添加discoveryNode到discoveryNodes列表
                                 new DiscoveryNode(
                                     nodeId_prefix + hostname + "_" + addressId + "#",
                                     address,
@@ -249,7 +251,7 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
                 logger.warn("timed out after [{}] resolving host [{}]", resolveTimeout, hostname);
             }
         }
-        return discoveryNodes;
+        return discoveryNodes; // NOTE:htt, 返回discoveryNodes列表
     }
 
     @Override
@@ -351,15 +353,15 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
         pingingRound.close();
     }
 
-    protected class PingingRound implements Releasable {
-        private final int id;
-        private final Map<TransportAddress, Connection> tempConnections = new HashMap<>();
-        private final KeyedLock<TransportAddress> connectionLock = new KeyedLock<>(true);
-        private final PingCollection pingCollection;
+    protected class PingingRound implements Releasable { // NOTE:htt, pingingRound
+        private final int id; // NOTE:htt, id
+        private final Map<TransportAddress, Connection> tempConnections = new HashMap<>(); // NOTE:htt, 临时连接
+        private final KeyedLock<TransportAddress> connectionLock = new KeyedLock<>(true); // NOTE:htt, 连接锁
+        private final PingCollection pingCollection; // NOTE:htt, ping集合
         private final List<DiscoveryNode> seedNodes; // NOTE:htt, 种子节点
-        private final Consumer<PingCollection> pingListener;
+        private final Consumer<PingCollection> pingListener; // NOTE:htt, ping监听器
         private final DiscoveryNode localNode; // NOTE:htt, local节点
-        private final ConnectionProfile connectionProfile;
+        private final ConnectionProfile connectionProfile; // NOTE:htt, 连接配置
 
         private AtomicBoolean closed = new AtomicBoolean(false);
 
@@ -381,12 +383,12 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
             return this.closed.get();
         }
 
-        public List<DiscoveryNode> getSeedNodes() {
-            ensureOpen();
+        public List<DiscoveryNode> getSeedNodes() { // NOTE:htt, 获取种子节点
+            ensureOpen(); // NOTE:htt, 确保pingingRound是打开的
             return seedNodes;
         }
 
-        public Connection getOrConnect(DiscoveryNode node) throws IOException {
+        public Connection getOrConnect(DiscoveryNode node) throws IOException { // NOTE:htt, 获取或连接节点
             Connection result;
             try (Releasable ignore = connectionLock.acquire(node.getAddress())) {
                 result = tempConnections.get(node.getAddress());
@@ -394,61 +396,61 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
                     ensureOpen();
                     boolean success = false;
                     logger.trace("[{}] opening connection to [{}]", id(), node);
-                    result = transportService.openConnection(node, connectionProfile);
+                    result = transportService.openConnection(node, connectionProfile); // NOTE:htt, 打开连接，建立和node节点的连接
                     try {
-                        transportService.handshake(result, connectionProfile.getHandshakeTimeout().millis());
+                        transportService.handshake(result, connectionProfile.getHandshakeTimeout().millis()); // NOTE:htt, 握手，验证连接
                         synchronized (this) {
                             // acquire lock and check if closed, to prevent leaving an open connection after closing
-                            ensureOpen();
-                            Connection existing = tempConnections.put(node.getAddress(), result);
-                            assert existing == null;
-                            success = true;
+                            ensureOpen(); // NOTE:htt, 确保pingingRound是打开的
+                            Connection existing = tempConnections.put(node.getAddress(), result); // NOTE:htt, 将result添加到tempConnections中
+                            assert existing == null; // NOTE:htt, 如果existing不为null，则抛出异常
+                            success = true; // NOTE:htt, 设置success为true
                         }
                     } finally {
-                        if (success == false) {
+                        if (success == false) { // NOTE:htt, 如果success为false，则关闭连接
                             logger.trace("[{}] closing connection to [{}] due to failure", id(), node);
                             IOUtils.closeWhileHandlingException(result);
                         }
                     }
                 }
             }
-            return result;
+            return result; // NOTE:htt, 返回结果
         }
 
-        private void ensureOpen() {
+        private void ensureOpen() { // NOTE:htt, 确保pingingRound是打开的
             if (isClosed()) {
                 throw new AlreadyClosedException("pinging round [" + id + "] is finished");
             }
         }
 
-        public void addPingResponseToCollection(PingResponse pingResponse) {
-            if (localNode.equals(pingResponse.node()) == false) {
-                pingCollection.addPing(pingResponse);
+        public void addPingResponseToCollection(PingResponse pingResponse) { // NOTE:htt, 添加ping响应到集合
+            if (localNode.equals(pingResponse.node()) == false) { // NOTE:htt, 如果本地节点与ping响应的节点不同，则添加到集合
+                pingCollection.addPing(pingResponse); // NOTE:htt, 添加ping响应到集合
             }
         }
 
         @Override
-        public void close() {
+        public void close() { // NOTE:htt, 关闭pingingRound
             List<Connection> toClose = null;
             synchronized (this) {
                 if (closed.compareAndSet(false, true)) {
-                    activePingingRounds.remove(id);
-                    toClose = new ArrayList<>(tempConnections.values());
-                    tempConnections.clear();
+                    activePingingRounds.remove(id); // NOTE:htt, 移除pingingRound
+                    toClose = new ArrayList<>(tempConnections.values()); // NOTE:htt, 获取临时连接
+                    tempConnections.clear(); // NOTE:htt, 清空临时连接
                 }
             }
             if (toClose != null) {
                 // we actually closed
                 try {
-                    pingListener.accept(pingCollection);
+                    pingListener.accept(pingCollection); // NOTE:htt, 接受ping集合
                 } finally {
-                    IOUtils.closeWhileHandlingException(toClose);
+                    IOUtils.closeWhileHandlingException(toClose); // NOTE:htt, 关闭临时连接
                 }
             }
         }
 
-        public ConnectionProfile getConnectionProfile() {
-            return connectionProfile;
+        public ConnectionProfile getConnectionProfile() { // NOTE:htt, 获取连接配置
+            return connectionProfile; // NOTE:htt, 返回连接配置
         }
     }
 
@@ -576,32 +578,32 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
         };
     }
 
-    private UnicastPingResponse handlePingRequest(final UnicastPingRequest request) {
+    private UnicastPingResponse handlePingRequest(final UnicastPingRequest request) { // NOTE:htt, 处理ping请求
         assert clusterName.equals(request.pingResponse.clusterName()) :
             "got a ping request from a different cluster. expected " + clusterName + " got " + request.pingResponse.clusterName();
-        temporalResponses.add(request.pingResponse);
+        temporalResponses.add(request.pingResponse); // NOTE:htt, 添加ping响应到集合
         // add to any ongoing pinging
-        activePingingRounds.values().forEach(p -> p.addPingResponseToCollection(request.pingResponse));
+        activePingingRounds.values().forEach(p -> p.addPingResponseToCollection(request.pingResponse)); // NOTE:htt, 添加ping响应到集合
         threadPool.schedule(TimeValue.timeValueMillis(request.timeout.millis() * 2), ThreadPool.Names.SAME,
             () -> temporalResponses.remove(request.pingResponse));
 
         List<PingResponse> pingResponses = CollectionUtils.iterableAsArrayList(temporalResponses);
-        pingResponses.add(createPingResponse(contextProvider.clusterState()));
+        pingResponses.add(createPingResponse(contextProvider.clusterState())); // NOTE:htt, 添加ping响应到集合
 
-        return new UnicastPingResponse(request.id, pingResponses.toArray(new PingResponse[pingResponses.size()]));
+        return new UnicastPingResponse(request.id, pingResponses.toArray(new PingResponse[pingResponses.size()])); // NOTE:htt, 创建unicast ping响应
     }
 
-    class UnicastPingRequestHandler implements TransportRequestHandler<UnicastPingRequest> {
+    class UnicastPingRequestHandler implements TransportRequestHandler<UnicastPingRequest> { // NOTE:htt, unicast ping请求处理器
 
         @Override
         public void messageReceived(UnicastPingRequest request, TransportChannel channel) throws Exception {
             if (closed) { // NOTE:htt, 如果线程已关闭，则返回node已关闭
                 throw new AlreadyClosedException("node is shutting down");
             }
-            if (request.pingResponse.clusterName().equals(clusterName)) {
-                channel.sendResponse(handlePingRequest(request));
+            if (request.pingResponse.clusterName().equals(clusterName)) { // NOTE:htt, 如果请求的clusterName与本地clusterName相同，则处理请求
+                channel.sendResponse(handlePingRequest(request)); // NOTE:htt, 处理请求
             } else {
-                throw new IllegalStateException(
+                throw new IllegalStateException( // NOTE:htt, 如果请求的clusterName与本地clusterName不同，则抛出异常
                     String.format(
                         Locale.ROOT,
                         "mismatched cluster names; request: [%s], local: [%s]",
@@ -645,9 +647,9 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
         }
     }
 
-    private PingResponse createPingResponse(ClusterState clusterState) {
-        DiscoveryNodes discoNodes = clusterState.nodes();
-        return new PingResponse(discoNodes.getLocalNode(), discoNodes.getMasterNode(), clusterState);
+    private PingResponse createPingResponse(ClusterState clusterState) { // NOTE:htt, 创建ping响应
+        DiscoveryNodes discoNodes = clusterState.nodes(); // NOTE:htt, 获取节点
+        return new PingResponse(discoNodes.getLocalNode(), discoNodes.getMasterNode(), clusterState); // NOTE:htt, 创建ping响应
     }
 
     static class UnicastPingResponse extends TransportResponse { // NOTE:htt, unicast ping回包
