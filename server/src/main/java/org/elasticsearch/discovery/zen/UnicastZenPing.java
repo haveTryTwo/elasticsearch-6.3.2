@@ -93,7 +93,7 @@ import static org.elasticsearch.common.util.concurrent.ConcurrentCollections.new
 
 public class UnicastZenPing extends AbstractComponent implements ZenPing {
 
-    public static final String ACTION_NAME = "internal:discovery/zen/unicast";
+    public static final String ACTION_NAME = "internal:discovery/zen/unicast"; // NOTE:htt, zeng ping请求
     public static final Setting<List<String>> DISCOVERY_ZEN_PING_UNICAST_HOSTS_SETTING =
         Setting.listSetting("discovery.zen.ping.unicast.hosts", emptyList(), Function.identity(),
             Property.NodeScope);
@@ -124,7 +124,7 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
     private final Map<Integer, PingingRound> activePingingRounds = newConcurrentMap();
 
     // a list of temporal responses a node will return for a request (holds responses from other nodes)
-    private final Queue<PingResponse> temporalResponses = ConcurrentCollections.newQueue();
+    private final Queue<PingResponse> temporalResponses = ConcurrentCollections.newQueue(); // NOTE:htt, 临时回包请求处理
 
     private final UnicastHostsProvider hostsProvider; // NOTE:htt, 主机提供者
 
@@ -578,40 +578,39 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
         };
     }
 
-    private UnicastPingResponse handlePingRequest(final UnicastPingRequest request) { // NOTE:htt, 处理ping请求
+    private UnicastPingResponse handlePingRequest(final UnicastPingRequest request) { // NOTE:htt, 处理ping节点列表请求，返回当前节点包含的所有节点信息
         assert clusterName.equals(request.pingResponse.clusterName()) :
             "got a ping request from a different cluster. expected " + clusterName + " got " + request.pingResponse.clusterName();
         temporalResponses.add(request.pingResponse); // NOTE:htt, 添加ping响应到集合
         // add to any ongoing pinging
         activePingingRounds.values().forEach(p -> p.addPingResponseToCollection(request.pingResponse)); // NOTE:htt, 添加ping响应到集合
         threadPool.schedule(TimeValue.timeValueMillis(request.timeout.millis() * 2), ThreadPool.Names.SAME,
-            () -> temporalResponses.remove(request.pingResponse));
+            () -> temporalResponses.remove(request.pingResponse)); // NOTE:htt, 2倍超时时间后，清楚当前节点的回报
 
         List<PingResponse> pingResponses = CollectionUtils.iterableAsArrayList(temporalResponses);
-        pingResponses.add(createPingResponse(contextProvider.clusterState())); // NOTE:htt, 添加ping响应到集合
+        pingResponses.add(createPingResponse(contextProvider.clusterState())); // NOTE:htt, 添加ping响应到集合，即添加本地节点和master节点
 
-        return new UnicastPingResponse(request.id, pingResponses.toArray(new PingResponse[pingResponses.size()])); // NOTE:htt, 创建unicast ping响应
+        return new UnicastPingResponse(request.id, pingResponses.toArray(new PingResponse[pingResponses.size()])); // NOTE:htt, 创建unicast ping响应，包含当前有的所有节点信息
     }
 
     class UnicastPingRequestHandler implements TransportRequestHandler<UnicastPingRequest> { // NOTE:htt, unicast ping请求处理器
 
         @Override
-        public void messageReceived(UnicastPingRequest request, TransportChannel channel) throws Exception {
+        public void messageReceived(UnicastPingRequest request, TransportChannel channel) throws Exception { // NOTE:htt, 处理ping请求回包，返回当前节点包含所有节点信息
             if (closed) { // NOTE:htt, 如果线程已关闭，则返回node已关闭
                 throw new AlreadyClosedException("node is shutting down");
             }
             if (request.pingResponse.clusterName().equals(clusterName)) { // NOTE:htt, 如果请求的clusterName与本地clusterName相同，则处理请求
-                channel.sendResponse(handlePingRequest(request)); // NOTE:htt, 处理请求
+                channel.sendResponse(handlePingRequest(request)); // NOTE:htt, 返回当前节点所有所有接地那信息
             } else {
                 throw new IllegalStateException( // NOTE:htt, 如果请求的clusterName与本地clusterName不同，则抛出异常
                     String.format(
                         Locale.ROOT,
                         "mismatched cluster names; request: [%s], local: [%s]",
                         request.pingResponse.clusterName().value(),
-                        clusterName.value()));
+                        clusterName.value())); // NOTE:htt, 如果请求的clusterName与本地clusterName不同，则抛出异常
             }
         }
-
     }
 
     static class UnicastPingRequest extends TransportRequest { // NOTE:htt, unicast ping请求
@@ -648,8 +647,8 @@ public class UnicastZenPing extends AbstractComponent implements ZenPing {
     }
 
     private PingResponse createPingResponse(ClusterState clusterState) { // NOTE:htt, 创建ping响应
-        DiscoveryNodes discoNodes = clusterState.nodes(); // NOTE:htt, 获取节点
-        return new PingResponse(discoNodes.getLocalNode(), discoNodes.getMasterNode(), clusterState); // NOTE:htt, 创建ping响应
+        DiscoveryNodes discoNodes = clusterState.nodes(); // NOTE:htt, 获取集群中所有节点
+        return new PingResponse(discoNodes.getLocalNode(), discoNodes.getMasterNode(), clusterState); // NOTE:htt, 创建ping响应，包含本地节点以及master节点
     }
 
     static class UnicastPingResponse extends TransportResponse { // NOTE:htt, unicast ping回包

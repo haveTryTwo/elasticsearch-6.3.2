@@ -54,7 +54,7 @@ public interface ZenPing extends Releasable { // NOTE: htt, zen ping接口，包
 
         private final ClusterName clusterName; // NOTE:htt, 集群名称
 
-        private final DiscoveryNode node; // NOTE: htt, master ping的节点
+        private final DiscoveryNode node; // NOTE: htt, ping的节点
 
         private final DiscoveryNode master; // NOTE: htt, master节点
 
