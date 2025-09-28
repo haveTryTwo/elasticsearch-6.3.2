@@ -204,12 +204,23 @@ Project xpack = project(':x-pack:plugin')
 xpack.subprojects.findAll { it.name != 'bwc' }.each { Project xpackSubproject ->
   File licenses = new File(xpackSubproject.projectDir, 'licenses')
   if (licenses.exists()) {
-    buildDefaultNotice.licensesDir licenses 
+    buildDefaultNotice.licensesDir licenses
   }
 }
 // but copy just the top level meta plugin to the default modules
 copyModule(processDefaultOutputs, xpack)
 copyLog4jProperties(buildDefaultLog4jConfig, xpack)
+
+// NOTE:htt, 调整gradle 4.5 -> 4.9
+//xpack.subprojects.findAll { it.parent == xpack }.each { Project xpackModule ->
+//  File licenses = new File(xpackModule.projectDir, 'licenses')
+//  if (licenses.exists()) {
+//    buildDefaultNotice.licensesDir licenses
+//  }
+//  copyModule(processDefaultOutputs, xpackModule)
+//  copyLog4jProperties(buildDefaultLog4jConfig, xpackModule)
+//}
+
 
 // 
 
@@ -229,14 +240,35 @@ configure(subprojects.findAll { ['archives', 'packages'].contains(it.name) }) {
     /*****************************************************************************
      *                   Common files in all distributions                       *
      *****************************************************************************/
-    libFiles = copySpec {
-      into 'lib'
-      from { project(':server').jar }
-      from { project(':server').configurations.runtime }
-      from { project(':libs:plugin-classloader').jar }
-      // delay add tools using closures, since they have not yet been configured, so no jar task exists yet
-      from { project(':distribution:tools:launchers').jar }
-      from { project(':distribution:tools:plugin-cli').jar }
+//    libFiles = copySpec {
+//      into 'lib'
+//      from { project(':server').jar }
+//      from { project(':server').configurations.runtime }
+//      from { project(':libs:plugin-classloader').jar }
+//      // delay add tools using closures, since they have not yet been configured, so no jar task exists yet
+//      from { project(':distribution:tools:launchers').jar }
+//      from { project(':distribution:tools:plugin-cli').jar }
+//    }
+    // NOTE:htt, 调整gradle 4.5 -> 4.9
+    libFiles = { oss ->
+      copySpec {
+        // delay by using closures, since they have not yet been configured, so no jar task exists yet
+        from { project(':server').jar }
+        from { project(':server').configurations.runtime }
+        from { project(':libs:plugin-classloader').jar }
+        from { project(':distribution:tools:java-version-checker').jar }
+        from { project(':distribution:tools:launchers').jar }
+        into('tools/plugin-cli') {
+          from { project(':distribution:tools:plugin-cli').jar }
+          from { project(':distribution:tools:plugin-cli').configurations.runtime }
+        }
+        if (oss == false) {
+          into('tools/security-cli') {
+            from { project(':x-pack:plugin:security:cli').jar }
+            from { project(':x-pack:plugin:security:cli').configurations.compile }
+          }
+        }
+      }
     }
 
     modulesFiles = { oss ->
@@ -314,6 +346,25 @@ configure(subprojects.findAll { ['archives', 'packages'].contains(it.name) }) {
 
 task run(type: RunTask) {
   distribution = System.getProperty('run.distribution', 'zip')
+  // NOTE:htt, 调整gradle 4.5 -> 4.9
+  if (distribution == 'zip') {
+    String licenseType = System.getProperty("run.license_type", "basic")
+    if (licenseType == 'trial') {
+      setting 'xpack.ml.enabled', 'true'
+      setting 'xpack.graph.enabled', 'true'
+      setting 'xpack.watcher.enabled', 'true'
+      setting 'xpack.license.self_generated.type', 'trial'
+      setupCommand 'setupTestAdmin',
+              'bin/elasticsearch-users', 'useradd', 'elastic-admin', '-p', 'elastic-password', '-r', 'superuser'
+    } else if (licenseType != 'basic') {
+      throw new IllegalArgumentException("Unsupported self-generated license type: [" + licenseType + "[basic] or [trial].")
+    }
+    setting 'xpack.security.enabled', 'true'
+    setting 'xpack.monitoring.enabled', 'true'
+    setting 'xpack.sql.enabled', 'true'
+    setting 'xpack.rollup.enabled', 'true'
+    keystoreSetting 'bootstrap.password', 'password'
+  }
 }
 
 /**
@@ -463,13 +514,13 @@ subprojects {
   }
 }
 
-static void assertLinesInFile(final Path path, final List<String> actualLines, final List<String> expectedLines) {
-  int line = 0
-  for (final String expectedLine : expectedLines) {
-    final String actualLine = actualLines.get(line)
-    if (expectedLine != actualLine) {
-      throw new GradleException("expected line [${line + 1}] in [${path}] to be [${expectedLine}] but was [${actualLine}]")
-    }
-    line++
-  }
-}
+//static void assertLinesInFile(final Path path, final List<String> actualLines, final List<String> expectedLines) {
+//  int line = 0
+//  for (final String expectedLine : expectedLines) {
+//    final String actualLine = actualLines.get(line)
+//    if (expectedLine != actualLine) {
+//      throw new GradleException("expected line [${line + 1}] in [${path}] to be [${expectedLine}] but was [${actualLine}]")
+//    }
+//    line++
+//  }
+//}
