@@ -67,8 +67,8 @@ public interface ZenPing extends Releasable { // NOTE: htt, zen ping接口，包
          * @param clusterStateVersion the current cluster state version of that node
          *                            ({@link ElectMasterService.MasterCandidate#UNRECOVERED_CLUSTER_VERSION} for not recovered)
          */
-        PingResponse(DiscoveryNode node, DiscoveryNode master, ClusterName clusterName, long clusterStateVersion) {
-            this.id = idGenerator.incrementAndGet();
+        PingResponse(DiscoveryNode node, DiscoveryNode master, ClusterName clusterName, long clusterStateVersion) { // NOTE:htt, ping回包
+            this.id = idGenerator.incrementAndGet(); // NOTE:htt, 自增id
             this.node = node;
             this.master = master;
             this.clusterName = clusterName;
@@ -101,6 +101,7 @@ public interface ZenPing extends Releasable { // NOTE: htt, zen ping接口，包
         /**
          * an always increasing unique identifier for this ping response.
          * lower values means older pings.
+         * NOTE:htt,
          */
         public long id() {
             return this.id;
